@@ -1,0 +1,246 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Serverless Express Application/API powered by API Gateway and Lambda
+Parameters:
+    ParentDomainName:
+        Type: String
+        Description: API Domain name
+        Default: "tomvisions.com"
+    DomainName:
+        Type: String
+        Description: API Domain name
+        Default: $DomainName
+    Certificate:
+        Type: String
+        Description: Certificate
+        Default: $Certificate
+    BucketNameImages:
+        Type: String
+        Description: Bucket for Images
+        Default: $BucketNameImages
+    Stage:
+        Type: String
+        Description: Bucket for Images
+        Default: $Stage
+    DbHost:
+        Type: String
+        Description: Bucket for Images
+        Default: $DbHost
+    DbName:
+        Type: String
+        Description: Bucket for Images
+        Default: $DbName
+    DbUserName:
+        Type: String
+        Description: Bucket for Images
+        Default: $DbUserName
+    DbPassword:
+        Type: String
+        Description: Bucket for Images
+        Default: $DbPassword
+    NodeEnv:
+        Type: String
+        Description: Bucket for Images
+        Default: $NodeEnv
+
+Conditions:
+    UseDomainName: !Not
+        - !Equals
+            - !Ref DomainName
+            - ''
+    UseCertificate: !Not
+        - !Equals
+            - !Ref Certificate
+            - ''
+
+Resources:
+    ExpressApi:
+        Type: AWS::Serverless::Api
+        Properties:
+            StageName: !Ref Stage
+            BinaryMediaTypes:
+                - image/png
+                - image/jpg
+                - image/jpeg
+                - multipart/form-data
+
+    ExpressLambdaFunction:
+        Type: AWS::Serverless::Function
+        Properties:
+            CodeUri: ./dist
+            PackageType: Zip
+            Runtime: nodejs18.x
+            Handler: lambda.handler
+            Environment:
+                Variables:
+                    DB_NAME: !Ref DbName
+                    STAGE: !Ref Stage   
+                    DB_HOST: !Ref DbHost
+                    DB_USERNAME: !Ref DbUserName
+                    DB_PASSWORD: !Ref DbPassword
+                    NODE_ENV: !Ref NodeEnv
+            MemorySize: 1024
+            Timeout: 30
+            Events:
+                Mail:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /api/v1/mail
+                        Method: ANY
+                Media:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /api/v1/media
+                        Method: ANY
+                MediaId:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /api/v1/media/id/{id}
+                        Method: ANY
+                MediaImagesByIdPagination:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /api/v1/media/id/{id}/image/{pageIndex}/{pageSize}/{sort}/{order}
+                        Method: ANY
+                MediaImagesPrimary:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /api/v1/media/primary
+                        Method: GET
+                MediaImagesPrimaryWithCode:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /api/v1/media/primary/{code}
+                        Method: GET
+
+                MediaImagesAllGalleries:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /api/v1/media/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
+                        Method: ANY
+
+                MediaAllImages:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /api/v1/media/image/age-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
+                        Method: ANY
+                MediaImagesById:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /api/v1/media/image/id/{id}
+                        Method: ANY
+
+                MediaAllTags:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /api/v1/media/tag/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{query}
+                        Method: ANY
+
+                MediaTagByLabelValue:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /api/v1/media/tag/list
+                        Method: ANY
+
+                MediaNewTag:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /api/v1/media/tag/new
+                        Method: ANY
+
+                Wedding:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /api/v1/wedding
+                        Method: ANY
+
+            Policies:
+                - SESBulkTemplatedCrudPolicy_v2:
+                      IdentityName: tomvisions.com
+                      TemplateName: DefaultEmailTemplate
+                - SESEmailTemplateCrudPolicy: {}
+                - S3WritePolicy:
+                      BucketName: !Ref BucketNameImages
+
+
+    MyApiRoute53RecordSetGroup:
+        Type: AWS::Route53::RecordSetGroup
+        Condition: UseDomainName
+        Properties:
+            HostedZoneName: !Sub ${ParentDomainName}.
+            RecordSets:
+                - Name: !Sub "${DomainName}."
+                  Type: A
+                  AliasTarget:
+                      EvaluateTargetHealth: true
+                      HostedZoneId: Z2FDTNDATAQYW2
+                      DNSName: !Sub ${Distribution.DomainName}.
+
+    Distribution:
+        Type: AWS::CloudFront::Distribution
+        Properties:
+            DistributionConfig:
+                Enabled: "true"
+                Comment: !Ref AWS::StackName
+                Aliases: 
+                    - !Ref DomainName
+                CNAMEs:
+                    - !Ref DomainName
+                ViewerCertificate: 
+                        AcmCertificateArn: arn:aws:acm:us-east-1:955552760689:certificate/a32d7458-6672-43c0-bdca-86cfc50f66d9
+                        SslSupportMethod: sni-only
+                HttpVersion: http2
+                Origins:
+                  - DomainName: !Sub "${ExpressApi}.execute-api.${AWS::Region}.amazonaws.com"
+                    OriginPath: !Sub "/${Stage}"
+                    Id: ApiOrigin
+                    CustomOriginConfig:
+                        HTTPPort: 80
+                        HTTPSPort: 443
+                        OriginProtocolPolicy: https-only
+                DefaultCacheBehavior:
+                    Compress: "true"
+                    AllowedMethods:
+                        - GET
+                        - HEAD
+                        - OPTIONS
+                        - PUT
+                        - POST
+                        - PATCH
+                        - DELETE
+                    TargetOriginId: ApiOrigin
+                    ViewerProtocolPolicy: "allow-all"
+                    CachePolicyId: "742eb823-1ef3-4032-8765-be3ea4bddc50"
+                    OriginRequestPolicyId: "b689b0a8-53d0-40ab-baf2-68738e2966ac"
+
+Outputs:
+    LambdaFunctionConsoleUrl:
+        Description: Console URL for the Lambda Function.
+        Value: !Sub https://${AWS::Region}.console.aws.amazon.com/lambda/home?region=${AWS::Region}#/functions/${ExpressLambdaFunction}
+
+    ApiGatewayApiConsoleUrl:
+        Description: Console URL for the API Gateway API's Stage.
+        Value: !Sub https://${AWS::Region}.console.aws.amazon.com/apigateway/home?region=${AWS::Region}#/apis/${ExpressApi}/stages/${Stage}
+
+    ApiUrl:
+        Description: Invoke URL for your API. Clicking this link will perform a GET request
+            on the root resource of your API.
+        Value: !Sub https://${ExpressApi}.execute-api.${AWS::Region}.amazonaws.com/
+
+    LambdaFunctionName:
+        Description: Name of the Serverless Express Lambda Function
+        Value: !Ref ExpressLambdaFunction
