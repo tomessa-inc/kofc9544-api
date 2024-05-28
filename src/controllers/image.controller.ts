@@ -152,7 +152,8 @@ export class ImageController {
             }
 
             const images = await imageMapper.getAllPrimaryImages(options);
-
+            console.log('images');
+            console.log(images);
             if (typeof images === 'string') {
                 return res.status(500).json({ errors_string: images })
             }
