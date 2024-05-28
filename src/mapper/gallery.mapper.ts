@@ -17,7 +17,7 @@ export class GalleryMapper extends BaseMapper {
 
     constructor() {
         super();
-        this.DATABASE_NAME = 'kofc_9544';
+        this.DATABASE_NAME = 'kofc_golf';
         this.initalizeSequelize()
         this.initializeGallery();
     }
