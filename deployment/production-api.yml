@@ -24,5 +24,6 @@ phases:
       - export DB_PASSWORD=$(echo "$DB_INFO" | jq -r '.DB_PASSWORD')
       - export DB_NAME=$(echo "$DB_INFO" | jq -r '.DB_NAME')
  #   TOKEN_SECRET: $TOKEN_SECRE
+      - export STAGE=PRODUCTION
       - export NODE_ENV=$(echo "$DB_INFO" | jq -r '.NODE_ENV')
       - npm run deploy-production
