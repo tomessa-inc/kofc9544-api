@@ -21,7 +21,7 @@ export interface EditProperties {
 
 export class S3Mapper {
     private _client;
-    private _UPLOAD_BUCKET: string = 'tomvisions-original-images';
+    private _UPLOAD_BUCKET: string = 'images-kofc-golf';
 
     constructor() {
         const options = {
@@ -167,7 +167,7 @@ console.log('start of write disk');
      */
     public resizeWithInS3(key: string, edits: EditProperties) {
         const imageRequest = JSON.stringify({
-            bucket: "tomvisions-original-images",
+            bucket: "images-kofc-golf",
             key: key,
             edits: edits
         })

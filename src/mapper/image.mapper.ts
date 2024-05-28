@@ -181,15 +181,18 @@ export class ImageMapper extends BaseMapper {
             sql = sql.concat(' GROUP BY `Image`.`GalleryId`');
 
 
-
+            console.log(this.SEQUELIZE);
+            console.log(sql);
 
           //SELECT `Image`.`id`, `Image`.`key`, `Image`.`GalleryId`, `Image`.`name`, `Image`.`description`, `Image`.`primaryImage`, (SELECT CAST(CONCAT('[',GROUP_CONCAT(JSON_OBJECT('TagId', TagId)),']') as JSON) as tags FROM gallery_tag where gallery_tag.GalleryId = `Image`.`GalleryId`), `gallery_tag`.`TagId`, gallery.name, gallery_tag.GalleryId FROM `image` AS `Image` INNER JOIN gallery ON gallery.id = `Image`.`GalleryId` INNER JOIN gallery_tag ON gallery_tag.GalleryId = `Image`.`GalleryId`  WHERE `Image`.`primaryImage` = 1 GROUP BY `Image`.`GalleryId`;
        
           //   SELECT CAST(CONCAT('[',GROUP_CONCAT(JSON_OBJECT('TagId', TagId)),']') as JSON) as tags FROM gallery_tag where GalleryId = 'model-workshop-april-2011';
           return await this.SEQUELIZE.query(sql).then(galleries => {
-
+                console.log('galleries')
+              console.log(galleries)
                 return this.processImageArray(galleries[0])
             }).catch(err => {
+                console.log(err);
                 return err;
             })
             /*            console.log(primaryImageConfig);

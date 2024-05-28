@@ -6,6 +6,11 @@ export interface OptionsSequelize {
     host:string;
     dialect: Dialect;
     port:number;
+    dialectOptions: {
+        options: {
+            requestTimeout: number
+        }
+    },1
 }
 
 export interface DBOptions {
@@ -23,7 +28,7 @@ export class SequelizeApi {
     private _database: string;
     private _username: string;
     private _password: string;
-    private _options: OptionsSequelize;
+    private _options: any;//OptionsSequelize;
 
     /**
      * Constructor for class
@@ -32,11 +37,12 @@ export class SequelizeApi {
      * @param password
      * @param options
      */
-    constructor(database: string, username: string, password: string, options: OptionsSequelize) {
+    constructor(database: string, username: string, password: string, options:any) {
         this._database = database;
         this._username = username;
         this._password = password;
         this._options = options;
+        console.log(this);
     }
 
     /**

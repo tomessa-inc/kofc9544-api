@@ -33,8 +33,8 @@ The Base Mapper. Functions which are in common with others mappers are placed he
 export class BaseMapper {
     private _QUERY;
     private _DEFAULT_ORDER: string = 'ASC';
-    private _DATABASE_NAME: string = 'photo_gallery';
-    private _PARAM_FRONTCLOUD = 'https://images.tomvisions.com'
+    private _DATABASE_NAME: string = 'kofc_golf';
+    private _PARAM_FRONTCLOUD = 'https://images.kofc9544-charitytournament.golf'
     private _SEQUELIZE;
 
     /**
@@ -42,8 +42,24 @@ export class BaseMapper {
      * @param dbConfig
      */
     public initalizeSequelize() {
-
-        let options = JSON.parse(`{"host": "${process.env.DB_HOST}", "dialect": "mysql", "port":3306}`);
+/*        let options = JSON.parse(`{
+                                            "host": "${process.env.DB_HOST}", 
+                                            "dialect": "mysql", 
+                                            "port":3306,  
+                                            "dialectOptions": {
+                                                "options": {
+                                                    "requestTimeout": 20000
+                                                }
+                                            },
+                                        }`); */
+        let options = {
+            host: process.env.DB_HOST,
+            dialect: "mysql",
+            port:3306,
+            dialectOptions: {
+                connectTimeout: 20000
+            },
+        }
 
         const sequelizeApi = new SequelizeApi(this._DATABASE_NAME,process.env.DB_USERNAME,process.env.DB_PASSWORD, options);//.initialize();
         this._SEQUELIZE = sequelizeApi.initialize();
