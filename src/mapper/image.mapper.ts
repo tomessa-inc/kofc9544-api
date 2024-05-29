@@ -68,7 +68,6 @@ export class ImageMapper extends BaseMapper {
             }
 
             return await Image.findOrCreate(imageConfig).then(data => {
-                console.log(data);
                 return data[0];
             }).catch(err => {
                 return err;
@@ -123,8 +122,6 @@ export class ImageMapper extends BaseMapper {
                 },
             }
 
-            console.log('image config')
-            console.log(imagesConfig)
             return await Image.findAll(imagesConfig).then(images => {
                 return this.processArray(images);
             }).catch(err => {
@@ -148,10 +145,8 @@ export class ImageMapper extends BaseMapper {
             if (options) {
                 sql += ` AND GalleryId = "${options['id']}"`;
             }
-            console.log(sql);
+//            console.log(sql);
             return await this.SEQUELIZE.query(sql).then(imageCount => {
-                console.log('the count');
-                console.log(imageCount[0][0]['count']);
                 return imageCount[0][0]['count'];
             }).catch(err => {
                 return err;
@@ -181,18 +176,17 @@ export class ImageMapper extends BaseMapper {
             sql = sql.concat(' GROUP BY `Image`.`GalleryId`');
 
 
-            console.log(this.SEQUELIZE);
-            console.log(sql);
+         //   console.log(this.SEQUELIZE);
+          //  console.log(sql);
 
           //SELECT `Image`.`id`, `Image`.`key`, `Image`.`GalleryId`, `Image`.`name`, `Image`.`description`, `Image`.`primaryImage`, (SELECT CAST(CONCAT('[',GROUP_CONCAT(JSON_OBJECT('TagId', TagId)),']') as JSON) as tags FROM gallery_tag where gallery_tag.GalleryId = `Image`.`GalleryId`), `gallery_tag`.`TagId`, gallery.name, gallery_tag.GalleryId FROM `image` AS `Image` INNER JOIN gallery ON gallery.id = `Image`.`GalleryId` INNER JOIN gallery_tag ON gallery_tag.GalleryId = `Image`.`GalleryId`  WHERE `Image`.`primaryImage` = 1 GROUP BY `Image`.`GalleryId`;
        
           //   SELECT CAST(CONCAT('[',GROUP_CONCAT(JSON_OBJECT('TagId', TagId)),']') as JSON) as tags FROM gallery_tag where GalleryId = 'model-workshop-april-2011';
           return await this.SEQUELIZE.query(sql).then(galleries => {
-                console.log('galleries')
-              console.log(galleries)
+           //     console.log('galleries')
+           //   console.log(galleries)
                 return this.processImageArray(galleries[0])
             }).catch(err => {
-                console.log(err);
                 return err;
             })
             /*            console.log(primaryImageConfig);
@@ -217,6 +211,13 @@ export class ImageMapper extends BaseMapper {
 
             const offset = ((options.pageIndex - 1) * options.pageSize)
             const images = {
+                include: [
+                    {
+                        Model: Gallery,
+                        association: Image.Gallery,
+                        required: false
+                    },
+                ],
                 where: [{ GalleryId: options.id }, {active:1}],
                 offset: offset,
                 limit: options.pageSize,
