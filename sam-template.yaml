@@ -95,6 +95,37 @@ Resources:
                         RestApiId: !Ref ExpressApi
                         Path: /api/v1/media
                         Method: ANY
+                UserSignIn:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /api/v1/user/sign-in
+                        Method: ANY
+                UserSignUp:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /api/v1/user/sign-up
+                        Method: ANY
+                UserSignOut:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /api/v1/user/sign-out
+                        Method: ANY
+                UserForgotPassword:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /api/v1/user/forgot-password
+                        Method: ANY
+                UserResetPassword:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /api/v1/user/reset-password
+                        Method: ANY
+
                 MediaId:
                     Type: Api
                     Properties:
