@@ -5,6 +5,7 @@ import {UserController} from "../controllers/user.controller";
 //import {UserAvatarController} from "../controllers/user.avatar.controller";
 
 userRouter.post("/sign-in", UserController.apiPostSignIn);
+userRouter.post("/sign-out", UserController.apiPostSignOut);
 userRouter.post("/sign-up", UserController.apiPostSignUp);
 userRouter.get("/", UserController.getAllUsers);
 userRouter.post("/", UserController.patchUpdateUser);

@@ -77,6 +77,71 @@ export class ImageMapper extends BaseMapper {
         }
     }
 
+    public async updateOrder(galleryId: string, id:string, order:number) {
+        Image.update({
+            order: order,
+        }, {
+            where: {
+                id: id
+            },
+        });
+/*(        return await Image.(imagesConfig).then(images => {
+            return this.processArray(images);
+        }).catch(err => {
+            return err;
+        }) */
+
+
+    }
+
+
+
+    public async reOrder(id:string) {
+
+        //const offset = ((params.pageIndex - 1) * params.pageSize)
+
+        const imagesConfig = {
+            offset: 0,
+            limit: 300,
+            where: {
+                active: 1,
+                GalleryId: id
+            },
+        }
+
+        return await Image.findAll(imagesConfig).then(images => {
+            return this.processArray(images);
+        }).catch(err => {
+            return err;
+        })
+
+
+    }
+
+    public async reNum(id:string, number:number) {
+
+        //const offset = ((params.pageIndex - 1) * params.pageSize)
+
+        const imagesConfig = {
+            where: {
+                id: id
+            },
+        }
+       // console.log(imagesConfig)
+        const image =  await Image.findOne(imagesConfig);
+      //  Image.
+        console.log(image);
+        image.set('order', number);
+        image.save();
+
+        /*.then(images => {
+            return this.processArray(images);
+        }).catch(err => {
+            return err;
+        }) */
+
+
+    }
     public async deleteImageById(id) {
         try {
 

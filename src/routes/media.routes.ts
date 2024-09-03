@@ -11,6 +11,9 @@ mediaRouter.put("/id/:id", GalleryController.apiUpdateGalleryById);
 
 
 mediaRouter.get("/id/:id/image/:pageIndex?/:pageSize?/:sort?/:order?", ImageController.apiGetAllImagesByGallery);
+mediaRouter.post("/id/:id/reorder", ImageController.apiImagesOrder);
+mediaRouter.post("/id/:galleryId/update/:id/order/:order", ImageController.apiUpdateOrderImage);
+
 mediaRouter.get("/primary/:code?", ImageController.apiGetAllPrimaryImages);
 
 mediaRouter.post("/page-index/:pageIndex/page-size/:pageSize?/:sort?/:order?", GalleryController.apiGetAllGalleries);

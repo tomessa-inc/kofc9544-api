@@ -32,6 +32,17 @@ export class UserController {
         }
 
     }
+
+    /**
+     * Function that determins if your username and password are correct
+     * @param req
+     * @param res
+     * @param next
+     */
+    public static async apiPostSignOut(req: any, res: any, next: any) {
+
+        return res.status(200).json({"sign-out":true});
+    }
 /*
 
     server.post(`${apiPrefix}/sign-in`, (schema, { requestBody }) => {

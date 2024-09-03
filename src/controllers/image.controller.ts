@@ -1,4 +1,5 @@
 import { imageMapper, paramsOptions } from "../mapper";
+import {mediaRouter} from "../routes";
 
 export class ImageController {
     /**
@@ -7,6 +8,84 @@ export class ImageController {
        * @param res
        * @param next
        */
+
+
+    public static async apiUpdateOrderImage(req: any, res: any, next: any) {
+        try {
+
+
+            let id
+            let galleryId
+            let order;
+
+            if (req.params.id) {
+                id = req.params.id
+            }
+
+
+            if (req.params.galleryId) {
+                galleryId = req.params.galleryId
+            }
+
+
+            if (req.params.order) {
+                order = req.params.order
+            }
+
+            //mediaRouter.post("/id/:id/update/current/:currentNumber/new/:newNumber", ImageController.apiUpdateOrderImage);
+
+            const images = await imageMapper.updateOrder(galleryId, id, order);
+
+/*
+            for (let number = 0;number < images.length; number++) {
+                await imageMapper.reNum(images[number].id, number);
+
+            }
+//            console.log(images);
+
+
+            if (typeof images === 'string') {
+                return res.status(500).json({ errors_string: images })
+            }
+
+            //            const paginationResults = galleryMapper.prepareListResults(images, req.query);
+*/
+            return res.status(200).json(images);
+
+        } catch (error) {
+            res.status(500).json({ error_main: error.toString() })
+        }
+
+    }
+
+    public static async apiImagesOrder(req: any, res: any, next: any) {
+        try {
+            let id;
+            if (req.params.id) {
+                id = req.params.id
+            }
+
+            const images = await imageMapper.reOrder(id);
+            for (let number = 0;number < images.length; number++) {
+                await imageMapper.reNum(images[number].id, number);
+
+            }
+//            console.log(images);
+
+
+            if (typeof images === 'string') {
+                return res.status(500).json({ errors_string: images })
+            }
+
+            //            const paginationResults = galleryMapper.prepareListResults(images, req.query);
+
+            return res.status(200).json(images);
+
+        } catch (error) {
+            res.status(500).json({ error_main: error.toString() })
+        }
+
+    }
 
     public static async apiDeleteImage(req: any, res: any, next: any) {
         try {

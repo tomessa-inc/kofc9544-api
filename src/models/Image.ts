@@ -43,7 +43,9 @@ class Image extends Model {
             orientation: {
                 type: DataTypes.SMALLINT,
             },
-
+            order: {
+                type: DataTypes.SMALLINT,
+            },
 
         }, {
             modelName: 'Image', sequelize: sequelize, tableName:"image"
