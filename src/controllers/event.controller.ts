@@ -9,6 +9,7 @@ export class EventController {
      * @param res
      * @param next
      */
+    /*
     public static async apiGetAllGalleries(req: any, res: any, next: any) {
         try {
             //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
@@ -42,14 +43,14 @@ export class EventController {
         }
 
     }
-
+*/
 
     /**
      * Updating gallery based on ID
      * @param req
      * @param res
      * @param next
-     */
+     *//*
     public static async apiUpdateGalleryById(req: any, res: any, next: any) {
         try {
             //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
@@ -72,7 +73,7 @@ export class EventController {
         } catch (error) {
             res.status(500).json({ error_main: error.toString() })
         }
-    }
+    } */
 
     /**
      * Retreiving gallery based on id

@@ -25,6 +25,8 @@ export class EventMapper extends BaseMapper {
 
 
     public async createEvent(data) {
+        console.log
+
     /*    try {
 
 
