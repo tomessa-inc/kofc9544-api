@@ -1,4 +1,3 @@
-import { Gallery } from "src/models";
 import { eventMapper, tagMapper, paramsOptions,  } from "../mapper/";
 
 export class EventController {
@@ -82,7 +81,7 @@ export class EventController {
      * @param next
      */
     public static async apiCreateEvent(req: any, res: any, next: any) {
-        try {
+      /*  try {
             //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
             //        return res.status(500).json({error: 'Not Authorized to access the API'})
             //      }
@@ -92,7 +91,7 @@ export class EventController {
                 options.id = req.params.id;
             }
 
-            const gallery = await eventMapper.createEvent(req.body);
+            const event = await eventMapper.createEvent(req.body);
 
             gallery.dataValues.tags = gallery.Tags.map((tag) => {
                 console.log({"label":tag.name, "value":tag.id})
@@ -107,6 +106,6 @@ export class EventController {
 
         } catch (error) {
             res.status(500).json({ error_main: error.toString() })
-        }
+        } */
     }
 }
