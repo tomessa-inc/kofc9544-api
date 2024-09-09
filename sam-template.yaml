@@ -87,109 +87,109 @@ Resources:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
-                        Path: /api/v1/mail
+                        Path: /mail
                         Method: ANY
                 Media:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
-                        Path: /api/v1/media
+                        Path: /media
                         Method: ANY
                 UserSignIn:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
-                        Path: /api/v1/user/sign-in
+                        Path: /user/sign-in
                         Method: ANY
                 UserSignUp:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
-                        Path: /api/v1/user/sign-up
+                        Path: /user/sign-up
                         Method: ANY
                 UserSignOut:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
-                        Path: /api/v1/user/sign-out
+                        Path: /user/sign-out
                         Method: ANY
                 UserForgotPassword:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
-                        Path: /api/v1/user/forgot-password
+                        Path: /user/forgot-password
                         Method: ANY
                 UserResetPassword:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
-                        Path: /api/v1/user/reset-password
+                        Path: /user/reset-password
                         Method: ANY
 
                 MediaId:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
-                        Path: /api/v1/media/id/{id}
+                        Path: /media/id/{id}
                         Method: ANY
                 MediaImagesByIdPagination:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
-                        Path: /api/v1/media/id/{id}/image/{pageIndex}/{pageSize}/{sort}/{order}
+                        Path: /media/id/{id}/image/{pageIndex}/{pageSize}/{sort}/{order}
                         Method: ANY
                 MediaImagesPrimary:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
-                        Path: /api/v1/media/primary
+                        Path: /media/primary
                         Method: GET
                 MediaImagesPrimaryWithCode:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
-                        Path: /api/v1/media/primary/{code}
+                        Path: /media/primary/{code}
                         Method: GET
 
                 MediaImagesAllGalleries:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
-                        Path: /api/v1/media/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
+                        Path: /media/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
                         Method: ANY
 
                 MediaAllImages:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
-                        Path: /api/v1/media/image/age-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
+                        Path: /media/image/age-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
                         Method: ANY
                 MediaImagesById:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
-                        Path: /api/v1/media/image/id/{id}
+                        Path: /media/image/id/{id}
                         Method: ANY
 
                 MediaAllTags:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
-                        Path: /api/v1/media/tag/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{query}
+                        Path: /media/tag/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{query}
                         Method: ANY
 
                 MediaTagByLabelValue:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
-                        Path: /api/v1/media/tag/list
+                        Path: /media/tag/list
                         Method: ANY
 
                 MediaNewTag:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
-                        Path: /api/v1/media/tag/new
+                        Path: /media/tag/new
                         Method: ANY
 
             Policies:
