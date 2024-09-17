@@ -9,8 +9,8 @@ export class EventController {
      * @param res
      * @param next
      */
-    /*
-    public static async apiGetAllGalleries(req: any, res: any, next: any) {
+
+    public static async apiGetEvent(req: any, res: any, next: any) {
         try {
             //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
             //        return res.status(500).json({error: 'Not Authorized to access the API'})
@@ -28,7 +28,7 @@ export class EventController {
                 }
             })
 
-            const galleries = await eventMapper.getAllGalleries(options);
+            const galleries = await eventMapper.getAllEvents(options);
 
             if (typeof galleries === 'string') {
                 return res.status(500).json({ errors_string: galleries })
@@ -43,7 +43,7 @@ export class EventController {
         }
 
     }
-*/
+
 
     /**
      * Updating gallery based on ID
@@ -82,6 +82,15 @@ export class EventController {
      * @param next
      */
     public static async apiCreateEvent(req: any, res: any, next: any) {
+        try {
+
+            const event = await eventMapper.createEvent(req.body.data);
+
+        } catch (error) {
+            res.status(500).json({ error_main: error.toString() })
+        }
+    }
+
       /*  try {
             //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
             //        return res.status(500).json({error: 'Not Authorized to access the API'})
@@ -108,5 +117,5 @@ export class EventController {
         } catch (error) {
             res.status(500).json({ error_main: error.toString() })
         } */
-    }
+
 }

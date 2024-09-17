@@ -5,3 +5,4 @@ export * from "./GalleryTag";
 export * from "./Tag";
 export * from "./Gallery";
 export * from "./User";
+export * from "./Event";
