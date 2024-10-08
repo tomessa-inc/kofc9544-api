@@ -43,19 +43,9 @@ interface Ruleset {
 
 class DateStuff extends Date {
     getWeekOfMonth() {
-        console.log("year inside get Wee kof Month")
-        console.log(this.getFullYear())
-        console.log("month inside get Wee kof Month")
-        console.log(this.getMonth())
 
         var firstWeekday = new Date(this.getFullYear(), this.getMonth(), 1).getDay()
-        console.log("firstWeekday");
-        console.log(firstWeekday);
-        console.log('get date')
-        console.log(this.getDate())
         var offsetDate = this.getDate() + firstWeekday;
-        console.log("offsetDate")
-        console.log(offsetDate)
         return Math.ceil(offsetDate / 7);
     }
 
@@ -75,6 +65,10 @@ class DateStuff extends Date {
         return dayOfWeek[weekday]
     }
 
+    getDaysOfMonth() {
+       return new Date(this.getFullYear(), this.getMonth(), 0).getDate();
+    }
+
     getFirstDayOfWeek() {
         const dayOfWeek = {
             0: "monday",
@@ -87,14 +81,12 @@ class DateStuff extends Date {
         }
 
         var firstWeekday = new Date(this.getFullYear(), this.getMonth(),1).getDay()
-        console.log('firstWeekday')
-        console.log(firstWeekday)
+
         return dayOfWeek[firstWeekday]
     }
 
 
     getDateBasedOnWeekDayMonth(ruleSet) {
-
         const today = new Date();
         const year = ruleSet.year
         const month = ruleSet.month;
@@ -149,7 +141,7 @@ class DateStuff extends Date {
 export class EventMapper extends BaseMapper {
     private _PARAMS_ID: string = 'id';
     private _PARAMS_NAME: string = 'name';
-    private _DEFAULT_SORT: string = 'name';
+    private _DEFAULT_SORT: string = 'createdAt';
     private _LIST_NAME: string = 'galleries';
 
 
@@ -184,16 +176,18 @@ export class EventMapper extends BaseMapper {
         return dateTime;
     }
 
-    public async getAllEvents(params: paramsOptions) { //: Promise<string[] | string> {
+    public async getAllEventsByMonth(month:number, year:number) { //: Promise<string[] | string> {
         try {
-            console.log(params);
-            const offset = ((params.pageIndex - 1) * params.pageSize);
+        //    console.log(params);
+          //  const offset = ((params.pageIndex - 1) * params.pageSize);
 
-            const galleryConfig = {
-                offset: offset,
-                limit: params.pageSize,
+            const eventConfig = {
+                where: {
+                    month:month,
+                    year:year
+                }
             }
-            return await Event.findAll(galleryConfig).then(galleries => {
+            return await Event.findAll(eventConfig).then(galleries => {
                 return this.processArray(galleries);
             }).catch(err => {
                 console.log('the error');
@@ -216,10 +210,12 @@ export class EventMapper extends BaseMapper {
         let startHour = startDate.time.hour
         let endHour = endDate.time.hour
         let weekOfMonth = 0;
+        let frequency = (data.frequency) ?? 0
         let dayOfWeek = ''
         const ruleSet:Ruleset = {dayOfWeek: null, week: null, month:null, timeOfDay:null, year:0};
 
-        for (let x = 0; x <= parseInt(data.frequency); x++) {
+
+        for (let x = 0; x <= frequency; x++) {
             const id = `${day}-${month+1}-${year}-${startHour}-${endHour}`;
             try {
                 const eventDefaults = {
@@ -231,9 +227,10 @@ export class EventMapper extends BaseMapper {
                     minuteStart: startDate.time.minute,
                     hourEnd: endDate.time.hour,
                     minuteEnd: endDate.time.minute,
+                    text: data.text
 
                 }
-                console.log(eventDefaults);
+           //     console.log(eventDefaults);
                 await Event.findOrCreate({where: {id: id}, defaults: eventDefaults})
             } catch (error) {
                 console.log(error.toString())
@@ -247,10 +244,20 @@ export class EventMapper extends BaseMapper {
                     month = month + 1;
 
                     if (month > 11) {
-                        month = 1;
+                        month = 0;
                         year = year + 1;
                     }
                     break;
+                case "weekly":
+                    day = day + 7;
+                    const dateCheck = new DateStuff(year, month, day)
+                    const daysInMonth = dateCheck.getDaysOfMonth()
+                    if (month > 11) {
+                        month = 0;
+                        year = year + 1;
+                    }
+                    break;
+
             }
 
             ruleSet.dayOfWeek = dayOfWeek
@@ -261,7 +268,7 @@ export class EventMapper extends BaseMapper {
 
             const dateUpdate = date.getDateBasedOnWeekDayMonth(ruleSet)
             if (!dateUpdate) {
-                return
+                return false
             }
 
          //   month = dateUpdate.getMonth()
@@ -296,7 +303,9 @@ export class EventMapper extends BaseMapper {
                     console.log(error);
                     return error.toString();
                 }*/
+
         }
+        return true;
     }
 
 

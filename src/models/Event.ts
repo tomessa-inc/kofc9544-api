@@ -33,6 +33,9 @@ class Event extends Model {
             minuteEnd: {
                 type: DataTypes.NUMBER
             },
+            text: {
+                type: DataTypes.STRING
+            },
             createdAt: {
                 type: DataTypes.DATE,
             },

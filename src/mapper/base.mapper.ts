@@ -15,6 +15,11 @@ export interface PaginationResults {
     pagination: any;
 }
 
+export interface bodyOptions {
+    
+
+}
+
 export interface paramsOptions {
     id?: string
     pageIndex?:number
@@ -177,8 +182,8 @@ export class BaseMapper {
         } else {
             // Paginate the results by size
          //   list = listClone.slice(begin, end);
-            console.log('the final list');
-            console.log(list);
+           // console.log('the final list');
+            //console.log(list);
             // Prepare the pagination mock-api
             pagination = {
                 total    : listLength,

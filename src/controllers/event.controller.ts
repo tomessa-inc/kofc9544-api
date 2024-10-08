@@ -10,31 +10,29 @@ export class EventController {
      * @param next
      */
 
-    public static async apiGetEvent(req: any, res: any, next: any) {
+    public static async apiGetEventsMonthByDay(req: any, res: any, next: any) {
         try {
             //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
             //        return res.status(500).json({error: 'Not Authorized to access the API'})
             //      }
 
+
             const options: paramsOptions = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: eventMapper.DEFAULT_SORT, order: eventMapper.DEFAULT_ORDER };
 
-            Object.entries(req.params).map(([key, value]) => {
-                if (value !== 'undefined') {
-                    if (isNaN(Number(value))) {
-                        options[key] = value;
-                    } else {
-                        options[key] = Number(value);
-                    }
-                }
-            })
 
-            const galleries = await eventMapper.getAllEvents(options);
+         //   console.log(req.body);
+            const month = req.body.data.month;
+            const year = req.body.data.year;
+           // console.log(month);
+           // console.log(year)
+
+            const galleries = await eventMapper.getAllEventsByMonth(month, year);
 
             if (typeof galleries === 'string') {
                 return res.status(500).json({ errors_string: galleries })
             }
 
-            const paginationResults = eventMapper.prepareListResults(galleries, options);
+            const paginationResults = eventMapper.prepareListResults(galleries,options);
 
             return res.status(200).json(paginationResults);
 
@@ -83,9 +81,13 @@ export class EventController {
      */
     public static async apiCreateEvent(req: any, res: any, next: any) {
         try {
-
+      //      console.log('create event')
+        //    console.log(req.body);
             const event = await eventMapper.createEvent(req.body.data);
 
+            if (event) {
+                res.status(200).json({success:true })
+            }
         } catch (error) {
             res.status(500).json({ error_main: error.toString() })
         }
