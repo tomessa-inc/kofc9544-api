@@ -10,7 +10,7 @@
         "cloudFormationStackNameStage": "kofc9544APIStageStack",
         "cloudFormationStackNameProduction": "kofc9544APIProdStack",
         "domainStage": "api-stage.tc-testing-check.net",
-        "domainProduction": "apitc-testing-check.net",
+        "domainProduction": "api.tc-testing-check.net",
         "certificate": "tc-testing-check.net",
         "bucketNameImages": "images.kofc9544.ca"
     },
