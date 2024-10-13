@@ -17,7 +17,8 @@ const bufferToJSONMiddleware = (req: Request, res: Response, next: NextFunction)
   if (req.body instanceof Buffer) {
     try {
       req.body = JSON.parse(req.body.toString());
-
+      console.log('here it is')
+      console.log(req.body);
       return req.body
     } catch (err) {
       return res.status(400).json({ error: 'Invalid JSON data' });
