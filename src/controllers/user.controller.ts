@@ -13,6 +13,7 @@ export class UserController {
             console.log('here')
             console.log(req.body)
             if (req.body[userMapper.PARAMS_USERNAME] && req.body[userMapper.PARAMS_PASSWORD]) {
+                console.log('past check')
                 const user = await userMapper.getUserBasedOnPassword(req.body);
                 console.log('user');
                 console.log(user);
