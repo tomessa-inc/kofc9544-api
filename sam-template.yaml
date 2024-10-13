@@ -197,6 +197,20 @@ Resources:
                         RestApiId: !Ref ExpressApi
                         Path: /media/tag/new
                         Method: ANY
+                EventCreate:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /event
+                        Method: ANY
+
+                EventMonth:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /event/month
+                        Method: ANY
+
 
             Policies:
                 - SESBulkTemplatedCrudPolicy_v2:
