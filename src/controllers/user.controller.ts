@@ -12,6 +12,8 @@ export class UserController {
         try {
             console.log('here')
             console.log(req.body)
+            console.log(req.body[userMapper.PARAMS_USERNAME])
+            console.log(req.body[userMapper.PARAMS_PASSWORD])
             if (req.body[userMapper.PARAMS_USERNAME] && req.body[userMapper.PARAMS_PASSWORD]) {
                 console.log('past check')
                 const user = await userMapper.getUserBasedOnPassword(req.body);
