@@ -200,7 +200,7 @@ export class BaseMapper {
 
     public generateJWTToken() {
         const token = nJwt.create({
-            iss: "http://mamboleofc.ca/",  // The URL of your service
+            iss: "http://tc-testing-check.net/",  // The URL of your service
             sub: uuid.v4(),    // The UID of the user in your system
             scope: "self"
         },process.env.TOKEN_SECRET);
