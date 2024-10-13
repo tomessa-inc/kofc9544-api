@@ -220,13 +220,13 @@ Resources:
             DistributionConfig:
                 Enabled: "true"
                 Comment: !Ref AWS::StackName
-#                Aliases:
-#                    - !Ref DomainName
-#                CNAMEs:
-#                    - !Ref DomainName
-#                ViewerCertificate:
-#                        AcmCertificateArn: arn:aws:acm:us-east-1:955552760689:certificate/a32d7458-6672-43c0-bdca-86cfc50f66d9
- #                       SslSupportMethod: sni-only
+                Aliases:
+                     - !Ref DomainName
+                CNAMEs:
+                     - !Ref DomainName
+                ViewerCertificate:
+                         AcmCertificateArn: arn:aws:acm:us-east-1:767397839074:certificate/1588c306-38d2-4147-9a4b-c70c8f1cafa4
+                         SslSupportMethod: sni-only
                 HttpVersion: http2
                 Origins:
                   - DomainName: !Sub "${ExpressApi}.execute-api.${AWS::Region}.amazonaws.com"
