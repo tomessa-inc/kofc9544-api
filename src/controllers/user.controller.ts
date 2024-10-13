@@ -11,6 +11,7 @@ export class UserController {
     public static async apiPostSignIn(req: any, res: any, next: any) {
         try {
             console.log('here')
+            console.log(req);
             console.log(req.body)
             console.log(userMapper.PARAMS_USERNAME)
             console.log(req.body[userMapper.PARAMS_USERNAME])
