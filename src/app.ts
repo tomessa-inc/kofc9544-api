@@ -25,6 +25,7 @@ app.use(async (req, res, next) => {
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Accept-Encoding, Content-Length")
  // res.header("Access-Control-Allow-Headers", "*")
   res.header('Access-Control-Allow-Methods', '*');
+  res.header( "Content-Type", "application/json")
 
   next()
 });
