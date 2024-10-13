@@ -45,16 +45,8 @@ app.use(async (req, res, next) => {
   res.header('Access-Control-Allow-Methods', '*');
   res.header( "content-type", "application/json")
 
-  if (req.body instanceof Buffer) {
-    try {
-      req.body = JSON.parse(req.body.toString());
-      console.log('here it is')
-      console.log(req.body);
-      return req.body
-    } catch (err) {
-      return res.status(400).json({ error: 'Invalid JSON data' });
-    }
-  }
+  console.log('right here')
+  check(req, res, next)
 
   next()
 });
@@ -66,3 +58,17 @@ app.use("/event", eventRouter);
 
 app.use("/", express);
 export { app };
+
+const check = (req, res, next) => {
+  if (req.body instanceof Buffer) {
+    try {
+      req.body = JSON.parse(req.body.toString());
+      console.log('here it is')
+      console.log(req.body);
+      return req
+
+    } catch (err) {
+      return res.status(400).json({error: 'Invalid JSON data'});
+    }
+  }
+}
