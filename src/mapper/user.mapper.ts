@@ -87,6 +87,8 @@ export class UserMapper extends BaseMapper {
 
             console.log(userParams);
             return await User.findOrCreate(userParams).then(data => {
+                console.log('in find')
+                console.log(data)
                 return data[0];
 //                data[0].accessToken = this.generateJWTToken();
             }).catch(data => {

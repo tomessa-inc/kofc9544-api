@@ -10,15 +10,7 @@ export class UserController {
      */
     public static async apiPostSignIn(req: any, res: any, next: any) {
         try {
-            console.log('here')
-            console.log(req);
-            console.log(req.body)
-            console.log(userMapper.PARAMS_USERNAME)
-            console.log(req.body[userMapper.PARAMS_USERNAME])
-            console.log(userMapper.PARAMS_PASSWORD)
-            console.log(req.body[userMapper.PARAMS_PASSWORD])
             if (req.body[userMapper.PARAMS_USERNAME] && req.body[userMapper.PARAMS_PASSWORD]) {
-                console.log('past check')
                 const user = await userMapper.getUserBasedOnPassword(req.body);
                 console.log('user');
                 console.log(user);
