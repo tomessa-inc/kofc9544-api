@@ -19,7 +19,7 @@ export class UserController {
                     return res.status(500).json({ error: "Username and/or Password incorrect" })
                 }
 
-
+                console.log("good stuff")
 
                 return res.status(200).json({"user":user, "token":userMapper.generateJWTToken()});
             } else {
