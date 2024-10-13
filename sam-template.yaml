@@ -6,7 +6,7 @@ Parameters:
     ParentDomainName:
         Type: String
         Description: API Domain name
-        Default: "kofc9544.ca"
+        Default: "tc-testing-check.net"
     DomainName:
         Type: String
         Description: API Domain name

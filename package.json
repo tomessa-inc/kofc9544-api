@@ -9,9 +9,9 @@
         "region": "us-east-1",
         "cloudFormationStackNameStage": "kofc9544APIStageStack",
         "cloudFormationStackNameProduction": "kofc9544APIProdStack",
-        "domainStage": "api-stage.kofc9544.ca",
-        "domainProduction": "api.kofc9544.ca",
-        "certificate": "kofc9544.ca",
+        "domainStage": "api-stage.tc-testing-check.net",
+        "domainProduction": "apitc-testing-check.net",
+        "certificate": "tc-testing-check.net",
         "bucketNameImages": "images.kofc9544.ca"
     },
     "scripts": {
