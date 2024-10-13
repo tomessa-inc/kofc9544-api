@@ -7,10 +7,25 @@ const ejs = require("ejs").__express;
 const app = express();
 const router = express.Router();
 import {mailRouter, mediaRouter, userRouter, eventRouter} from './routes';
+import {NextFunction} from "express";
 
 
 const fileUpload = require('express-fileupload');
 import bodyparser from 'body-parser';
+
+const bufferToJSONMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  if (req.body instanceof Buffer) {
+    try {
+      req.body = JSON.parse(req.body.toString());
+
+      return req.body
+    } catch (err) {
+      return res.status(400).json({ error: 'Invalid JSON data' });
+    }
+  }
+
+  next();
+};
 
 
 app.use(express.static("/tmp"));
@@ -19,6 +34,7 @@ app.use(bodyparser.json({limit: '50mb', type: 'application/*+json'}));
 app.use(express.json({type: "application/json"}))
 app.use(cors());
 app.use(compression());
+app.use(bufferToJSONMiddleware)
 
 app.use(async (req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*")
