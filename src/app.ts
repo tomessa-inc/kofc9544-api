@@ -12,7 +12,7 @@ import {NextFunction} from "express";
 
 const fileUpload = require('express-fileupload');
 import bodyparser from 'body-parser';
-
+/*
 const bufferToJSONMiddleware = (req: Request, res: Response, next: NextFunction) => {
   if (req.body instanceof Buffer) {
     try {
@@ -28,21 +28,22 @@ const bufferToJSONMiddleware = (req: Request, res: Response, next: NextFunction)
   next();
 };
 
-
+console.log('hello')
+console.log(bufferToJSONMiddleware) */
 app.use(express.static("/tmp"));
 app.use(bodyparser.urlencoded({extended: true}));
 app.use(bodyparser.json({limit: '50mb', type: 'application/*+json'}));
 app.use(express.json({type: "application/json"}))
 app.use(cors());
 app.use(compression());
-app.use(bufferToJSONMiddleware)
+//app.use(bufferToJSONMiddleware)
 
 app.use(async (req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*")
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Accept-Encoding, Content-Length")
  // res.header("Access-Control-Allow-Headers", "*")
   res.header('Access-Control-Allow-Methods', '*');
-  res.header( "Content-Type", "application/json")
+  res.header( "content-type", "application/json")
 
   next()
 });
