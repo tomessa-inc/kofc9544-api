@@ -1,7 +1,7 @@
 "use strict";
 import {BaseMapper} from "./base.mapper";
 
-import {User} from "../models";
+import {Gallery, GalleryTag, Tag, User} from "../models";
 //import { User} from "../models";
 import {or} from "../db";
 import dotenv from 'dotenv';
@@ -16,6 +16,26 @@ export class UserMapper extends BaseMapper {
     private _PARAMS_USER: string = 'user';
     private _LIST_NAME: string = 'users';
     private _DEFAULT_SORT: string = 'username';
+
+
+    constructor() {
+        super();
+        this.DATABASE_NAME = 'kofc_golf';
+        this.initalizeSequelize()
+        this.initializeUsers();
+    }
+
+    private async initializeUsers() {
+        try {
+           // const tag = await Tag.initialize(this.SEQUELIZE);
+           // const galleryTag = GalleryTag.initialize(this.SEQUELIZE, tag);
+            User.initialize(this.SEQUELIZE);
+//            Gallery.initialize(this.SEQUELIZE, tag, galleryTag);
+        } catch (error) {
+            console.log(error);
+
+        }
+    }
 
 
     public async apiUpdateUser(params) {
