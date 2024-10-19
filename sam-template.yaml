@@ -237,7 +237,7 @@ Resources:
     Distribution:
         Type: AWS::CloudFront::Distribution
         Properties:
-            Tag:
+            Tags:
                 - Key: Environment
                   Value: !Ref NodeEnv
 
