@@ -226,6 +226,15 @@ export class BaseMapper {
         }
     }
 
+    /**
+     * Sleep
+     * @param ms
+     */
+    async sleep(ms)
+    {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
     get DEFAULT_ORDER(): string {
         return this._DEFAULT_ORDER;
     }

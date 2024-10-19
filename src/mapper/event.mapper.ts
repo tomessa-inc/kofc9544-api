@@ -1,6 +1,6 @@
 "use strict";
 //import {gallery as Gallery, image as Image} from "../models/";
-import {BaseMapper, paramsOptions} from '.';
+import {BaseMapper, paramsOptions, resourceGroupTaggingApiMapper, cloudFrontMapper} from '.';
 import moment from "moment";
 import {hasSubscribers} from "diagnostics_channel";
 import * as uuid from 'uuid';
@@ -8,6 +8,7 @@ import {Image, User, Event, Tag, GalleryTag, Gallery} from "../models/";
 import {SequelizeApi} from "../db/Sequelize";
 import {trim} from "lodash";
 import {parse} from "dotenv";
+import process from "process";
 
 interface DateTime {
     date: {
@@ -174,6 +175,30 @@ export class EventMapper extends BaseMapper {
         dateTime.time.minute = parseInt(minute);
 
         return dateTime;
+    }
+
+    public async publishEvents() {
+        const resources = (await resourceGroupTaggingApiMapper.getResourceByTag({key: "Environment", value:process.env.NODE_ENV}))['ResourceTagMappingList'][0];
+        const id = resources['ResourceARN'].split("/").pop();
+        const checkValidation = await cloudFrontMapper.createInvalidation("/event/month", id)
+        if (checkValidation['Invalidation'].Status === "InProgress") {
+            return true;
+        } else {
+            return false
+        }
+ /*       console.log('checking validation')
+        let validLoop = true
+        const invalidationId = checkValidation['Invalidation']['Id']
+        while (validLoop) {
+            const updateStatus = await cloudFrontMapper.checkInvalidation(id, invalidationId);
+
+            if (updateStatus['Invalidation'].Status === "Completed") {
+                validLoop = false
+            }
+            await this.sleep(5000);
+        } */
+
+        //return true;
     }
 
     public async getAllEventsByMonth(month:number, year:number) { //: Promise<string[] | string> {

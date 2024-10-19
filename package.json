@@ -41,6 +41,8 @@
     },
     "license": "Apache-2.0",
     "dependencies": {
+        "@aws-sdk/client-cloudfront": "^3.675.0",
+        "@aws-sdk/client-resource-groups-tagging-api": "^3.675.0",
         "@aws-sdk/client-s3": "^3.441.0",
         "@aws-sdk/client-ses": "^3.435.0",
         "@vendia/serverless-express": "^4.12.6",

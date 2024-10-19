@@ -1,7 +1,13 @@
-import { eventMapper, tagMapper, paramsOptions,  } from "../mapper/";
+import { eventMapper, tagMapper, paramsOptions } from "../mapper/";
 
 export class EventController {
 
+
+    public static async apiPublishEvents(req: any, res: any, next: any) {
+        await eventMapper.publishEvents();
+
+        return res.status(200).json({result:"success"});
+    }
 
     /**
      * Calling all galleries
@@ -9,7 +15,6 @@ export class EventController {
      * @param res
      * @param next
      */
-
     public static async apiGetEventsMonthByDay(req: any, res: any, next: any) {
         try {
             //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
