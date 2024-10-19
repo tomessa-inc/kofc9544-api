@@ -237,6 +237,10 @@ Resources:
     Distribution:
         Type: AWS::CloudFront::Distribution
         Properties:
+            Tag:
+                - Key: Environment
+                  Value: !Ref NodeEnv
+
             DistributionConfig:
                 Enabled: "true"
                 Comment: !Ref AWS::StackName
@@ -270,6 +274,7 @@ Resources:
                     ViewerProtocolPolicy: "allow-all"
                     CachePolicyId: "658327ea-f89d-4fab-a63d-7e88639e58f6"
                     OriginRequestPolicyId: "b689b0a8-53d0-40ab-baf2-68738e2966ac"
+
 
 Outputs:
     LambdaFunctionConsoleUrl:
