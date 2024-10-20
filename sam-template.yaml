@@ -216,6 +216,12 @@ Resources:
                         RestApiId: !Ref ExpressApi
                         Path: /event/month/{month}/year/{year}
                         Method: ANY
+                EventMonthPublish:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /event/publish
+                        Method: ANY
 
 
             Policies:
