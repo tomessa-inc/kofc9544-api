@@ -17,6 +17,8 @@ export class EventController {
      */
     public static async apiGetEventsMonthByDay(req: any, res: any, next: any) {
         try {
+            let month;
+            let year;
             //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
             //        return res.status(500).json({error: 'Not Authorized to access the API'})
             //      }
@@ -24,10 +26,14 @@ export class EventController {
 
             const options: paramsOptions = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: eventMapper.DEFAULT_SORT, order: eventMapper.DEFAULT_ORDER };
 
-
-         //   console.log(req.body);
-            const month = req.body.data.month;
-            const year = req.body.data.year;
+        if (req.params.month && req.params.year) {
+            month = req.param.month;
+            year = req.param.year;
+        } else {
+            //   console.log(req.body);
+            month = req.body.data.month;
+            year = req.body.data.year;
+        }
            // console.log(month);
            // console.log(year)
 
