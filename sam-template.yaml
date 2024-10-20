@@ -209,13 +209,13 @@ Resources:
                     Properties:
                         RestApiId: !Ref ExpressApi
                         Path: /event/month/
-                        Method: POST
+                        Method: ANY
                 EventMonthCache:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
                         Path: /event/month/{month}/year/{year}
-                        Method: GET
+                        Method: ANY
 
 
             Policies:
