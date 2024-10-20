@@ -208,8 +208,14 @@ Resources:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
-                        Path: /event/month
-                        Method: ANY
+                        Path: /event/month/
+                        Method: POST
+                EventMonthCache:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /event/month/{month}/year/{year}
+                        Method: GET
 
 
             Policies:
