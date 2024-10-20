@@ -27,16 +27,13 @@ export class EventController {
             const options: paramsOptions = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: eventMapper.DEFAULT_SORT, order: eventMapper.DEFAULT_ORDER };
 
         if (req.params.month && req.params.year) {
-            month = req.param.month;
-            year = req.param.year;
+            month = req.params.month;
+            year = req.params.year;
         } else {
             //   console.log(req.body);
             month = req.body.data.month;
             year = req.body.data.year;
         }
-           // console.log(month);
-           // console.log(year)
-
             const galleries = await eventMapper.getAllEventsByMonth(month, year);
 
             if (typeof galleries === 'string') {
