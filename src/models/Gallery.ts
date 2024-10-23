@@ -28,7 +28,11 @@ export class Gallery extends Model {
             },
             updatedAt: {
                 type: DataTypes.DATE,
+            },
+            viewing: {
+                type: DataTypes.BOOLEAN,
             }
+
         }, {
             modelName: 'Gallery', sequelize: sequelize, tableName:"gallery"
         });

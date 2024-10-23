@@ -39,7 +39,7 @@ export class BaseMapper {
     private _QUERY;
     private _DEFAULT_ORDER: string = 'ASC';
     private _DATABASE_NAME: string = 'kofc_golf';
-    private _PARAM_FRONTCLOUD = 'https://images.kofc9544-charitytournament.golf'
+    private _PARAM_FRONTCLOUD = 'https://images.tc-testing-check.net'
     private _SEQUELIZE;
 
     /**

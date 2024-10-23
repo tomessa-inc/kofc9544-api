@@ -15,6 +15,7 @@ mediaRouter.post("/id/:id/reorder", ImageController.apiImagesOrder);
 mediaRouter.post("/id/:galleryId/update/:id/order/:order", ImageController.apiUpdateOrderImage);
 
 mediaRouter.get("/primary/:code?", ImageController.apiGetAllPrimaryImages);
+mediaRouter.get("/tag/list/frontend", ImageController.apiGetAllPrimaryImages);
 
 mediaRouter.post("/page-index/:pageIndex/page-size/:pageSize?/:sort?/:order?", GalleryController.apiGetAllGalleries);
 mediaRouter.post("/image/page-index/:pageIndex/page-size/:pageSize/:sort?/:order?", ImageController.apiGetAllImages);

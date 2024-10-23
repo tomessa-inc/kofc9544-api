@@ -27,7 +27,16 @@ export class GalleryMapper extends BaseMapper {
             console.log(params);
             const offset = ((params.pageIndex - 1) * params.pageSize);
 
+
+
             const galleryConfig = {
+                include: [
+                    {
+                        Model: Tag,
+                        association: Gallery.Tag,
+                        required: false
+                    },
+                ],
                 attributes: {exclude: ['ImageId', 'GalleryTagTagId']},
                 offset: offset,
                 limit: params.pageSize,

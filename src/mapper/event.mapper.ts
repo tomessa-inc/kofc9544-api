@@ -28,8 +28,8 @@ interface DataOptions {
     id: string,
     text: string,
     recurring: string,
-    frequency: string
-
+    frequency: string,
+    viewing:boolean
 }
 interface Ruleset {
     month: number
@@ -252,7 +252,8 @@ export class EventMapper extends BaseMapper {
                     minuteStart: startDate.time.minute,
                     hourEnd: endDate.time.hour,
                     minuteEnd: endDate.time.minute,
-                    text: data.text
+                    text: data.text,
+                    public: data.viewing
 
                 }
            //     console.log(eventDefaults);
