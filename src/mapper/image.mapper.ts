@@ -222,21 +222,13 @@ export class ImageMapper extends BaseMapper {
     }
     public async getAllPrimaryImages(options: paramsOptions) { //: Promise<string[] | string> {
         try {
-
-
-            // console.log(paramsWhere);
-       //     const sql = 'SELECT `Image`.`id`, `Image`.`key`, `Image`.`GalleryId`, `Image`.`name`, `Image`.`description`, `Image`.`primaryImage`, `gallery_tag`.`TagId`, gallery.name, gallery_tag.GalleryId FROM `image` AS `Image` INNER JOIN gallery ON gallery.id = `Image`.`GalleryId` INNER JOIN gallery_tag ON gallery_tag.GalleryId = `Image`.`GalleryId`  WHERE `Image`.`primaryImage` = 1';
-          //  const sql = 'SELECT `Image`.`id`, `Image`.`key`, `Image`.`GalleryId`, `Image`.`name`, `Image`.`description`, `Image`.`primaryImage`, `gallery_tag`.`TagId`, gallery.name, gallery_tag.GalleryId FROM `image` AS `Image` INNER JOIN gallery ON gallery.id = `Image`.`GalleryId` INNER JOIN gallery_tag ON gallery_tag.GalleryId = `Image`.`GalleryId`  WHERE `Image`.`primaryImage` = 1 GROUP BY `Image`.`GalleryId`;'
-
-
-
-        //  const sql = 'SELECT `Image`.`id`, `Image`.`key`, `Image`.`GalleryId`, `Image`.`name`, `Image`.`description`, `Image`.`primaryImage`, (SELECT CAST(CONCAT(\'[\',GROUP_CONCAT(JSON_OBJECT(\'TagId\', TagId)),\']\') as JSON) FROM gallery_tag where gallery_tag.GalleryId = `Image`.`GalleryId`) as TagsId, gallery.name, gallery_tag.GalleryId FROM `image` AS `Image` INNER JOIN gallery ON gallery.id = `Image`.`GalleryId` INNER JOIN gallery_tag ON gallery_tag.GalleryId = `Image`.`GalleryId`  WHERE `Image`.`primaryImage` = 1 GROUP BY `Image`.`GalleryId`;'
             let sql = 'SELECT `Image`.`id`, `Image`.`key`, `Image`.`GalleryId`, `Image`.`name`, `Image`.`description`, `Image`.`primaryImage`, (SELECT CAST(CONCAT(\'[\',GROUP_CONCAT(JSON_OBJECT(\'TagId\', TagId)),\']\') as JSON) FROM gallery_tag where gallery_tag.GalleryId = `Image`.`GalleryId`) as TagsId, gallery.name, gallery_tag.GalleryId FROM `image` AS `Image` INNER JOIN gallery ON gallery.id = `Image`.`GalleryId` INNER JOIN gallery_tag ON gallery_tag.GalleryId = `Image`.`GalleryId` ';
 
-       //     if (options.code) {
-         //        sql = sql.concat(`WHERE (\`Image\`.\`primaryImage\` = 1 AND  gallery.code is null)  OR  (\`Image\`.\`primaryImage\` = 1 AND gallery.code = '${options.code}')`);
-         //   } else {
-                 sql = sql.concat(`WHERE (\`Image\`.\`primaryImage\` = 1 AND  gallery.viewing is ${options.logged}) `);
+            if (options.logged) {
+                 sql = sql.concat(`WHERE (\`Image\`.\`primaryImage\` = 1) AND (gallery.viewing  is 1 OR gallery.viewing is 0)`);
+            } else {
+                sql = sql.concat(`WHERE (\`Image\`.\`primaryImage\` = 1 AND  gallery.viewing is 1)`);
+            }
             sql = sql.concat(' GROUP BY `Image`.`GalleryId`');
 
 
@@ -253,12 +245,6 @@ export class ImageMapper extends BaseMapper {
             }).catch(err => {
                 return err;
             })
-            /*            console.log(primaryImageConfig);
-                        return await Image.findAll(primaryImageConfig).then(galleries => {
-                            return this.processArray(galleries);
-                        }).catch(err => {
-                            return err;
-                        }) */
         } catch (error) {
 
             return error.toString();
