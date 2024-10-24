@@ -1,5 +1,5 @@
 import { Gallery } from "src/models";
-import { galleryMapper, tagMapper, paramsOptions,  } from "../mapper/";
+import {galleryMapper, tagMapper, paramsOptions, eventMapper,} from "../mapper/";
 
 export class GalleryController {
 
@@ -44,6 +44,11 @@ export class GalleryController {
 
     }
 
+    public static async apiPublishGallery(req: any, res: any, next: any) {
+        await galleryMapper.publishGallery();
+
+        return res.status(200).json({result:"success"});
+    }
 
     /**
    * Updating gallery based on ID

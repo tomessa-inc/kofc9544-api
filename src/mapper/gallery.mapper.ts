@@ -1,12 +1,13 @@
 "use strict";
 import {Gallery, GalleryTag, Tag} from "../models/";
 //import {gallery as Gallery, image as Image} from "../models/";
-import {BaseMapper, paramsOptions} from '.';
+import {BaseMapper, cloudFrontMapper, paramsOptions, resourceGroupTaggingApiMapper} from '.';
 import moment from "moment";
 import {hasSubscribers} from "diagnostics_channel";
 import * as uuid from 'uuid';
 import {Image} from "../models/";
 import {SequelizeApi} from "../db/Sequelize";
+import process from "process";
 
 export class GalleryMapper extends BaseMapper {
     private _PARAMS_ID: string = 'id';
@@ -20,6 +21,20 @@ export class GalleryMapper extends BaseMapper {
         this.DATABASE_NAME = 'kofc_golf';
         this.initalizeSequelize()
         this.initializeGallery();
+    }
+
+    public async publishGallery() {
+        const resources = (await resourceGroupTaggingApiMapper.getResourceByTag({
+            key: "Environment",
+            value: process.env.NODE_ENV
+        }))['ResourceTagMappingList'][0];
+        const id = resources['ResourceARN'].split("/").pop();
+        const checkValidation = await cloudFrontMapper.createInvalidation("/media/*", id)
+        if (checkValidation['Invalidation'].Status === "InProgress") {
+            return true;
+        } else {
+            return false
+        }
     }
 
     public async getAllGalleries(params: paramsOptions) { //: Promise<string[] | string> {
