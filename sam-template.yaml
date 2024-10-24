@@ -148,7 +148,7 @@ Resources:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
-                        Path: /media/primary
+                        Path: /media/primary/logged/{logged}
                         Method: GET
                 MediaImagesPrimaryWithCode:
                     Type: Api
