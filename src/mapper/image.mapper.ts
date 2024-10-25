@@ -225,7 +225,7 @@ export class ImageMapper extends BaseMapper {
             let sql = 'SELECT `Image`.`id`, `Image`.`key`, `Image`.`GalleryId`, `Image`.`name`, `Image`.`description`, `Image`.`primaryImage`, (SELECT CAST(CONCAT(\'[\',GROUP_CONCAT(JSON_OBJECT(\'TagId\', TagId)),\']\') as JSON) FROM gallery_tag where gallery_tag.GalleryId = `Image`.`GalleryId`) as TagsId, gallery.name, gallery_tag.GalleryId FROM `image` AS `Image` INNER JOIN gallery ON gallery.id = `Image`.`GalleryId` INNER JOIN gallery_tag ON gallery_tag.GalleryId = `Image`.`GalleryId` ';
 
             if (options.logged) {
-                 sql = sql.concat(`WHERE (\`Image\`.\`primaryImage\` = 1) AND (gallery.viewing  is 1 OR gallery.viewing is 0)`);
+                 sql = sql.concat(`WHERE (\`Image\`.\`primaryImage\` = 1) AND (gallery.viewing  = 1 OR gallery.viewing = 0)`);
             } else {
                 sql = sql.concat(`WHERE (\`Image\`.\`primaryImage\` = 1 AND  gallery.viewing is 1)`);
             }
