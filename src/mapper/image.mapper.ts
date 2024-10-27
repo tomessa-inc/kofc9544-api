@@ -227,7 +227,7 @@ export class ImageMapper extends BaseMapper {
             if (options.logged) {
                  sql = sql.concat(`WHERE (\`Image\`.\`primaryImage\` = 1) AND (gallery.viewing  = 1 OR gallery.viewing = 0)`);
             } else {
-                sql = sql.concat(`WHERE (\`Image\`.\`primaryImage\` = 1 AND  gallery.viewing is 1)`);
+                sql = sql.concat(`WHERE (\`Image\`.\`primaryImage\` = 1 AND gallery.viewing = 1)`);
             }
             sql = sql.concat(' GROUP BY `Image`.`GalleryId`');
 

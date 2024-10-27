@@ -1,5 +1,5 @@
 "use strict";
-import {BaseMapper} from "./base.mapper";
+import {BaseMapper, paramsOptions} from "./base.mapper";
 
 import {Gallery, GalleryTag, Tag, User} from "../models";
 //import { User} from "../models";
@@ -119,17 +119,31 @@ export class UserMapper extends BaseMapper {
         }
     }
 
-    public async getAllUsers() : Promise <string[] | string> {
+    public async getAllUsers(params:  paramsOptions) : Promise <string[] | string> {
+       const check = params;
+
         try {
-            const params = {
-                include: [{
-                    association: User.TeamUser,
-                    as: 'teams'
-                },
+            console.log(check);
+            const offset = ((check.pageIndex - 1) * check.pageSize);
+
+
+
+            const galleryConfig = {
+                include: [
                     {
-                        association: User.Access,
-                        as: 'access'
-                    }]
+                        Model: Tag,
+                        association: Gallery.Tag,
+                        required: false
+                    },
+                ],
+                attributes: {exclude: ['ImageId', 'GalleryTagTagId']},
+                offset: offset,
+                limit: check.pageSize,
+            }
+
+            const params = {
+                offset: offset,
+                limit: check.pageSize,
             };
 
             return await User.findAll(params).then(users => {

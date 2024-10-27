@@ -9,8 +9,8 @@ var jsonParser = bodyParser.json()
 userRouter.post("/sign-in", UserController.apiPostSignIn);
 userRouter.post("/sign-out", UserController.apiPostSignOut);
 userRouter.post("/sign-up", UserController.apiPostSignUp);
-userRouter.get("/", UserController.getAllUsers);
-userRouter.post("/", UserController.patchUpdateUser);
+userRouter.post("/", UserController.getAllUsers);
+userRouter.patch("/", UserController.patchUpdateUser);
 //userRouter.post("/avatar", UserAvatarController.apiUploadAvatar);
 
 export {userRouter};

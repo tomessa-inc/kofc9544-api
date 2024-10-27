@@ -1,4 +1,4 @@
-import { userMapper } from "../mapper/";
+import {galleryMapper, paramsOptions, userMapper} from "../mapper/";
 
 export class UserController {
 
@@ -124,8 +124,11 @@ export class UserController {
             //         if (!userMapper.checkAuthenication(req.headers.authorization)) {
             //           return res.status(500).json({error: 'Not Authorized to access the API'})
             //     }
+            console.log('get all users')
 
-            const users = await userMapper.getAllUsers();
+            const options: paramsOptions = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: userMapper.DEFAULT_SORT, order: userMapper.DEFAULT_ORDER };
+
+            const users = await userMapper.getAllUsers(options);
 
             if (typeof users === 'string') {
                 return res.status(500).json({ error: users })

@@ -8,3 +8,4 @@ export * from './resourcegrouptaggingapi.mapper';
 export * from './event.mapper';
 export * from './mail.mapper';
 export * from './user.mapper';
+export * from "./access.mapper"

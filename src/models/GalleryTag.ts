@@ -65,7 +65,7 @@ GalleryTag.init({
 ///Tag.GalleryTag = Tag.hasMany(GalleryTag,  {sourceKey: "id", as: "gallery_tag",  foreignKey: 'tag_id', onUpdate: 'cascade'})
 
 //User.TeamUser = User.hasMany(TeamUser, {as: 'teams', foreignKey: 'UserId', onUpdate: 'cascade'});
-//User.Access = User.hasOne(Access, {sourceKey: "AccessId", as: 'access', foreignKey: 'slug', onUpdate: 'cascade'});
+//User.Access.ts = User.hasOne(Access.ts, {sourceKey: "AccessId", as: 'access', foreignKey: 'slug', onUpdate: 'cascade'});
 
 
 //Tag.belongsTo(GalleryTag);
