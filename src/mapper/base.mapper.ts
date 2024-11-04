@@ -39,7 +39,7 @@ export class BaseMapper {
     private _QUERY;
     private _DEFAULT_ORDER: string = 'ASC';
     private _DATABASE_NAME: string = 'kofc_golf';
-    private _PARAM_FRONTCLOUD = 'https://images.tc-testing-check.net'
+    private _PARAM_FRONTCLOUD = 'https://images.kofc9544.ca'
     private _SEQUELIZE;
 
     /**
@@ -203,7 +203,7 @@ export class BaseMapper {
 
     public generateJWTToken() {
         const token = nJwt.create({
-            iss: "http://tc-testing-check.net/",  // The URL of your service
+            iss: "https://kofc9544.ca/",  // The URL of your service
             sub: uuid.v4(),    // The UID of the user in your system
             scope: "self"
         },process.env.TOKEN_SECRET);
