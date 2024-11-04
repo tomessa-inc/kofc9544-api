@@ -1,13 +1,14 @@
 "use strict";
 import {BaseMapper, paramsOptions} from "./base.mapper";
 
-import {Gallery, GalleryTag, Tag, User} from "../models";
+import {Access, Gallery, GalleryTag, Tag, User} from "../models";
 //import { User} from "../models";
 import {or} from "../db";
 import dotenv from 'dotenv';
 import * as uuid from 'uuid';
 import moment from "moment";
 import { get } from "lodash";
+import {UserAccess} from "../models/UserAccess";
 export class UserMapper extends BaseMapper {
     private _PARAMS_ID: string = 'id';
     private _PARAMS_EMAIL: string = 'email';
@@ -27,9 +28,9 @@ export class UserMapper extends BaseMapper {
 
     private async initializeUsers() {
         try {
-           // const tag = await Tag.initialize(this.SEQUELIZE);
-           // const galleryTag = GalleryTag.initialize(this.SEQUELIZE, tag);
-            User.initialize(this.SEQUELIZE);
+            const access = await Access.initialize(this.SEQUELIZE);
+            const userAccess = UserAccess.initialize(this.SEQUELIZE, access);
+            User.initialize(this.SEQUELIZE, access, userAccess);
 //            Gallery.initialize(this.SEQUELIZE, tag, galleryTag);
         } catch (error) {
             console.log(error);
@@ -38,14 +39,14 @@ export class UserMapper extends BaseMapper {
     }
 
 
-    public async apiUpdateUser(params) {
+    public async apiUpdateUser(params, body) {
         try {
-            const userUpdate = params['user'];
+            //const userUpdate = params['user'];
             const id = params['id'];
 
-            const teams = userUpdate['teams'];
+           // const teams = userUpdate['teams'];
     
-            const userUpdateResult = await User.update(userUpdate, {where: {id: id}}).then(data => {
+            const userUpdateResult = await User.update(body, {where: {id: id}}).then(data => {
                 return true;
             }).catch(data => {
                 return false;
@@ -116,6 +117,41 @@ export class UserMapper extends BaseMapper {
             });
         } catch (error) {
             console.log(`Could not fetch users ${error}`)
+        }
+    }
+
+    /**
+     *
+     * @param options
+     * @returns
+     */
+    public async getUserById(options: paramsOptions) {
+        try {
+            console.log('get user');
+
+            const userParams = {
+                include: [
+                    {
+                        Model: Access,
+                        association: User.Access,
+                        required: false
+                    },
+                ],
+                where: {id: options.id},
+                attributes: {exclude: ['ImageId', 'GalleryTagTagId']},
+            }
+
+            return await User.findOrCreate(userParams).then(data => {
+              //  return this.processArray(data, User)
+                console.log('data')
+                console.log(data);
+                return data[0];
+            }).catch(err => {
+
+                return err;
+            })
+        } catch (error) {
+            return error.toString();
         }
     }
 

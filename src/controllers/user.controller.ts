@@ -1,4 +1,4 @@
-import {galleryMapper, paramsOptions, userMapper} from "../mapper/";
+import {galleryMapper, imageMapper, paramsOptions, userMapper} from "../mapper/";
 
 export class UserController {
 
@@ -140,6 +140,76 @@ export class UserController {
         } catch (error) {
 
             return res.status(500).json({ error: error.toString() })
+        }
+
+    }
+
+    /**
+     * Get All Users
+     * @param req
+     * @param res
+     * @param next
+     */
+    public static async getUserById(req: any, res: any, next: any) {
+        try {
+            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
+            //        return res.status(500).json({error: 'Not Authorized to access the API'})
+            //      }
+            const options: paramsOptions = { id: "string" };
+
+            if (req.params.id) {
+                options.id = req.params.id;
+            }
+
+            const user = await userMapper.getUserById(options);
+            console.log('got user333')
+            console.log(user);
+            user.dataValues.Accesses = user.dataValues.Accesses.map((tag) => {
+                console.log('helllo tag')
+                console.log({"label":tag.name, "value":tag.id})
+                return {"label":tag.name, "value":tag.id}
+            })
+            console.log('helo')
+            if (typeof user === 'string') {
+                return res.status(500).json({ errors_string: user })
+            }
+
+            console.log('arrived')
+            console.log(user)
+            return res.status(200).json(user);
+
+        } catch (error) {
+            res.status(500).json({ error_main: error.toString() })
+        }
+    }
+
+    /**
+     * Calling all galleries
+     * @param req
+     * @param res
+     * @param next
+     */
+    public static async apiUpdateUser(req: any, res: any, next: any) {
+        try {
+            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
+            //        return res.status(500).json({error: 'Not Authorized to access the API'})
+            //      }
+
+            let id;
+            if (req.params.id) {
+                id = req.params.id
+            }
+
+            const images = await userMapper.apiUpdateUser(id, req.body);
+
+            if (typeof images === 'string') {
+                return res.status(500).json({ errors_string: images })
+            }
+
+            return res.status(200).json(images);
+
+        } catch (error) {
+            res.status(500).json({ error_main: error.toString() })
         }
 
     }

@@ -71,17 +71,20 @@ export class BaseMapper {
      }
 
     public async processArray(listing) {
+        console.log('listing')
+        console.log(listing)
         if (listing.length) {
             const listArray = [];
-                
+
             for (let item of listing) {
-                console.log(item.get)
+                if (!item)
+                    continue;
                 listArray.push(item.get());
             }
-
+            console.log('the list array')
+            console.log(listing)
             return listArray;
         }
-
         return [];
     }
 

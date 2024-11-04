@@ -13,4 +13,7 @@ userRouter.post("/", UserController.getAllUsers);
 userRouter.patch("/", UserController.patchUpdateUser);
 //userRouter.post("/avatar", UserAvatarController.apiUploadAvatar);
 
+userRouter.post("/id/:id", UserController.getUserById);
+userRouter.put("/id/:id", UserController.apiUpdateUser);
+
 export {userRouter};
