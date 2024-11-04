@@ -261,7 +261,7 @@ Resources:
                 CNAMEs:
                      - !Ref DomainName
                 ViewerCertificate:
-                         AcmCertificateArn: arn:aws:acm:us-east-1:767397839074:certificate/1588c306-38d2-4147-9a4b-c70c8f1cafa4
+                         AcmCertificateArn: arn:aws:acm:us-east-1:767397839074:certificate/8ddd4c0d-1ef3-4f40-b226-6f96c67b4dfe
                          SslSupportMethod: sni-only
                 HttpVersion: http2
                 Origins:
