@@ -6,7 +6,7 @@ Parameters:
     ParentDomainName:
         Type: String
         Description: API Domain name
-        Default: "tc-testing-check.net"
+        Default: "kofc9544.ca"
     DomainName:
         Type: String
         Description: API Domain name
@@ -284,7 +284,7 @@ Resources:
                         - DELETE
                     TargetOriginId: ApiOrigin
                     ViewerProtocolPolicy: "allow-all"
-                    CachePolicyId: "b1b6dbb1-945b-4291-99a1-87715a5eb5b5"
+                    CachePolicyId: "dedee9a3-c493-4f0e-a6ea-0e9e104bf0f6"
                     OriginRequestPolicyId: "b689b0a8-53d0-40ab-baf2-68738e2966ac"
 
 
