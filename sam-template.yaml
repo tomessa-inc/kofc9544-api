@@ -131,7 +131,12 @@ Resources:
                         RestApiId: !Ref ExpressApi
                         Path: /user/reset-password
                         Method: ANY
-
+                UserList:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /user/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}/{filterQuery}
+                        Method: ANY
                 MediaId:
                     Type: Api
                     Properties:
