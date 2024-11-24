@@ -135,8 +135,15 @@ Resources:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
+                        Path: /user/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
+                        Method: ANY
+                UserListFilter:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
                         Path: /user/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}/{filterQuery}
                         Method: ANY
+
                 MediaId:
                     Type: Api
                     Properties:
