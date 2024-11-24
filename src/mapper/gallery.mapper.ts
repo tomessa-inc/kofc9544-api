@@ -40,10 +40,12 @@ export class GalleryMapper extends BaseMapper {
     public async getAllGalleries(params: paramsOptions) { //: Promise<string[] | string> {
         try {
             console.log(params);
-            const offset = ((params.pageIndex - 1) * params.pageSize);
 
+            const offset = ((params.pageIndex - 1) * params.pageSize) ?? 1
 
+            console.log("offset")
 
+            console.log(offset);
             const galleryConfig = {
                 include: [
                     {

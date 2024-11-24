@@ -8,6 +8,8 @@ import dotenv from 'dotenv';
 import * as uuid from 'uuid';
 import moment from "moment";
 import { get } from "lodash";
+import {UserAccess} from "../models/UserAccess";
+import {use} from "chai";
 export class AccessMapper extends BaseMapper {
     private _PARAMS_ID: string = 'id';
     private _PARAMS_EMAIL: string = 'email';
@@ -87,6 +89,35 @@ export class AccessMapper extends BaseMapper {
         }
     }
 
+
+    public async apiDeleteAccess(id) {
+        try {
+            return await UserAccess.destroy({ where: { UserId: id }})
+                //const result = await User.findOrCreate(user, defaults: userDefaults
+
+        } catch (error) {
+            return error.toString;
+        }
+    }
+
+    public async apiAddAccess(userId, access) {
+        try {
+            const userParams = {
+                where: {
+                    UserId: userId,
+                    AccessId: access,
+                    createdAt: moment().format('YYYY-MM-DD'),
+                    updatedAt: moment().format('YYYY-MM-DD')
+                },
+            }
+
+            console.log(userParams)
+            return await UserAccess.findOrCreate(userParams)
+        } catch (error) {
+            return error.toString;
+        }
+    }
+
     /**
      *
      * @param params
@@ -121,10 +152,8 @@ export class AccessMapper extends BaseMapper {
         const check = params;
 
         try {
-            console.log(check);
-            const offset = ((check.pageIndex - 1) * check.pageSize);
 
-
+            const offset = ((check.pageIndex - 1) * check.pageSize) ?? 0
 
             const galleryConfig = {
                 include: [

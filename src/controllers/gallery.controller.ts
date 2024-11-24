@@ -29,13 +29,14 @@ export class GalleryController {
             })
 
             const galleries = await galleryMapper.getAllGalleries(options);
-     
+
             if (typeof galleries === 'string') {
                 return res.status(500).json({ errors_string: galleries })
             }
-
             const paginationResults = galleryMapper.prepareListResults(galleries, options);
 
+            console.log("the galleies")
+            console.log(paginationResults);
             return res.status(200).json(paginationResults);
 
         } catch (error) {

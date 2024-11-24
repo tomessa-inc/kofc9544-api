@@ -1,4 +1,4 @@
-import {accessMapper, paramsOptions, tagMapper, userMapper} from "../mapper/";
+import {accessMapper, galleryMapper, paramsOptions, tagMapper, userMapper} from "../mapper/";
 
 export class AccessController {
 
@@ -125,17 +125,28 @@ export class AccessController {
             //         if (!userMapper.checkAuthenication(req.headers.authorization)) {
             //           return res.status(500).json({error: 'Not Authorized to access the API'})
             //     }
-            console.log('get all users')
+            console.log('get all access')
 
-            const options: paramsOptions = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: userMapper.DEFAULT_SORT, order: userMapper.DEFAULT_ORDER };
+            const options: paramsOptions = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: accessMapper.DEFAULT_SORT, order: accessMapper.DEFAULT_ORDER };
 
-            const users = await accessMapper.getAllAccess(options);
+            Object.entries(req.params).map(([key, value]) => {
+                if (value !== 'undefined') {
+                    if (isNaN(Number(value))) {
+                        options[key] = value;
+                    } else {
+                        options[key] = Number(value);
+                    }
+                }
+            })
 
-            if (typeof users === 'string') {
-                return res.status(500).json({ error: users })
+            const access = await accessMapper.getAllAccess(options);
+            console.log("access")
+            console.log(access);
+            if (typeof access === 'string') {
+                return res.status(500).json({ error: access })
             }
 
-            const paginationResults = userMapper.prepareListResults(users, req.query);
+            const paginationResults = userMapper.prepareListResults(access, req.query);
 
             return res.status(200).json(paginationResults)
         } catch (error) {
@@ -156,7 +167,23 @@ export class AccessController {
             //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
             //        return res.status(500).json({error: 'Not Authorized to access the API'})
             //      }
-            const access = await accessMapper.getAllAccess(req.body);
+
+            const options: paramsOptions = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: galleryMapper.DEFAULT_SORT, order: galleryMapper.DEFAULT_ORDER };
+
+            Object.entries(req.params).map(([key, value]) => {
+                if (value !== 'undefined') {
+                    if (isNaN(Number(value))) {
+                        options[key] = value;
+                    } else {
+                        options[key] = Number(value);
+                    }
+                }
+            })
+
+            const access = await accessMapper.getAllAccess(options);
+
+
+
 
             if (typeof access === 'string') {
                 return res.status(500).json({ errors_string: access })

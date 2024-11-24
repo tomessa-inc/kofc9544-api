@@ -8,6 +8,6 @@ var jsonParser = bodyParser.json()
 
 accessRouter.post("/", AccessController.getAllAccess);
 accessRouter.post("/new", AccessController.apiCreateAccess);
-accessRouter.post("/list", AccessController.apiGetAllAccessAsLabelValues);
+accessRouter.post("/list/page-index/:pageIndex/page-size/:pageSize?/:sort?/:order?", AccessController.apiGetAllAccessAsLabelValues);
 
 export {accessRouter};

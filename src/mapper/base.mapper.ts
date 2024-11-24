@@ -71,8 +71,8 @@ export class BaseMapper {
      }
 
     public async processArray(listing) {
-        console.log('listing')
-        console.log(listing)
+     //   console.log('listing')
+       // console.log(listing)
         if (listing.length) {
             const listArray = [];
 
@@ -81,8 +81,8 @@ export class BaseMapper {
                     continue;
                 listArray.push(item.get());
             }
-            console.log('the list array')
-            console.log(listing)
+//            console.log('the list array')
+  //          console.log(listing)
             return listArray;
         }
         return [];
@@ -133,7 +133,7 @@ export class BaseMapper {
     public generatePagination(list:string[], body: paramsOptions) : PaginationResults {
         let listClone;
         listClone = list;
-      
+
         const search = body.search || null;
         const sort = body.sort || this['DEFAULT_SORT']
         const order = body.order || 'asc';
@@ -142,16 +142,20 @@ export class BaseMapper {
 
         if (sort === 'identifier' || sort === body.sort)
         {
+            console.log("check here")
+            console.log(sort);
             listClone.sort((a, b) => {
-
+                console.log("a")
+                console.log(a)
+                console.log("b")
+                console.log(b);
                 const fieldA = a[sort].toString().toUpperCase();
                 const fieldB = b[sort].toString().toUpperCase();
 
                 return order === 'asc' ? fieldA.localeCompare(fieldB) : fieldB.localeCompare(fieldA);
             });
-        }
-        else
-        {
+        }  else {
+            console.log("check there")
             listClone.sort((a, b) => order === 'asc' ? a[sort] - b[sort] : b[sort] - a[sort]);
         }
 
@@ -164,6 +168,7 @@ export class BaseMapper {
         // Paginate - Start
         const listLength = body.listLength
 
+        console.log("begin")
         // Calculate pagination details
         const begin = (page -1 ) * size;
         const end = Math.min((size * (page + 1)), listLength);
@@ -176,6 +181,9 @@ export class BaseMapper {
         // the last possible page number, return null for
         // products but also send the last possible page so
         // the app can navigate to there
+        console.log("arrived")
+        console.log(page);
+        console.log(lastPage)
         if ( page > lastPage )
         {
             listClone = null;
@@ -197,7 +205,7 @@ export class BaseMapper {
                 endIndex  : end - 1
             };
         }
-
+        console.log("at the end")
         return JSON.parse(`{"data":${JSON.stringify(list)}, "total":"${listLength}","pageSize":"${size}", "pageIndex":"${page}", "lastage":"${lastPage}"}`);
     }
 

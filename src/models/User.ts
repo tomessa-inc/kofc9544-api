@@ -44,7 +44,7 @@ class User extends Model {
             modelName: 'User', sequelize, tableName: "user"
         });
 
-        user.Access = User.belongsToMany(access, { through: userAccess, throughAssociations: {
+        user.Access = User.belongsToMany(access, { through: userAccess,  as: "access", throughAssociations: {
                 // 1️⃣ The name of the association going from the source model (Person)
                 // to the through model (LikedToot)
                 fromSource: User,
@@ -61,7 +61,9 @@ class User extends Model {
                 // to the target model (Toot)
                 toTarget: access,
                 foreignKey: 'UserId',
-                sourceKey: 'id'
+                sourceKey: 'id',
+
+
                 // targetKey: 'gallery_id'
             },} );
 

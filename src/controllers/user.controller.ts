@@ -1,6 +1,38 @@
-import {galleryMapper, imageMapper, paramsOptions, userMapper} from "../mapper/";
+import {accessMapper, galleryMapper, imageMapper, paramsOptions, userMapper} from "../mapper/";
 
 export class UserController {
+
+    /**
+     * Function that determins if your username and password are correct
+     * @param req
+     * @param res
+     * @param next
+     */
+    public static async apiForgotPassword(req: any, res: any, next: any) {
+        try {
+            if (req.body[userMapper.PARAMS_USERNAME] && req.body[userMapper.PARAMS_PASSWORD]) {
+
+
+                const user = await userMapper.getUserBasedOnPassword(req.body);
+                console.log('user');
+                console.log(user);
+                if (typeof(user) !== "object") {
+
+                    return res.status(500).json({ error: "Username and/or Password incorrect" })
+                }
+
+                console.log("good stuff")
+
+                return res.status(200).json({"user":user, "token":userMapper.generateJWTToken()});
+            } else {
+                console.log("Missing either Username and/or password");
+                return res.status(500).json({ error: "Missing either Username and/or password" })
+            }
+        } catch (error) {
+            return res.status(500).json({ error: error.toString() })
+        }
+
+    }
 
     /**
      * Function that determins if your username and password are correct
@@ -128,6 +160,16 @@ export class UserController {
 
             const options: paramsOptions = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: userMapper.DEFAULT_SORT, order: userMapper.DEFAULT_ORDER };
 
+            Object.entries(req.params).map(([key, value]) => {
+                if (value !== 'undefined') {
+                    if (isNaN(Number(value))) {
+                        options[key] = value;
+                    } else {
+                        options[key] = Number(value);
+                    }
+                }
+            })
+
             const users = await userMapper.getAllUsers(options);
 
             if (typeof users === 'string') {
@@ -164,18 +206,21 @@ export class UserController {
             const user = await userMapper.getUserById(options);
             console.log('got user333')
             console.log(user);
-            user.dataValues.Accesses = user.dataValues.Accesses.map((tag) => {
-                console.log('helllo tag')
-                console.log({"label":tag.name, "value":tag.id})
-                return {"label":tag.name, "value":tag.id}
-            })
+
             console.log('helo')
             if (typeof user === 'string') {
                 return res.status(500).json({ errors_string: user })
             }
-
-            console.log('arrived')
-            console.log(user)
+/*
+            const access = user.dataValues.Accesses.map((tag) => {
+                console.log('helllo tag')
+                console.log({"label":tag.name, "value":tag.id})
+                return {"label":tag.name, "value":tag.id}
+            })
+*/
+            ///console.log('arrived')
+          //  console.log(user)
+        //    console.log({"data": user});
             return res.status(200).json(user);
 
         } catch (error) {
@@ -200,7 +245,15 @@ export class UserController {
                 id = req.params.id
             }
 
+            await accessMapper.apiDeleteAccess(id);
+
+            req.body.access.map(async (access) => {
+                await accessMapper.apiAddAccess(id, access);
+            });
+
             const images = await userMapper.apiUpdateUser(id, req.body);
+
+
 
             if (typeof images === 'string') {
                 return res.status(500).json({ errors_string: images })

@@ -3,12 +3,19 @@ import {BaseMapper, paramsOptions} from "./base.mapper";
 
 import {Access, Gallery, GalleryTag, Tag, User} from "../models";
 //import { User} from "../models";
+import {Op} from "sequelize"
 import {or} from "../db";
 import dotenv from 'dotenv';
 import * as uuid from 'uuid';
 import moment from "moment";
 import { get } from "lodash";
 import {UserAccess} from "../models/UserAccess";
+import  crypto from "crypto";
+const algorithm = 'aes-256-cbc'; //Using AES encryption
+const key = crypto.randomBytes(32);
+const iv = crypto.randomBytes(16);
+
+
 export class UserMapper extends BaseMapper {
     private _PARAMS_ID: string = 'id';
     private _PARAMS_EMAIL: string = 'email';
@@ -16,7 +23,7 @@ export class UserMapper extends BaseMapper {
     private _PARAMS_USERNAME: string = 'userName';
     private _PARAMS_USER: string = 'user';
     private _LIST_NAME: string = 'users';
-    private _DEFAULT_SORT: string = 'username';
+    private _DEFAULT_SORT: string = 'firstName';
 
 
     constructor() {
@@ -134,7 +141,8 @@ export class UserMapper extends BaseMapper {
                     {
                         Model: Access,
                         association: User.Access,
-                        required: false
+                        required: false,
+                        as: 'Access'
                     },
                 ],
                 where: {id: options.id},
@@ -163,24 +171,30 @@ export class UserMapper extends BaseMapper {
             const offset = ((check.pageIndex - 1) * check.pageSize);
 
 
-
-            const galleryConfig = {
-                include: [
-                    {
-                        Model: Tag,
-                        association: Gallery.Tag,
-                        required: false
-                    },
-                ],
-                attributes: {exclude: ['ImageId', 'GalleryTagTagId']},
-                offset: offset,
-                limit: check.pageSize,
-            }
-
             const params = {
                 offset: offset,
                 limit: check.pageSize,
+                where: null,
             };
+
+            if (check.filterQuery) {
+                params.where =  {
+                    [Op.or]: [
+                        {
+                            firstName:
+                                {
+                                    [Op.like]: `%${check.filterQuery}%`
+                                }
+                        },
+                        {
+                            lastName:
+                                {
+                                    [Op.like]: `%${check.filterQuery}%`
+                                }
+                        },
+                    ]
+                }
+            }
 
             return await User.findAll(params).then(users => {
                 return this.processArray(users);
@@ -191,6 +205,14 @@ export class UserMapper extends BaseMapper {
         } catch (error) {
             return error.toString() //["error" => error.toString()];
         }
+    }
+
+    //Encrypting text
+    encrypt(text) {
+        let cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(key), iv);
+        let encrypted = cipher.update(text);
+        encrypted = Buffer.concat([encrypted, cipher.final()]);
+        return { iv: iv.toString('hex'), encryptedData: encrypted.toString('hex') };
     }
 
     get PARAMS_ID(): string {
