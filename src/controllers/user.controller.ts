@@ -1,38 +1,8 @@
-import {accessMapper, galleryMapper, imageMapper, paramsOptions, userMapper} from "../mapper/";
+import {accessMapper, galleryMapper, imageMapper, mailMapper, paramsOptions, userMapper} from "../mapper/";
+import {EmailMessaging} from "../models/EmailMessaging";
 
 export class UserController {
 
-    /**
-     * Function that determins if your username and password are correct
-     * @param req
-     * @param res
-     * @param next
-     */
-    public static async apiForgotPassword(req: any, res: any, next: any) {
-        try {
-            if (req.body[userMapper.PARAMS_USERNAME] && req.body[userMapper.PARAMS_PASSWORD]) {
-
-
-                const user = await userMapper.getUserBasedOnPassword(req.body);
-                console.log('user');
-                console.log(user);
-                if (typeof(user) !== "object") {
-
-                    return res.status(500).json({ error: "Username and/or Password incorrect" })
-                }
-
-                console.log("good stuff")
-
-                return res.status(200).json({"user":user, "token":userMapper.generateJWTToken()});
-            } else {
-                console.log("Missing either Username and/or password");
-                return res.status(500).json({ error: "Missing either Username and/or password" })
-            }
-        } catch (error) {
-            return res.status(500).json({ error: error.toString() })
-        }
-
-    }
 
     /**
      * Function that determins if your username and password are correct

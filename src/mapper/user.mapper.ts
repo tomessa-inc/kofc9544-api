@@ -1,7 +1,7 @@
 "use strict";
 import {BaseMapper, paramsOptions} from "./base.mapper";
 
-import {Access, Gallery, GalleryTag, Tag, User} from "../models";
+
 //import { User} from "../models";
 import {Op} from "sequelize"
 import {or} from "../db";
@@ -11,6 +11,8 @@ import moment from "moment";
 import { get } from "lodash";
 import {UserAccess} from "../models/UserAccess";
 import  crypto from "crypto";
+import {Access} from "../models/Access";
+import {User} from "../models/User";
 const algorithm = 'aes-256-cbc'; //Using AES encryption
 const key = crypto.randomBytes(32);
 const iv = crypto.randomBytes(16);
@@ -26,18 +28,27 @@ export class UserMapper extends BaseMapper {
     private _DEFAULT_SORT: string = 'firstName';
 
 
+
     constructor() {
         super();
         this.DATABASE_NAME = 'kofc_golf';
-        this.initalizeSequelize()
+        this.initializeSequelize()
         this.initializeUsers();
     }
 
     private async initializeUsers() {
         try {
-            const access = await Access.initialize(this.SEQUELIZE);
-            const userAccess = UserAccess.initialize(this.SEQUELIZE, access);
-            User.initialize(this.SEQUELIZE, access, userAccess);
+            const model = {access: null, userAccess: null}
+
+        //    console.log('the sequelize')
+          //  console.log(this.SEQUELIZE)
+            model.access  = await Access.initialize(this.SEQUELIZE);
+
+          ///  this.MODEL({access: access})
+            model.userAccess = await UserAccess.initialize(this.SEQUELIZE, model);
+         //   model.authentication = await UserAuthentication.initialize(this.SEQUELIZE, model);
+
+            User.initialize(this.SEQUELIZE, model);
 //            Gallery.initialize(this.SEQUELIZE, tag, galleryTag);
         } catch (error) {
             console.log(error);
@@ -97,6 +108,8 @@ export class UserMapper extends BaseMapper {
         }
     }
 
+
+
     /**
      *
      * @param params
@@ -142,7 +155,7 @@ export class UserMapper extends BaseMapper {
                         Model: Access,
                         association: User.Access,
                         required: false,
-                        as: 'Access'
+                        as: 'access'
                     },
                 ],
                 where: {id: options.id},
@@ -207,12 +220,17 @@ export class UserMapper extends BaseMapper {
         }
     }
 
+
+
     //Encrypting text
     encrypt(text) {
         let cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(key), iv);
+        console.log("the cypher is ");
+        console.log(cipher);
         let encrypted = cipher.update(text);
         encrypted = Buffer.concat([encrypted, cipher.final()]);
-        return { iv: iv.toString('hex'), encryptedData: encrypted.toString('hex') };
+        console.log(encrypted.toString('hex'))
+        return encrypted.toString('hex')
     }
 
     get PARAMS_ID(): string {

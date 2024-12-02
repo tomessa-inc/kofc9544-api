@@ -1,4 +1,3 @@
-import { Gallery } from "src/models";
 import {galleryMapper, tagMapper, paramsOptions, eventMapper,} from "../mapper/";
 
 export class GalleryController {

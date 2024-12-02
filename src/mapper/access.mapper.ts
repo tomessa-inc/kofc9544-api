@@ -1,7 +1,6 @@
 "use strict";
 import {BaseMapper, paramsOptions} from "./base.mapper";
 
-import {Gallery, GalleryTag, Tag, Access} from "../models";
 //import { User} from "../models";
 import {or} from "../db";
 import dotenv from 'dotenv';
@@ -10,6 +9,9 @@ import moment from "moment";
 import { get } from "lodash";
 import {UserAccess} from "../models/UserAccess";
 import {use} from "chai";
+import {Access} from "../models/Access";
+import {Tag} from "../models/Tag";
+import {Gallery} from "../models/Gallery";
 export class AccessMapper extends BaseMapper {
     private _PARAMS_ID: string = 'id';
     private _PARAMS_EMAIL: string = 'email';
@@ -22,7 +24,7 @@ export class AccessMapper extends BaseMapper {
     constructor() {
         super();
         this.DATABASE_NAME = 'kofc_golf';
-        this.initalizeSequelize()
+        this.initializeSequelize()
         this.initializeUsers();
     }
 

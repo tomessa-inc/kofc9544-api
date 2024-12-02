@@ -1,13 +1,14 @@
 "use strict";
-import {Gallery, GalleryTag, Tag} from "../models/";
 //import {gallery as Gallery, image as Image} from "../models/";
 import {BaseMapper, cloudFrontMapper, paramsOptions, resourceGroupTaggingApiMapper} from '.';
 import moment from "moment";
 import {hasSubscribers} from "diagnostics_channel";
 import * as uuid from 'uuid';
-import {Image} from "../models/";
 import {SequelizeApi} from "../db/Sequelize";
 import process from "process";
+import {Tag} from "../models/Tag";
+import {Gallery} from "../models/Gallery";
+import {GalleryTag} from "../models/GalleryTag";
 
 export class GalleryMapper extends BaseMapper {
     private _PARAMS_ID: string = 'id';
@@ -19,7 +20,7 @@ export class GalleryMapper extends BaseMapper {
     constructor() {
         super();
         this.DATABASE_NAME = 'kofc_golf';
-        this.initalizeSequelize()
+        this.initializeSequelize()
         this.initializeGallery();
     }
 

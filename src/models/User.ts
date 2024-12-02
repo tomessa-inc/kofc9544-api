@@ -4,16 +4,18 @@ const {DataTypes, Model} = require("sequelize");
 //import {sequelize} from '../db/';
 import {S3Mapper} from "../mapper/s3.mapper";
 import {UserAccess} from "./UserAccess";
+import {UserAuthentication} from "./UserAuthentication";
+import {Base} from "./Base";
+
 
 class User extends Model {
-    static PARAM_FRONTCLOUD = 'https://images.tomvisions.com'
-
-    private avatar:string;
     protected id:string
-    protected userName;string
+    protected userName:string
 
 
-    public static initialize(sequelize, access, userAccess) {
+    public static initialize(sequelize,model) {
+       // console.log('check')
+       // console.log(sequelize)
         const user = this.init({
             id: {
                 type: DataTypes.STRING,
@@ -44,14 +46,15 @@ class User extends Model {
             modelName: 'User', sequelize, tableName: "user"
         });
 
-        user.Access = User.belongsToMany(access, { through: userAccess,  as: "access", throughAssociations: {
+
+        user.Access = User.belongsToMany(model.access, { through: model.userAccess,  as: "access", throughAssociations: {
                 // 1️⃣ The name of the association going from the source model (Person)
                 // to the through model (LikedToot)
                 fromSource: User,
 
                 // 2️⃣ The name of the association going from the through model (LikedToot)
                 // to the source model (Person)
-                toSource: access,
+                toSource: model.access,
 
                 // 3️⃣ The name of the association going from the target model (Toot)
                 // to the through model (LikedToot)
@@ -59,7 +62,7 @@ class User extends Model {
 
                 // 4️⃣ The name of the association going from the through model (LikedToot)
                 // to the target model (Toot)
-                toTarget: access,
+                toTarget: model.access,
                 foreignKey: 'UserId',
                 sourceKey: 'id',
 
@@ -67,7 +70,8 @@ class User extends Model {
                 // targetKey: 'gallery_id'
             },} );
 
-
+        return user;
+      //  Image.Gallery = Image.hasOne(Gallery,  {sourceKey: "GalleryId", as: "gallery", foreignKey: 'id', onUpdate: 'cascade'})
     }
 }
 

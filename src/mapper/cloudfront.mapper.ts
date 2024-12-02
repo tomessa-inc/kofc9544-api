@@ -1,7 +1,7 @@
 import {CloudFrontClient, ListDistributionsCommand, CreateInvalidationCommand, GetInvalidationCommand, GetDistributionCommand} from "@aws-sdk/client-cloudfront";
 import {PutObjectCommand, ListObjectsCommand} from "@aws-sdk/client-s3";
 import fs, {existsSync} from "fs";
-import {User} from "../models";
+
 const sizeOf = require('image-size');
 import * as uuid from 'uuid';
 const { exec } = require("child_process");

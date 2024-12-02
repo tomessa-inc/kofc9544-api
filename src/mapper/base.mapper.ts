@@ -3,8 +3,10 @@ import dotenv from "dotenv";
 import * as uuid from 'uuid';
 import { s3Mapper } from './s3.mapper';
 import {SequelizeApi} from "../db/Sequelize";
-import * as console from "console";
-import * as process from "process";
+import process from "process";
+import {Promise, Schema} from "mongoose";
+import * as console from "node:console";
+
 //import {Sequelize} from "sequelize";
 
 
@@ -30,6 +32,8 @@ export interface paramsOptions {
     sort?: string,
     order?: string
     listLength?:number,
+    email_type?:string,
+    token?: string
 }
 
 /*
@@ -46,7 +50,7 @@ export class BaseMapper {
      * Initalizing the Sequelize instance with the configuration data taken from file
      * @param dbConfig
      */
-    public initalizeSequelize() {
+    public initializeSequelize() {
 /*        let options = JSON.parse(`{
                                             "host": "${process.env.DB_HOST}", 
                                             "dialect": "mysql", 
@@ -262,3 +266,4 @@ export class BaseMapper {
         return this._SEQUELIZE;
     }
 }
+

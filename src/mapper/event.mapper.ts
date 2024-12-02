@@ -4,11 +4,11 @@ import {BaseMapper, paramsOptions, resourceGroupTaggingApiMapper, cloudFrontMapp
 import moment from "moment";
 import {hasSubscribers} from "diagnostics_channel";
 import * as uuid from 'uuid';
-import {Image, User, Event, Tag, GalleryTag, Gallery} from "../models/";
 import {SequelizeApi} from "../db/Sequelize";
 import {trim} from "lodash";
 import {parse} from "dotenv";
 import process from "process";
+import {Event} from "../models/Event"
 
 interface DateTime {
     date: {
@@ -149,7 +149,7 @@ export class EventMapper extends BaseMapper {
     constructor() {
         super();
         this.DATABASE_NAME = 'kofc_golf';
-        this.initalizeSequelize()
+        this.initializeSequelize()
         this.initializeEvent();
     }
 

@@ -10,7 +10,7 @@ class UserAccess extends Model {
      * @param sequelize
      * @param access
      */
-    public static initialize(sequelize, access) {
+    public static initialize(sequelize, model) {
         const userAccess = this.init({
             AccessId: {
                 type: DataTypes.STRING,
@@ -29,7 +29,7 @@ class UserAccess extends Model {
             modelName: 'UserAccess', sequelize: sequelize, tableName:"user_access"
         });
 
-        userAccess.Access = access.hasMany(userAccess,  {sourceKey: "id", as: "user_access",  foreignKey: 'AccessId', onUpdate: 'cascade'})
+        userAccess.Access = model.access.hasMany(userAccess,  {sourceKey: "id",  foreignKey: 'AccessId', onUpdate: 'cascade'})
 
         return userAccess;
     }

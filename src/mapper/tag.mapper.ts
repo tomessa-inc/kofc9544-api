@@ -1,7 +1,8 @@
 import { BaseMapper } from ".";
 import moment from "moment";
-import {Tag, GalleryTag} from "../models";
 import * as uuid from 'uuid';
+import {Tag} from "../models/Tag";
+import {GalleryTag} from "../models/GalleryTag";
 
 export class TagMapper extends BaseMapper {
     private _PARAMS_NAME: string = 'name';
@@ -12,7 +13,7 @@ export class TagMapper extends BaseMapper {
     constructor() {
         super();
         this.DATABASE_NAME = 'kofc_golf';
-        this.initalizeSequelize()
+        this.initializeSequelize()
         this.initializeTag();
     }
 

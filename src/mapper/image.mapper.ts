@@ -1,7 +1,9 @@
 import { BaseMapper } from ".";
-import {GalleryTag, Image, Tag} from "../models";
 import { paramsOptions } from ".";
 import { Gallery } from "../models/Gallery";
+import {Tag} from "../models/Tag";
+import {GalleryTag} from "../models/GalleryTag";
+import {Image} from "../models/Image";
 //import { sequelize } from "../db";
 
 export class ImageMapper extends BaseMapper {
@@ -12,7 +14,7 @@ export class ImageMapper extends BaseMapper {
     constructor() {
         super();
         this.DATABASE_NAME = 'kofc_golf';
-        this.initalizeSequelize()
+        this.initializeSequelize()
         this.initializeImage();
     }
 

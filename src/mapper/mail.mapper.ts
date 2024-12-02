@@ -58,12 +58,40 @@ export class MailMapper {
      */
     async prepareEmail(body) {
         this._params = emailParams;
-        await this.formatBody(body);
-        this._params.Source = 'tomc@tomvisions.com';
+      //  await this.formatBody(body);
+        this._params.Source = 'KOFC Site Admin <test@kofc9544.ca>';
         this._params.ReplyToAddresses = [];
         this._params.Template = 'DefaultEmailTemplate';
+        this._PARAMS_CONTENT = '';
 
         switch (body[this._PARAMS_EMAIL_TYPE]) {
+            case EmailMessaging.EMAIL_TYPE_CALENDER_EVENT:
+                this._params.Destination.ToAddresses.push('tomc@tomvisions.com');
+                this._SUBJECT_CONTENT = EmailMessaging.CALENDER_EVENT_SUBJECT;
+                this._HTML_CONTENT = format(EmailMessaging.CALENDER_EVENT_CONTENT_HTML, `http://localhost:5173/reset-password/${body.token}`)
+                //    this._HTML_CONTENT = this._PARAMS_CONTENT.concat(format(EmailMessaging.FORGOTPASSWORD_CONTENT_HTML, key, this.checkObject(body[key])));
+                this._TEXT_CONTENT = EmailMessaging.CALENDER_EVENT_CONTENT_TEXT;
+                this._TO_PERSON = "Tom";
+                this._EMAIL_LOGO = imageService.loadImage200x200("tomvisions-logo-email.png")
+                this._EMAIL_BANNER = imageService.loadImage600x300("waterfall-sm2.jpg")
+
+                this._params.TemplateData = `{\"NAME\":\"${this._TO_PERSON}\",\"EMAIL_LOGO\":\"${this._EMAIL_LOGO}\", \"EMAIL_BANNER\":\"${this._EMAIL_BANNER}\", \"SUBJECT_CONTENT\":\"${this._SUBJECT_CONTENT}\",\"HTML_CONTENT\":\"${this._HTML_CONTENT}\",\"PARAMS_CONTENT\":\"${this._PARAMS_CONTENT}\",  \"TEXT_CONTENT\":\"${this._TEXT_CONTENT}\"}`;
+                break;
+
+
+            case EmailMessaging.EMAIL_TYPE_FORGOTPASSWORD:
+                this._params.Destination.ToAddresses.push('tomc@tomvisions.com');
+                this._SUBJECT_CONTENT = EmailMessaging.FORGOTPASSWORD_SUBJECT;
+                this._HTML_CONTENT = format(EmailMessaging.FORGOTPASSWORD_CONTENT_HTML, `http://localhost:5173/reset-password/${body.token}`)
+                this._TEXT_CONTENT = EmailMessaging.FORGOTPASSWORD_CONTENT_TEXT;
+                this._TO_PERSON = "Tom";
+                this._EMAIL_LOGO = imageService.loadImage200x200("tomvisions-logo-email.png")
+                this._EMAIL_BANNER = imageService.loadImage600x300("waterfall-sm2.jpg")
+
+                this._params.TemplateData = `{\"NAME\":\"${this._TO_PERSON}\",\"EMAIL_LOGO\":\"${this._EMAIL_LOGO}\", \"EMAIL_BANNER\":\"${this._EMAIL_BANNER}\", \"SUBJECT_CONTENT\":\"${this._SUBJECT_CONTENT}\",\"HTML_CONTENT\":\"${this._HTML_CONTENT}\",\"PARAMS_CONTENT\":\"${this._PARAMS_CONTENT}\",  \"TEXT_CONTENT\":\"${this._TEXT_CONTENT}\"}`;
+
+
+                break;
             case EmailMessaging.EMAIL_TYPE_CONTACT:
                 this._params.Destination.ToAddresses.push('tomc@tomvisions.com');
 

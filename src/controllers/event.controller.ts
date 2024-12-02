@@ -1,4 +1,5 @@
-import { eventMapper, tagMapper, paramsOptions } from "../mapper/";
+import {eventMapper, tagMapper, paramsOptions, mailMapper} from "../mapper/";
+import {EmailMessaging} from "../models/EmailMessaging";
 
 export class EventController {
 
@@ -26,9 +27,9 @@ export class EventController {
 
             const options: paramsOptions = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: eventMapper.DEFAULT_SORT, order: eventMapper.DEFAULT_ORDER };
 
-        if (req.params.month && req.params.year) {
-            month = req.params.month;
-            year = req.params.year;
+        if (req.body.month && req.body.year) {
+            month = req.body.month;
+            year = req.body.year;
         } else {
             //   console.log(req.body);
             month = req.body.data.month;
@@ -92,6 +93,8 @@ export class EventController {
       //      console.log('create event')
         //    console.log(req.body);
             const event = await eventMapper.createEvent(req.body.data);
+            await mailMapper.prepareEmail({email_type: EmailMessaging.EMAIL_TYPE_CALENDER_EVENT});
+            await mailMapper.apiSendMail();
 
             if (event) {
                 res.status(200).json({success:true })

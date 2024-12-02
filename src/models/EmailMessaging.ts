@@ -3,6 +3,8 @@ const os = require('node:os');
 export class EmailMessaging
 {
     static EMAIL_TYPE_CONTACT = 'contact';
+    static EMAIL_TYPE_FORGOTPASSWORD = 'forgot';
+    static EMAIL_TYPE_CALENDER_EVENT = 'calender';
 
     static EMAIL_TYPE_CONTACTUS = 'contact_us';
     static EMAIL_TYPE_REGISTER = 'register';
@@ -12,6 +14,17 @@ export class EmailMessaging
     static CONTACT_SUBJECT = '%s';
     static CONTACT_CONTENT_TEXT = `You have received a message from the Contact Form:\\n%s`;
     static CONTACT_CONTENT_HTML = '<p>You have received a message from the Contact Form:</p><p>%s</p>';
+
+    static CALENDER_EVENT_SUBJECT = 'New Calender Event has just been posted';
+    static CALENDER_EVENT_CONTENT_TEXT = `A new event has been posted on the KOFC Calender:\\n`;
+    static CALENDER_EVENT_CONTENT_HTML = '<p>A new event has been posted on the KOFC Calender. You are receiving this email to alert you.in order to reset your password</p><p><a href=\\\"%s\\\"><button>Reset Password</button></a></p>';
+
+
+
+    static FORGOTPASSWORD_SUBJECT = 'Forgot Password';
+    static FORGOTPASSWORD_CONTENT_TEXT = `You have received a message from the Contact Us Form:\\n`;
+    static FORGOTPASSWORD_CONTENT_HTML = '<p>You are receiving this email in order to reset your password</p><p><a href=\\\"%s\\\"><button>Reset Password</button></a></p>';
+
 
     static CONTACTUS_SUBJECT = 'Email From Information Page';
     static CONTACTUS_CONTENT_TEXT = `You have received a message from the Contact Us Form:\\n`;

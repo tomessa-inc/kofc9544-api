@@ -5,13 +5,16 @@ import {UserController} from "../controllers/user.controller";
 import {ImageController} from "../controllers/image.controller";
 import {mediaRouter} from "./media.routes";
 import {GalleryController} from "../controllers/gallery.controller";
+import {UserAuthenticationController} from "../controllers/user.authentication.controller";
 //import {UserAvatarController} from "../controllers/user.avatar.controller";
 var bodyParser = require('body-parser')
 var jsonParser = bodyParser.json()
 
 
 userRouter.post("/sign-in", UserController.apiPostSignIn);
-userRouter.post("/forgot-password", UserController.apiForgotPassword);
+userRouter.post("/forgot-password/:id", UserAuthenticationController.apiForgotPassword);
+
+userRouter.post("/reset-password-token/:token", UserAuthenticationController.apiResetPasswordToken);
 
 userRouter.post("/sign-in", UserController.apiPostSignIn);
 userRouter.post("/sign-out", UserController.apiPostSignOut);
