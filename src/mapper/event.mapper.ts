@@ -27,6 +27,7 @@ interface DataOptions {
     end: string,
     id: string,
     text: string,
+    description: string,
     recurring: string,
     frequency: string,
     viewing:boolean
@@ -253,6 +254,7 @@ export class EventMapper extends BaseMapper {
                     hourEnd: endDate.time.hour,
                     minuteEnd: endDate.time.minute,
                     text: data.text,
+                    description: data.description,
                     public: data.viewing
 
                 }

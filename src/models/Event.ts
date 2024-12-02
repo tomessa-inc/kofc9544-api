@@ -36,6 +36,9 @@ class Event extends Model {
             text: {
                 type: DataTypes.STRING
             },
+            description: {
+                type: DataTypes.TEXT
+            },
             createdAt: {
                 type: DataTypes.DATE,
             },

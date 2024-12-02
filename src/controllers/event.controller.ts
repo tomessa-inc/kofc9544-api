@@ -93,7 +93,7 @@ export class EventController {
       //      console.log('create event')
         //    console.log(req.body);
             const event = await eventMapper.createEvent(req.body.data);
-            await mailMapper.prepareEmail({email_type: EmailMessaging.EMAIL_TYPE_CALENDER_EVENT});
+            await mailMapper.prepareEmail({email_type: EmailMessaging.EMAIL_TYPE_CALENDER_EVENT, text: });
             await mailMapper.apiSendMail();
 
             if (event) {
