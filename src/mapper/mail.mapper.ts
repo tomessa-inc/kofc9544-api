@@ -58,7 +58,7 @@ export class MailMapper {
      */
     async prepareEmail(body) {
         this._params = emailParams;
-      //  await this.formatBody(body);
+        await this.formatBody(body);
         this._params.Source = 'KOFC Site Admin <test@kofc9544.ca>';
         this._params.ReplyToAddresses = [];
         this._params.Template = 'DefaultEmailTemplate';
@@ -68,8 +68,10 @@ export class MailMapper {
             case EmailMessaging.EMAIL_TYPE_CALENDER_EVENT:
                 this._params.Destination.ToAddresses.push('tomc@tomvisions.com');
                 this._SUBJECT_CONTENT = EmailMessaging.CALENDER_EVENT_SUBJECT;
-                this._HTML_CONTENT = format(EmailMessaging.CALENDER_EVENT_CONTENT_HTML, `http://localhost:5173/reset-password/${body.token}`)
-                //    this._HTML_CONTENT = this._PARAMS_CONTENT.concat(format(EmailMessaging.FORGOTPASSWORD_CONTENT_HTML, key, this.checkObject(body[key])));
+                await this.formatBody(body);
+                this._HTML_CONTENT = this._PARAMS_CONTENT
+               // this._HTML_CONTENT = format( this._PARAMS_CONTENT, `http://localhost:5173/reset-password/${body.token}`)
+               // this._HTML_CONTENT = this._PARAMS_CONTENT.concat(format(EmailMessaging.FORGOTPASSWORD_CONTENT_HTML, key, this.checkObject(body[key])));
                 this._TEXT_CONTENT = EmailMessaging.CALENDER_EVENT_CONTENT_TEXT;
                 this._TO_PERSON = "Tom";
                 this._EMAIL_LOGO = imageService.loadImage200x200("tomvisions-logo-email.png")
