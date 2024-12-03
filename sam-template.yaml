@@ -119,14 +119,14 @@ Resources:
                         RestApiId: !Ref ExpressApi
                         Path: /user/sign-out
                         Method: ANY
-                ForgotPassowrd:
+                UserForgotPassword:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
-                        Path: /forgot-password
+                        Path: /user/forgot-password
                         Method: ANY
 
-                UserForgotPassword:
+                UserForgotPasswordToken:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
