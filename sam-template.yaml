@@ -254,7 +254,7 @@ Resources:
 
     MyApiRoute53RecordSetGroup:
         Type: AWS::Route53::RecordSetGroup
-        Condition: UseDomainName
+   #     Condition: UseDomainName
         Properties:
             HostedZoneName: !Sub ${ParentDomainName}.
             RecordSets:
