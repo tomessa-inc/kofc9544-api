@@ -146,20 +146,13 @@ export class BaseMapper {
 
         if (sort === 'identifier' || sort === body.sort)
         {
-            console.log("check here")
-            console.log(sort);
             listClone.sort((a, b) => {
-                console.log("a")
-                console.log(a)
-                console.log("b")
-                console.log(b);
                 const fieldA = a[sort].toString().toUpperCase();
                 const fieldB = b[sort].toString().toUpperCase();
 
                 return order === 'asc' ? fieldA.localeCompare(fieldB) : fieldB.localeCompare(fieldA);
             });
         }  else {
-            console.log("check there")
             listClone.sort((a, b) => order === 'asc' ? a[sort] - b[sort] : b[sort] - a[sort]);
         }
 
@@ -172,7 +165,6 @@ export class BaseMapper {
         // Paginate - Start
         const listLength = body.listLength
 
-        console.log("begin")
         // Calculate pagination details
         const begin = (page -1 ) * size;
         const end = Math.min((size * (page + 1)), listLength);
@@ -185,9 +177,7 @@ export class BaseMapper {
         // the last possible page number, return null for
         // products but also send the last possible page so
         // the app can navigate to there
-        console.log("arrived")
-        console.log(page);
-        console.log(lastPage)
+
         if ( page > lastPage )
         {
             listClone = null;
@@ -209,7 +199,7 @@ export class BaseMapper {
                 endIndex  : end - 1
             };
         }
-        console.log("at the end")
+
         return JSON.parse(`{"data":${JSON.stringify(list)}, "total":"${listLength}","pageSize":"${size}", "pageIndex":"${page}", "lastage":"${lastPage}"}`);
     }
 

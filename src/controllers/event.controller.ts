@@ -32,16 +32,16 @@ export class EventController {
             year = req.body.year;
         } else {
             //   console.log(req.body);
-            month = req.body.data.month;
-            year = req.body.data.year;
+            month = req.params.month;
+            year = req.params.year;
         }
-            const galleries = await eventMapper.getAllEventsByMonth(month, year);
+            const events = await eventMapper.getAllEventsByMonth(month, year);
 
-            if (typeof galleries === 'string') {
-                return res.status(500).json({ errors_string: galleries })
+            if (typeof events === 'string') {
+                return res.status(500).json({ errors_string: events })
             }
 
-            const paginationResults = eventMapper.prepareListResults(galleries,options);
+            const paginationResults = eventMapper.prepareListResults(events,options);
 
             return res.status(200).json(paginationResults);
 
