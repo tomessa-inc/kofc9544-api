@@ -27,9 +27,9 @@ export class EventController {
 
             const options: paramsOptions = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: eventMapper.DEFAULT_SORT, order: eventMapper.DEFAULT_ORDER };
 
-        if (req.body.month && req.body.year) {
-            month = req.body.month;
-            year = req.body.year;
+        if (req.body.data.month && req.body.data.year) {
+            month = req.body.data.month;
+            year = req.body.data.year;
         } else {
             //   console.log(req.body);
             month = req.params.month;
