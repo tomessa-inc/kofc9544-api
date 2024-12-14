@@ -1,35 +1,28 @@
 const {DataTypes, Model} = require("sequelize");
-import {Calendar} from "./Calendar";
 //import {sequelize} from '../db/';
 import {S3Mapper} from "../mapper/s3.mapper";
 
-class Event extends Model {
+class Calendar extends Model {
 
     private avatar:string;
 
-    public static initialize(sequelize) {
-        return this.init({
+    public static initialize(sequelize, Event) {
+        const calendar =  this.init({
             id: {
                 type: DataTypes.STRING,
                 primaryKey: true
             },
-            hourStart: {
+            day: {
                 type: DataTypes.NUMBER
             },
-            minuteStart: {
+            month: {
                 type: DataTypes.NUMBER
             },
-            hourEnd: {
+            year: {
                 type: DataTypes.NUMBER
             },
-            minuteEnd: {
-                type: DataTypes.NUMBER
-            },
-            text: {
+            EventId: {
                 type: DataTypes.STRING
-            },
-            description: {
-                type: DataTypes.TEXT
             },
             createdAt: {
                 type: DataTypes.DATE,
@@ -37,14 +30,13 @@ class Event extends Model {
             updatedAt: {
                 type: DataTypes.DATE,
             },
-            viewing: {
-                type: DataTypes.BOOLEAN
-            },
         }, {
-            modelName: 'Event', sequelize, tableName: "event"
+            modelName: 'Calendar', sequelize, tableName: "calendar"
         });
+        calendar.Event = calendar.hasOne(Event,  {sourceKey: "EventId", foreignKey: 'id', onUpdate: 'cascade'})
+
     }
 }
 
-export {Event}
+export {Calendar}
 

@@ -1,5 +1,6 @@
 import {eventMapper, tagMapper, paramsOptions, mailMapper} from "../mapper/";
 import {EmailMessaging} from "../models/EmailMessaging";
+import {calendarMapper} from "../mapper/calendar.mapper";
 
 export class EventController {
 
@@ -35,7 +36,7 @@ export class EventController {
             month = req.params.month;
             year = req.params.year;
         }
-            const events = await eventMapper.getAllEventsByMonth(month, year);
+            const events = await calendarMapper.getAllEventsByMonth(month, year);
 
             if (typeof events === 'string') {
                 return res.status(500).json({ errors_string: events })
@@ -90,15 +91,14 @@ export class EventController {
      */
     public static async apiCreateEvent(req: any, res: any, next: any) {
         try {
-      //      console.log('create event')
-        //    console.log(req.body);
-            const event = await eventMapper.createEvent(req.body.data);
+            req.body.data.eventId =  await eventMapper.createEvent(req.body.data);
+            await calendarMapper.createCalendar(req.body.data);
+
             await mailMapper.prepareEmail({email_type: EmailMessaging.EMAIL_TYPE_CALENDER_EVENT, data: req.body.data });
             await mailMapper.apiSendMail();
 
-            if (event) {
-                res.status(200).json({success:true })
-            }
+            res.status(200).json({success:true })
+
         } catch (error) {
             res.status(500).json({ error_main: error.toString() })
         }

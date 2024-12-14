@@ -202,29 +202,6 @@ export class EventMapper extends BaseMapper {
         //return true;
     }
 
-    public async getAllEventsByMonth(month:number, year:number) { //: Promise<string[] | string> {
-        try {
-        //    console.log(params);
-          //  const offset = ((params.pageIndex - 1) * params.pageSize);
-
-            const eventConfig = {
-                where: {
-                    month:month,
-                    year:year
-                }
-            }
-            return await Event.findAll(eventConfig).then(galleries => {
-                return this.processArray(galleries);
-            }).catch(err => {
-                console.log('the error');
-                console.log(err);
-                return err;
-            })
-        } catch (error) {
-
-            return error.toString();
-        }
-    }
 
     public async createEvent(data: DataOptions) {
         const startDate = this.parseDate(data.start)
@@ -239,101 +216,25 @@ export class EventMapper extends BaseMapper {
         let frequency = (data.frequency) ?? 0
         let dayOfWeek = ''
         const ruleSet:Ruleset = {dayOfWeek: null, week: null, month:null, timeOfDay:null, year:0};
-
-
-        for (let x = 0; x <= frequency; x++) {
-            const id = `${day}-${month+1}-${year}-${startHour}-${endHour}`;
-            try {
-                const eventDefaults = {
-                    id: id,
-                    day: day,
-                    month: month + 1,
-                    year: year,
-                    hourStart: startDate.time.hour,
-                    minuteStart: startDate.time.minute,
-                    hourEnd: endDate.time.hour,
-                    minuteEnd: endDate.time.minute,
-                    text: data.text,
-                    description: data.description,
-                    public: data.viewing
-
-                }
-           //     console.log(eventDefaults);
-                await Event.findOrCreate({where: {id: id}, defaults: eventDefaults})
-            } catch (error) {
-                console.log(error.toString())
-            }
-            const date = new DateStuff(year, month, day)
-
-            weekOfMonth = date.getWeekOfMonth()
-            dayOfWeek = date.getDayOfWeek()
-            switch(data.recurring) {
-                case "monthly":
-                    month = month + 1;
-
-                    if (month > 11) {
-                        month = 0;
-                        year = year + 1;
-                    }
-                    break;
-                case "weekly":
-                    day = day + 7;
-                    const dateCheck = new DateStuff(year, month, day)
-                    const daysInMonth = dateCheck.getDaysOfMonth()
-                    if (month > 11) {
-                        month = 0;
-                        year = year + 1;
-                    }
-                    break;
-
-            }
-
-            ruleSet.dayOfWeek = dayOfWeek
-            ruleSet.week = weekOfMonth
-            ruleSet.month = month
-            ruleSet.timeOfDay = startDate.time.hour
-            ruleSet.year = year;
-
-            const dateUpdate = date.getDateBasedOnWeekDayMonth(ruleSet)
-            if (!dateUpdate) {
-                return false
-            }
-
-         //   month = dateUpdate.getMonth()
-            day = dateUpdate.getDate()
-            year = dateUpdate.getFullYear()
-
-//            dateUpdate.get
-            // console.log(startDate)
-        //    const date = new DateStuff(year, month, day)
-
-        //    console.log('week of month')
-
-          //  console.log(date.getWeekOfMonth())
-
-
-            //  const endDate = this.parseDate(data.end)
-
-
-            /*    try {
-
-
-                    const tag = {
-                        GalleryId: GalleryId,
-                        TagId: TagId,
-                        createdAt: moment().format('YYYY-MM-DD'),
-                        updatedAt: moment().format('YYYY-MM-DD'),
-                    };
-
-                    return await GalleryTag.findOrCreate({where: [{GalleryId: GalleryId}, {TagId: TagId}], defaults: tag});
-                } catch (error) {
-                    console.log('the error');
-                    console.log(error);
-                    return error.toString();
-                }*/
+        const id = `${day}-${month+1}-${year}-${startHour}-${endHour}`;
+        const eventDefaults = {
+            id: id,
+            //   day: day,
+            //   month: month + 1,
+            //   year: year,
+            hourStart: startDate.time.hour,
+            minuteStart: startDate.time.minute,
+            hourEnd: endDate.time.hour,
+            minuteEnd: endDate.time.minute,
+            text: data.text,
+            description: data.description,
+            public: data.viewing
 
         }
-        return true;
+
+        await Event.findOrCreate({where: {id: id}, defaults: eventDefaults})
+
+        return id;
     }
 
 
@@ -343,9 +244,7 @@ export class EventMapper extends BaseMapper {
             return this._DEFAULT_SORT;
         }
 
-        get
-        PARAMS_ID()
-    :
+        get PARAMS_ID():
         string
         {
             return this._PARAMS_ID;
