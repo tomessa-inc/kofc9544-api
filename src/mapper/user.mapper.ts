@@ -118,8 +118,18 @@ export class UserMapper extends BaseMapper {
         try {
             // get config vars
             dotenv.config();
+
+
             const userParams = {
-                raw: true,
+                include: [
+                    {
+                        Model: Access,
+                        association: User.Access,
+                        required: false,
+                        as: 'access'
+                    },
+                ],
+           //     raw: true,
                 where: {
                     password: params.password,
                     userName: params.userName
@@ -127,10 +137,10 @@ export class UserMapper extends BaseMapper {
             };
 
             console.log(userParams);
-            return await User.findOrCreate(userParams).then(data => {
+            return await User.findOne(userParams).then(data => {
                 console.log('in find')
                 console.log(data)
-                return data[0];
+                return data;
 //                data[0].accessToken = this.generateJWTToken();
             }).catch(data => {
                 return data;
