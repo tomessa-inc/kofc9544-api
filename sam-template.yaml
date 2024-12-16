@@ -154,6 +154,12 @@ Resources:
                         RestApiId: !Ref ExpressApi
                         Path: /user/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}/{filterQuery}
                         Method: ANY
+                UserId:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /user/id/{id}
+                        Method: ANY
 
                 MediaId:
                     Type: Api
