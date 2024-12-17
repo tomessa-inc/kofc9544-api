@@ -12,6 +12,8 @@ var jsonParser = bodyParser.json()
 
 
 userRouter.post("/sign-in", UserController.apiPostSignIn);
+userRouter.post("/forgot-password", UserAuthenticationController.apiForgotPasswordNoId);
+
 userRouter.post("/forgot-password/:id", UserAuthenticationController.apiForgotPassword);
 
 userRouter.post("/reset-password-token/:token", UserAuthenticationController.apiResetPasswordToken);

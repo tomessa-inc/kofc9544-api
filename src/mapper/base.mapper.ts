@@ -25,7 +25,9 @@ export interface bodyOptions {
 export interface paramsOptions {
     id?: string
     pageIndex?:number
+    email?:string
     pageSize?:number
+    firstName?:string
     filterQuery?:string
     search?:string
     logged?:boolean

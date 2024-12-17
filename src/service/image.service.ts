@@ -4,7 +4,7 @@
 
 class ImageService {
   private _PARAM_LOCATION = 'email';
-  private _PARAM_FRONTCLOUD = 'https://d34wc8uzk8vrsx.cloudfront.net';
+  private _PARAM_FRONTCLOUD = 'https://images.kofc9544.ca';
 
   constructor() { }
 
@@ -32,6 +32,18 @@ class ImageService {
     return `${this._PARAM_FRONTCLOUD}/${resizedImage}`;
   }
 
+  loadImage100x100(image) {
+    const resizedImage = this.resizeWithInS3(image, {
+      "resize": {
+        "width": 100,
+        "height": 100,
+        "fit": "cover"
+      }
+    });
+
+    return `${this._PARAM_FRONTCLOUD}/${resizedImage}`;
+  }
+
   /**
    * Setup Signature so that a specific bucket and key are resized with the resized serverless app that is running along with the edits
    * being applied
@@ -45,7 +57,7 @@ class ImageService {
     }
 
     const imageRequest = JSON.stringify({
-      bucket: "tomvisions-original-images",
+      bucket: "images.kofc9544.ca",
       key: key,
       edits: edits
     })

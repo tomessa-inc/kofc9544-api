@@ -106,6 +106,38 @@ export class UserAuthenticationMapper extends BaseMapper {
 
     /**
      *
+     * @param id
+     */
+    async deleteTokenEntry(id:string) {
+        try {
+            const userParams = {
+                where: {UserId: id},
+            }
+            // get config vars
+            //    dotenv.config();
+
+
+            /*   const userParams = {
+                   where: {
+                       UserId: userId,
+                       AccessId: access,
+                       createdAt: moment().format('YYYY-MM-DD'),
+                       updatedAt: moment().format('YYYY-MM-DD')
+                   },
+               } */
+
+            //     return await UserAuthentication.create(userParams);
+
+            return await UserAuthentication.destroy(userParams);
+        } catch (error) {
+            console.log(`Could not create token ${error}`)
+            console.log(error);
+        }
+    }
+
+
+    /**
+     *
      * @param params
      */
     async createTokenEntry(id,token) {

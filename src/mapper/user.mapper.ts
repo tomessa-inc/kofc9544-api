@@ -185,6 +185,30 @@ export class UserMapper extends BaseMapper {
             return error.toString();
         }
     }
+    /**
+     *
+     * @param email
+     * @returns User
+     */
+    public async getUserByEmail(email:string) {
+        try {
+            const userParams = {
+                where: {email: email},
+                attributes: {exclude: ['ImageId', 'GalleryTagTagId']},
+            }
+
+            return await User.findOne(userParams).then(data => {
+                //  return this.processArray(data, User)
+
+                return data
+            }).catch(err => {
+
+                return err;
+            })
+        } catch (error) {
+            return error.toString();
+        }
+    }
 
     public async getAllUsers(params:  paramsOptions) : Promise <string[] | string> {
        const check = params;

@@ -129,6 +129,12 @@ Resources:
                         RestApiId: !Ref ExpressApi
                         Path: /user/forgot-password
                         Method: ANY
+                UserForgotPasswordWithId:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /user/forgot-password/{id}
+                        Method: ANY
 
                 UserForgotPasswordToken:
                     Type: Api

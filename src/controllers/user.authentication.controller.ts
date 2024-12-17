@@ -10,6 +10,44 @@ export class UserAuthenticationController {
      * @param res
      * @param next
      */
+    public static async apiForgotPasswordNoId(req: any, res: any, next: any) {
+        try {
+            const options: paramsOptions = { id: "string", email_type: "string", token: "string", firstName: "", email: "" };
+
+            const userObj = await userMapper.getUserByEmail(req.body.email)
+            options.id = userObj.get('id')
+            options.firstName = userObj.get('firstName')
+            options.id = userObj.get('id')
+            options.email = userObj.get('email')
+
+
+            await userAuthenticationMapper.deleteTokenEntry(options.id)
+
+            const encryptedToken  = await userMapper.encrypt(options.id)
+
+            options.email_type = EmailMessaging.EMAIL_TYPE_FORGOTPASSWORD
+            options.token = encryptedToken
+
+            await userAuthenticationMapper.createTokenEntry(options.id, encryptedToken)
+            await mailMapper.prepareEmail(options)
+            await mailMapper.apiSendMail()
+
+//            return res.status(200).json({"user":user, "token":userMapper.generateJWTToken()});
+            //  } else {
+            ///      console.log("Missing either Username and/or password");
+            //    return res.status(500).json({ error: "Missing either Username and/or password" })
+            // }
+        } catch (error) {
+            return res.status(500).json({ error: error.toString() })
+        }
+
+    }
+    /**
+     * Function that determins if your username and password are correct
+     * @param req
+     * @param res
+     * @param next
+     */
     public static async apiForgotPassword(req: any, res: any, next: any) {
         try {
             //    if (req.body[userMapper.PARAMS_USERNAME] && req.body[userMapper.PARAMS_PASSWORD]) {
