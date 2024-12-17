@@ -266,7 +266,7 @@ Resources:
 
             Policies:
                 - SESBulkTemplatedCrudPolicy_v2:
-                      IdentityName: tomvisions.com
+                      IdentityName: kofc9544.ca
                       TemplateName: DefaultEmailTemplate
                 - SESEmailTemplateCrudPolicy: {}
                 - S3WritePolicy:
