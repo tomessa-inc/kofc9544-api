@@ -82,9 +82,21 @@ export class MailMapper {
 
 
             case EmailMessaging.EMAIL_TYPE_FORGOTPASSWORD:
+                let host = "https://member.kofc9544.ca"
+                switch(process.env.STAGE) {
+                    case "dev":
+                        host = "http://localhost:5173"
+                        break;
+                    case "stage":
+                        host = "https://member-stage.kofc9544.ca"
+                        break;
+
+                    default:
+                        break;
+                }
                 this._params.Destination.ToAddresses.push(body.email);
                 this._SUBJECT_CONTENT = EmailMessaging.FORGOTPASSWORD_SUBJECT;
-                this._HTML_CONTENT = format(EmailMessaging.FORGOTPASSWORD_CONTENT_HTML, `http://localhost:5173/reset-password/${body.token}`)
+                this._HTML_CONTENT = format(EmailMessaging.FORGOTPASSWORD_CONTENT_HTML, `${host}/reset-password/${body.token}`)
                 this._TEXT_CONTENT = EmailMessaging.FORGOTPASSWORD_CONTENT_TEXT;
                 this._TO_PERSON = body.firstName;
                 this._EMAIL_LOGO = imageService.loadImage100x100("kofc-logo100x100.png")
