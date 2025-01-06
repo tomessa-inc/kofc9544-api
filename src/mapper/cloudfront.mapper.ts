@@ -63,6 +63,7 @@ export class CloudFrontMapper {
      * @param path
      */
     async createInvalidation(path, distributionId) {
+        console.log("Creating invalidation");
         try {
             let params = { // CreateInvalidationRequest
                 DistributionId: distributionId, // required
@@ -76,6 +77,7 @@ export class CloudFrontMapper {
                     CallerReference: `${Date.now()}`, // required
                 },
             };
+
 
             return await this._client.send(new CreateInvalidationCommand(params));
         } catch (error) {
