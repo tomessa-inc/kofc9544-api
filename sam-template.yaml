@@ -277,7 +277,12 @@ Resources:
                 - SESEmailTemplateCrudPolicy: {}
                 - S3WritePolicy:
                       BucketName: !Ref BucketNameImages
-
+                - Version: '2012-10-17'
+                  Statement:
+                      - Effect: Allow
+                        Action:
+                            - tag:GetResources
+                        Resource: '*'
 
     MyApiRoute53RecordSetGroup:
         Type: AWS::Route53::RecordSetGroup
