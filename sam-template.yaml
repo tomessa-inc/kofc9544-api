@@ -282,6 +282,7 @@ Resources:
                       - Effect: Allow
                         Action:
                             - tag:GetResources
+                            - cloudfront:CreateInvalidation
                         Resource: '*'
 
     MyApiRoute53RecordSetGroup:
