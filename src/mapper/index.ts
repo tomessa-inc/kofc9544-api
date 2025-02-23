@@ -9,3 +9,5 @@ export * from './event.mapper';
 export * from './mail.mapper';
 export * from './user.mapper';
 export * from "./access.mapper"
+export * from "./golf.mapper"
+export * from "./team.mapper"

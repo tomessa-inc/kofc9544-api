@@ -253,7 +253,7 @@ export class ImageMapper extends BaseMapper {
         }
     }
 
-    /**
+ /**
  * 
  * @param options 
  * @returns 

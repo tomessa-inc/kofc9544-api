@@ -6,7 +6,7 @@ import { getCurrentInvoke } from "@vendia/serverless-express";
 const ejs = require("ejs").__express;
 const app = express();
 const router = express.Router();
-import {mailRouter, mediaRouter, userRouter, eventRouter, accessRouter} from './routes';
+import {mailRouter, mediaRouter, userRouter, eventRouter, accessRouter, golfRouter} from './routes';
 import {NextFunction} from "express";
 
 
@@ -53,6 +53,8 @@ app.use("/media", mediaRouter);
 app.use("/user", userRouter);
 app.use("/event", eventRouter);
 app.use("/access", accessRouter);
+app.use("/golf", golfRouter);
+
 
 app.use("/", express);
 export { app };

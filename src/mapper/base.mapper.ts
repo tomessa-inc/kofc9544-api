@@ -233,6 +233,10 @@ export class BaseMapper {
         }
     }
 
+    public generateId(data:string) {
+        return data.replace(/\s+/g, '-').toLowerCase();
+    }
+
     /**
      * Sleep
      * @param ms

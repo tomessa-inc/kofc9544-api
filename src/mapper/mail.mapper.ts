@@ -4,7 +4,7 @@ import { SESClient, SendTemplatedEmailCommand } from '@aws-sdk/client-ses';
 import { emailParams } from '../data/email-params';
 import { emailHeader } from '../data/email.header';
 import { emailFooter } from '../data/email.footer';
-import { format } from 'util';
+import util, {format, inspect} from 'util';
 import { EmailMessaging } from '../models/EmailMessaging';
 import { imageService } from '../service';
 
@@ -49,6 +49,60 @@ export class MailMapper {
 
     constructor() {
         this._sesClient = new SESClient({ 'region': this._REGION });
+    }
+
+    async setupEmail(body) {
+        let params = {
+            "contact" :  [
+                this.PARAMS_MESSAGE, this.PARAMS_EMAIL_TYPE, this.PARAMS_NAME, this.PARAMS_EMAIL
+            ],
+            "contact_us" :  [
+                this.PARAMS_MESSAGE, this.PARAMS_EMAIL_TYPE, this.PARAMS_NAME, this.PARAMS_SUBJECT, this.PARAMS_EMAILORPHONE
+            ],
+            "sponsor" :  [
+                this.PARAMS_EMAIL_TYPE, this.PARAMS_EMAIL
+            ],
+            "volunteer" :  [
+                this.PARAMS_EMAIL_TYPE, this.PARAMS_NAME, this.PARAMS_EMAILORPHONE
+            ],
+            "register" :  [
+                this.PARAMS_EMAIL_TYPE
+            ],
+        }
+
+        const missingParam = [];
+        let valid = true;
+        try {
+
+            const paramCheck:string[] = params[body[this.PARAMS_EMAIL_TYPE]]
+
+            Object.values(paramCheck).map(param   => {
+                if (!body[param]) {
+                    valid = false;
+                    missingParam.push(param);
+                }
+            });
+
+            if (valid) {
+                await this.prepareEmail(body);
+                const retVal = await this.apiSendMail();
+
+                if (retVal['$metadata']['httpStatusCode'] === 200) {
+                    return {success:true, data: retVal}
+
+                } else {
+                    return {success:true, data: retVal}
+                }
+
+
+            } else {
+               return new Error(`Email has not been sent. Missing parameters: ${inspect(missingParam)}`)
+
+            }
+        } catch (error) {
+
+            throw new Error(`Email has not been sent ${error.toString()}`);
+        }
     }
 
 
@@ -109,7 +163,7 @@ export class MailMapper {
                 break;
             case EmailMessaging.EMAIL_TYPE_CONTACT:
                 this._params.Destination.ToAddresses.push('tomc@tomvisions.com');
-
+                await this.formatBody(body);
                 this._SUBJECT_CONTENT = EmailMessaging.CONTACT_SUBJECT;
                 this._HTML_CONTENT = EmailMessaging.CONTACT_CONTENT_HTML;
                 this._TEXT_CONTENT = EmailMessaging.CONTACT_CONTENT_TEXT;
@@ -125,7 +179,7 @@ export class MailMapper {
             case EmailMessaging.EMAIL_TYPE_CONTACTUS:
                 this._params.Destination.ToAddresses.push('tcruicksh@gmail.com');
                 this._params.Destination.ToAddresses.push('resolvewithmarc@sympatico.ca');
-
+                await this.formatBody(body);
                 this._SUBJECT_CONTENT = EmailMessaging.CONTACTUS_SUBJECT;
                 this._HTML_CONTENT = EmailMessaging.CONTACTUS_CONTENT_HTML;
                 this._TEXT_CONTENT = EmailMessaging.CONTACTUS_CONTENT_TEXT;
@@ -137,6 +191,7 @@ export class MailMapper {
                 break;
 
             case EmailMessaging.EMAIL_TYPE_REGISTER:
+
                 this._params.Destination.ToAddresses.push('tcruicksh@gmail.com');
                 this._params.Destination.ToAddresses.push('golfregistration@kofc9544.ca');
                 this._SUBJECT_CONTENT = EmailMessaging.REGISTER_SUBJECT;
@@ -145,9 +200,9 @@ export class MailMapper {
                 this._TO_PERSON = "Richard";
                 this._EMAIL_LOGO = imageService.loadImage200x200("kofc-logo.png")
                 this._EMAIL_BANNER = imageService.loadImage600x300("loch-march-background.jpeg")
+                await this.formatBody(body);
                 this._params.TemplateData = `{\"NAME\":\"${this._TO_PERSON}\",\"EMAIL_LOGO\":\"${this._EMAIL_LOGO}\", \"EMAIL_BANNER\":\"${this._EMAIL_BANNER}\", \"SUBJECT_CONTENT\":\"${this._SUBJECT_CONTENT}\",\"HTML_CONTENT\":\"${this._HTML_CONTENT}\",\"PARAMS_CONTENT\":\"${this._PARAMS_CONTENT}\",  \"TEXT_CONTENT\":\"${this._TEXT_CONTENT}\"}`;
                 await this.apiSendMail();
-
 
                 this._params.Destination.ToAddresses = [];
                 this._params.Destination.ToAddresses.push(body['players'][0]['email']);
@@ -161,13 +216,12 @@ export class MailMapper {
                 this._EMAIL_BANNER = imageService.loadImage600x300("loch-march-background.jpeg")
                 this._PARAMS_CONTENT = '';
                 this._params.TemplateData = `{\"NAME\":\"${this._TO_PERSON}\",\"EMAIL_LOGO\":\"${this._EMAIL_LOGO}\", \"EMAIL_BANNER\":\"${this._EMAIL_BANNER}\", \"SUBJECT_CONTENT\":\"${this._SUBJECT_CONTENT}\",\"HTML_CONTENT\":\"${this._HTML_CONTENT}\",\"PARAMS_CONTENT\":\"${this._PARAMS_CONTENT}\",  \"TEXT_CONTENT\":\"${this._TEXT_CONTENT}\"}`;
-
                 break;
 
             case EmailMessaging.EMAIL_TYPE_VOLUNTEER:
                 this._params.Destination.ToAddresses.push('tcruicksh@gmail.com');
                 this._params.Destination.ToAddresses.push('resolvewithmarc@sympatico.ca');
-
+                await this.formatBody(body);
                 this._SUBJECT_CONTENT = EmailMessaging.VOLUNTEER_SUBJECT;
                 this._HTML_CONTENT = EmailMessaging.VOLUNTEER_CONTENT_HTML;
                 this._TEXT_CONTENT = EmailMessaging.VOLUNTEER_CONTENT_TEXT;
@@ -179,6 +233,7 @@ export class MailMapper {
                 break;
 
             case EmailMessaging.EMAIL_TYPE_SPONSOR:
+                await this.formatBody(body);
                 this._params.Destination.ToAddresses.push('tcruicksh@gmail.com');
                 this._params.Destination.ToAddresses.push('n.rolheiser@gmail.com');
                 this._SUBJECT_CONTENT = EmailMessaging.SPONSOR_SUBJECT;
@@ -201,6 +256,8 @@ export class MailMapper {
             this._PARAMS_CONTENT = this._PARAMS_CONTENT.concat(format(EmailMessaging.PARAMS_CONTENT, key, this.checkObject(body[key])));
 
         });
+        console.log("the content");
+        console.log(this._PARAMS_CONTENT);
     }
 
     checkObject(data) {
