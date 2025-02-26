@@ -268,7 +268,7 @@ export class MailMapper {
         let stringData = "";
 
         for (let row of data) {
-            let format = `<p>player: ${row['player']}</p><p>email: ${row['email']}</p><p>phone: ${row['phone']}</p>`;
+            let format = `<p>player: ${row['player']}</p><p>email: ${row['email']}</p><p>phone: ${row['phone']}</p><p>allergies: ${row['allergies']}</p>`;
             stringData = stringData.concat(" ", format);
         }
 

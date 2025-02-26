@@ -13,10 +13,10 @@ export interface OptionsPlayer {
             "player": string,
             "email": string,
             "phone": string,
+            allergies?: string,
         }[],
     body?: string,
     teamId?: string,
-    allergies?: string,
     individual?:boolean,
     "email_type": string
 }
@@ -41,6 +41,7 @@ export class GolfController {
            }
         }
         const too = await golfMapper.createPlayerRegistration(optionsPlayer);
+
         delete(req.body["individual"])
         await mailMapper.setupEmail(req.body)
 
