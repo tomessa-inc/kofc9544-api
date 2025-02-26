@@ -32,7 +32,12 @@ class Player extends Model
             TeamId: {
                 type: DataTypes.STRING,
             },
-
+            allergies: {
+                type: DataTypes.STRING,
+            },
+            payment: {
+                type: DataTypes.BOOLEAN,
+            },
             createdAt: {
                 type: DataTypes.DATE,
             },

@@ -16,6 +16,7 @@ export interface OptionsPlayer {
         }[],
     body?: string,
     teamId?: string,
+    allergies?: string,
     individual?:boolean,
     "email_type": string
 }
