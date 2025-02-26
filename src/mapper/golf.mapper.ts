@@ -43,7 +43,7 @@ export class GolfMapper extends BaseMapper {
                     phone: player.phone,
                     individual: params.individual,
                     TeamId: params.teamId,
-                    allergies: params.allergies,
+                    allergies: player.allergies,
                     createdAt: moment().format('YYYY-MM-DD'),
                     updatedAt: moment().format('YYYY-MM-DD'),
                 };
