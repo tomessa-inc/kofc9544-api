@@ -2,6 +2,8 @@
 
 //import { GalleryTag } from "./GalleryTag";
 
+import Sequelize from "sequelize";
+
 const {DataTypes, Model} = require('../db');
 
 class Player extends Model
@@ -13,7 +15,8 @@ class Player extends Model
     public static initialize(sequelize, team) {
         const player = this.init({
             id: {
-                type: DataTypes.STRING,
+                type: Sequelize.INTEGER,
+                autoIncrement: true,
                 primaryKey: true
             },
             name: {
@@ -25,7 +28,6 @@ class Player extends Model
             phone: {
                 type: DataTypes.STRING,
             },
-
             individual: {
                 type: DataTypes.BOOLEAN,
             },

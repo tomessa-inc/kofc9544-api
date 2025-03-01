@@ -51,7 +51,7 @@ export class MailMapper {
         this._sesClient = new SESClient({ 'region': this._REGION });
     }
 
-    async setupEmail(body) {
+    async setupEmail(data, emailType = '') {
         let params = {
             "contact" :  [
                 this.PARAMS_MESSAGE, this.PARAMS_EMAIL_TYPE, this.PARAMS_NAME, this.PARAMS_EMAIL
@@ -68,39 +68,55 @@ export class MailMapper {
             "register" :  [
                 this.PARAMS_EMAIL_TYPE
             ],
+            "send_id" :  [
+                this.PARAMS_EMAIL_TYPE
+            ],
+
         }
 
         const missingParam = [];
         let valid = true;
         try {
+            const body = data.data;
+            console.log(body);
+            console.log(data);
+
+            if (!body.email_type){
+                body.email_type = data[this.PARAMS_EMAIL_TYPE]
+            }
 
             const paramCheck:string[] = params[body[this.PARAMS_EMAIL_TYPE]]
 
+            console.log("paramcheck")
+            console.log(paramCheck)
             Object.values(paramCheck).map(param   => {
                 if (!body[param]) {
                     valid = false;
                     missingParam.push(param);
                 }
             });
-
+                console.log("valid")
+            console.log(valid);
+                console.log(body)
             if (valid) {
-                await this.prepareEmail(body);
-                const retVal = await this.apiSendMail();
+                console.log("preparep")
 
+                await this.prepareEmail(body);
+                console.log("after prepare")
+                const retVal = await this.apiSendMail();
+                console.log("sent")
                 if (retVal['$metadata']['httpStatusCode'] === 200) {
                     return {success:true, data: retVal}
 
                 } else {
                     return {success:true, data: retVal}
                 }
-
-
             } else {
                return new Error(`Email has not been sent. Missing parameters: ${inspect(missingParam)}`)
 
             }
         } catch (error) {
-
+            console.log(error);
             throw new Error(`Email has not been sent ${error.toString()}`);
         }
     }
@@ -112,12 +128,14 @@ export class MailMapper {
      */
     async prepareEmail(body) {
         this._params = emailParams;
-        await this.formatBody(body);
+      //  await this.formatBody(body);
         this._params.Source = 'KOFC Site Admin <test@kofc9544.ca>';
         this._params.ReplyToAddresses = [];
         this._params.Template = 'DefaultEmailTemplate';
         this._PARAMS_CONTENT = '';
 
+        console.log("the body in prepared")
+        console.log(body);
         switch (body[this._PARAMS_EMAIL_TYPE]) {
             case EmailMessaging.EMAIL_TYPE_CALENDER_EVENT:
                 this._params.Destination.ToAddresses.push(body.email);
@@ -162,6 +180,7 @@ export class MailMapper {
 
                 break;
             case EmailMessaging.EMAIL_TYPE_CONTACT:
+                this._params.Destination.ToAddresses = [];
                 this._params.Destination.ToAddresses.push('tomc@tomvisions.com');
                 await this.formatBody(body);
                 this._SUBJECT_CONTENT = EmailMessaging.CONTACT_SUBJECT;
@@ -177,6 +196,7 @@ export class MailMapper {
 
 
             case EmailMessaging.EMAIL_TYPE_CONTACTUS:
+                this._params.Destination.ToAddresses = [];
                 this._params.Destination.ToAddresses.push('tcruicksh@gmail.com');
                 this._params.Destination.ToAddresses.push('resolvewithmarc@sympatico.ca');
                 await this.formatBody(body);
@@ -191,7 +211,7 @@ export class MailMapper {
                 break;
 
             case EmailMessaging.EMAIL_TYPE_REGISTER:
-
+                this._params.Destination.ToAddresses = [];
                 this._params.Destination.ToAddresses.push('tcruicksh@gmail.com');
                 this._params.Destination.ToAddresses.push('golfregistration@kofc9544.ca');
                 this._SUBJECT_CONTENT = EmailMessaging.REGISTER_SUBJECT;
@@ -202,16 +222,20 @@ export class MailMapper {
                 this._EMAIL_BANNER = imageService.loadImage600x300("loch-march-background.jpeg")
                 await this.formatBody(body);
                 this._params.TemplateData = `{\"NAME\":\"${this._TO_PERSON}\",\"EMAIL_LOGO\":\"${this._EMAIL_LOGO}\", \"EMAIL_BANNER\":\"${this._EMAIL_BANNER}\", \"SUBJECT_CONTENT\":\"${this._SUBJECT_CONTENT}\",\"HTML_CONTENT\":\"${this._HTML_CONTENT}\",\"PARAMS_CONTENT\":\"${this._PARAMS_CONTENT}\",  \"TEXT_CONTENT\":\"${this._TEXT_CONTENT}\"}`;
-                await this.apiSendMail();
 
+                break;
+
+            case EmailMessaging.EMAIL_TYPE_SEND_ID:
+                console.log("testing stuff")
+                console.log(body);
                 this._params.Destination.ToAddresses = [];
-                this._params.Destination.ToAddresses.push(body['players'][0]['email']);
+                this._params.Destination.ToAddresses.push(body['email']);
                 this._params.Destination.BccAddresses.push('tomc@tomvisions.com');
 
                 this._SUBJECT_CONTENT = EmailMessaging.REGISTERCONTACTSENDER_SUBJECT;
-                this._HTML_CONTENT = EmailMessaging.REGISTERCONTACTSENDER_CONTENT_HTML;
+                this._HTML_CONTENT = util.format(EmailMessaging.REGISTERCONTACTSENDER_CONTENT_HTML, body.id);
                 this._TEXT_CONTENT = EmailMessaging.REGISTERCONTACTSENDER_CONTENT_TEXT;
-                this._TO_PERSON = body['players'][0]['player'];
+                this._TO_PERSON = body["name"];
                 this._EMAIL_LOGO = imageService.loadImage200x200("kofc-logo.png")
                 this._EMAIL_BANNER = imageService.loadImage600x300("loch-march-background.jpeg")
                 this._PARAMS_CONTENT = '';
@@ -219,6 +243,7 @@ export class MailMapper {
                 break;
 
             case EmailMessaging.EMAIL_TYPE_VOLUNTEER:
+                this._params.Destination.ToAddresses = [];
                 this._params.Destination.ToAddresses.push('tcruicksh@gmail.com');
                 this._params.Destination.ToAddresses.push('resolvewithmarc@sympatico.ca');
                 await this.formatBody(body);
@@ -234,12 +259,13 @@ export class MailMapper {
 
             case EmailMessaging.EMAIL_TYPE_SPONSOR:
                 await this.formatBody(body);
+                this._params.Destination.ToAddresses = [];
                 this._params.Destination.ToAddresses.push('tcruicksh@gmail.com');
-                this._params.Destination.ToAddresses.push('n.rolheiser@gmail.com');
+                this._params.Destination.ToAddresses.push('bmilliere@sympatico.ca');
                 this._SUBJECT_CONTENT = EmailMessaging.SPONSOR_SUBJECT;
                 this._HTML_CONTENT = EmailMessaging.SPONSOR_CONTENT_HTML;
                 this._TEXT_CONTENT = EmailMessaging.SPONSOR_CONTENT_TEXT;
-                this._TO_PERSON = "Nick";
+                this._TO_PERSON = "Brian";
                 this._EMAIL_LOGO = imageService.loadImage200x200("kofc-logo.png")
                 this._EMAIL_BANNER = imageService.loadImage600x300("loch-march-background.jpeg")
                 
@@ -252,7 +278,11 @@ export class MailMapper {
 
     async formatBody(body) {
         this._PARAMS_CONTENT = '';
+        console.log("body for format body")
+        console.log(body)
+
         Object.keys(body).map((key) => {
+            console.log(key);
             this._PARAMS_CONTENT = this._PARAMS_CONTENT.concat(format(EmailMessaging.PARAMS_CONTENT, key, this.checkObject(body[key])));
 
         });
@@ -261,12 +291,13 @@ export class MailMapper {
     }
 
     checkObject(data) {
-        if (typeof data === 'string') {
+        if (typeof data === 'string' || data === undefined) {
             return data;
         }
 
         let stringData = "";
-
+        console.log("data")
+        console.log(data);
         for (let row of data) {
             let format = `<p>player: ${row['player']}</p><p>email: ${row['email']}</p><p>phone: ${row['phone']}</p><p>allergies: ${row['allergies']}</p>`;
             stringData = stringData.concat(" ", format);

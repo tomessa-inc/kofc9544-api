@@ -8,6 +8,8 @@ export class EmailMessaging
 
     static EMAIL_TYPE_CONTACTUS = 'contact_us';
     static EMAIL_TYPE_REGISTER = 'register';
+    static EMAIL_TYPE_SEND_ID = 'send_id';
+
     static EMAIL_TYPE_VOLUNTEER = 'volunteer';
     static EMAIL_TYPE_SPONSOR = 'sponsor';
 
@@ -34,9 +36,9 @@ export class EmailMessaging
     static REGISTER_CONTENT_TEXT = `You have received a submission from register form:\\n`;
     static REGISTER_CONTENT_HTML = '<p>You have received a submission from register form:</p>';
 
-    static REGISTERCONTACTSENDER_SUBJECT = 'Email from Knights of Columbus Golf Tournament!';
-    static REGISTERCONTACTSENDER_CONTENT_TEXT = `Your registration has been received. Please send payment ($175/person) via e-transter to golfregistration@kofc9544.ca OR by mail to 152 Springcreek Crescent, Kanata Ontario K2M 2M1 with cheque payable to Knights of Columbus 9544 Charity Golf Tournament\\n`;
-    static REGISTERCONTACTSENDER_CONTENT_HTML = "<p>Your registration has been received. Please send payment ($175/person) via e-transter to <a href=\\\"mailto:golfregistration@kofc9544.ca\\\">golfregistration@kofc9544.ca</a> OR by mail to 152 Springcreek Crescent, Kanata Ontario K2M 2M1 with cheque payable to <strong>Knights of Columbus 9544 Charity Golf Tournament</strong>.</p><p>For additional information, please contact Richard Van Loon, Registration Coordinator, at golfregistration@kofc9544.ca or 613-592-3686</p>";
+    static REGISTERCONTACTSENDER_SUBJECT = 'Registration confirmed! - Knights of Columbus Golf Tournament';
+    static REGISTERCONTACTSENDER_CONTENT_TEXT = `Your registration has been received. Please send payment ($175/person) via e-transter to golfregistration@kofc9544.ca.<br><br>     OR by mail to 152 Springcreek Crescent, Kanata Ontario K2M 2M1 with cheque payable to Knights of Columbus 9544 Charity Golf Tournament\\n`;
+    static REGISTERCONTACTSENDER_CONTENT_HTML = "<p>Your registration has been received. Please send your payment of $175 via e-transter to <a href=\\\"mailto:golfregistration@kofc9544.ca\\\">golfregistration@kofc9544.ca</a> with your <strong>ID #%s</strong> in the notes.<br><br>If paying by cheque, make the cheque payable to <strong>Knights of Columbus 9544 Charity Golf Tournament</strong> and mail it to Holy Redeemer Parish at 44 Rothesay Dr, Kanata, ON K2L 2X1,  with your ID (above) written on the cheque.</p><p>Thank you for your support!</p>";
 
     static VOLUNTEER_SUBJECT = 'Email From Volunteer Form';
     static VOLUNTEER_CONTENT_TEXT = `You have received a message from the Volunteer Form:\\n`;

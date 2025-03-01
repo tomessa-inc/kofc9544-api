@@ -1,6 +1,7 @@
 import {mailMapper, golfMapper, teamMapper} from "../mapper/";
 import {MailController} from "./mail.controller";
 import {inspect} from "util";
+import {EmailMessaging} from "../models/EmailMessaging";
 //import {golfMapper} from "../mapper/golf.mapper";
 //import {teamMapper} from "../mapper/team.mapper";
 
@@ -30,21 +31,37 @@ export class GolfController {
 
         if (optionsPlayer.players.length >= 2) {
            team =  await teamMapper.createTeamRegistration(optionsPlayer);
-           console.log(team[0].captain)
-            console.log(optionsPlayer.players[0].player)
-           if (team[0].captain === optionsPlayer.players[0].player) {
+           console.log("teamsssss")
+           console.log(team);
+
+
+           if (!team.success) {
+               return res.status(200).json({ success: team.success, msg: team.message })
+           }
+
+           console.log("arrived")
+            console.log(team);
+           console.log(team.data.captain)
+           console.log(optionsPlayer);
+           console.log(optionsPlayer.players[0].player)
+
+           if (team.data.captain === optionsPlayer.players[0].player) {
                console.log('it good')
-               optionsPlayer.teamId = team[0].id;
+               optionsPlayer.teamId = team.id;
                optionsPlayer.individual = false;
            } else {
                return res.status(500).json({ error_main:"Team name already exists" })
            }
         }
+        console.log("about to crate reg")
         const too = await golfMapper.createPlayerRegistration(optionsPlayer);
-
+        console.log("too");
+        console.log(too);
         delete(req.body["individual"])
-        await mailMapper.setupEmail(req.body)
 
+
+        await mailMapper.setupEmail({email_type:EmailMessaging.EMAIL_TYPE_REGISTER, data: req.body})
+       // await mailMapper.apiSendMail();
 
 
 
@@ -53,7 +70,7 @@ export class GolfController {
 
         //   await MailController.apiPostSendMail(req, res, next)
 
-        return res.status(200).json({ success: true, msg: "Registration successful" })
+        return res.status(200).json({ success: false, msg: "Registration successful" })
 
     }
 
@@ -88,8 +105,6 @@ export class GolfController {
             }
             const paginationResults = golfMapper.prepareListResults(galleries, options);
 
-            console.log("the galleies")
-            console.log(paginationResults);
             return res.status(200).json(paginationResults);
 
         } catch (error) {
@@ -127,12 +142,10 @@ export class GolfController {
             const galleries = await golfMapper.getAllPlayers(options);
 
             if (typeof galleries === 'string') {
-                return res.status(500).json({ errors_string: galleries })
+                // return res.status(500).json({ errors_string: galleries })
             }
             const paginationResults = golfMapper.prepareListResults(galleries, options);
 
-            console.log("the galleies")
-            console.log(paginationResults);
             return res.status(200).json(paginationResults);
 
         } catch (error) {
@@ -173,8 +186,6 @@ export class GolfController {
 
             const paginationResults = teamMapper.prepareListResults(team, options);
 
-            console.log("the galleies")
-            console.log(paginationResults);
             return res.status(200).json(paginationResults);
 
         } catch (error) {
@@ -219,8 +230,6 @@ export class GolfController {
 
             const paginationResults = teamMapper.prepareListResults(team, options);
 
-            console.log("the galleies")
-            console.log(paginationResults);
             return res.status(200).json(paginationResults);
 
         } catch (error) {

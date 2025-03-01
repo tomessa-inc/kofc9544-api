@@ -7,7 +7,9 @@ const util = require('util');
 export class MailController {
     static async apiPostSendMail(req: any, res: any, next: any) {
         try {
-            const retval = await mailMapper.setupEmail(req.body)
+
+            const retval = await mailMapper.setupEmail({email_type: req.body.email_type, data: req.body})
+
             return res.status(200).json({success: true, msg: retval})
         } catch (err) {
             return res.status(500).json({success:false, message: `Registration not successful, ${err.toString()}`});

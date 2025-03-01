@@ -1,4 +1,4 @@
-import {BaseMapper, paramsOptions} from ".";
+import {BaseMapper, mailMapper, paramsOptions} from ".";
 import moment from "moment";
 import * as uuid from 'uuid';
 import {Player} from "../models/Player";
@@ -8,6 +8,7 @@ import {Tag} from "../models/Tag";
 import {Gallery} from "../models/Gallery";
 import {Team} from "../models/Team";
 import {Image} from "../models/Image";
+import {EmailMessaging} from "../models/EmailMessaging";
 
 export class GolfMapper extends BaseMapper {
     private _PARAMS_NAME: string = 'name';
@@ -31,33 +32,40 @@ export class GolfMapper extends BaseMapper {
         Player.initialize(this.SEQUELIZE, team);
     }
 
+
+
     public async createPlayerRegistration(params: OptionsPlayer) {
+
         console.log("the registration")
         console.log(params)
         try {
-            const test = params.players.map(async (player) => {
+            const test =  await params.players.map( async (player) => {
+
                 const playerObject = {
-                    id: player.player.replace(/\s+/g, '-').toLowerCase(),
                     name: player.player,
                     email: player.email,
                     phone: player.phone,
                     individual: params.individual,
-                    TeamId: params.teamId,
+                    TeamId: params.teamId ?? null,
                     allergies: player.allergies,
                     createdAt: moment().format('YYYY-MM-DD'),
                     updatedAt: moment().format('YYYY-MM-DD'),
                 };
-
+                console.log("playe")
                 console.log(playerObject);
-                return await Player.findOrCreate({
-                    where: {name: player.player, email: player.email},
-                    defaults: playerObject
-                });
+                const test2 = await Player.create(playerObject);
+                console.log("test2")
+                console.log(test2.toJSON())
+                await mailMapper.setupEmail({email_type:EmailMessaging.EMAIL_TYPE_SEND_ID, data: test2.toJSON()})
+             ///   await mailMapper.apiSendMail()
+                return test2.toJSON()
 
             })
 
             console.log("the testing stuff")
             console.log(test);
+          //  test.email_type = EmailMessaging.EMAIL_TYPE_SEND_ID
+            
 
             return test
         } catch (error) {

@@ -26,29 +26,32 @@ export class TeamMapper extends BaseMapper {
     }
 
     public async createTeamRegistration(params: OptionsPlayer) {
-        let teamName = params.team_name
+        try {
 
-        if (params.team_name === "") {
-            teamName = params.players[0].player
+
+            var teamName = params.team_name
+
+            if (teamName === "") {
+                teamName = params.players[0].player
+            }
+
+            console.log("the team name")
+            console.log(teamName)
+            const team = {
+                id: teamName.replace(/\s+/g, '-').toLowerCase(),
+                name: teamName,
+                captain: params.players[0].player,
+                createdAt: moment().format('YYYY-MM-DD'),
+                updatedAt: moment().format('YYYY-MM-DD'),
+            };
+
+
+            const id = await Team.create(team);
+
+            return {success: true, data: id.toJSON()}
+        } catch (error) {
+            return {success: false, message: `Team name "${teamName}" already exists`};
         }
-
-        console.log("the team name")
-        console.log(teamName)
-        const team = {
-            id: teamName.replace(/\s+/g, '-').toLowerCase(),
-            name: teamName,
-            captain: params.players[0].player,
-            createdAt: moment().format('YYYY-MM-DD'),
-            updatedAt: moment().format('YYYY-MM-DD'),
-        };
-
-        console.log(team);
-        const id = await Team.findOrCreate({where: {teamName: teamName}, defaults: team});
-
-
-       //  return id.get('id');
-
-        return id
     }
 
     public async getAllTeamsNeedingPlayers(params) {
