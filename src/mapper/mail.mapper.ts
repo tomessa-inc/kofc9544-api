@@ -52,6 +52,7 @@ export class MailMapper {
     }
 
     async setupEmail(data, emailType = '') {
+        console.log("in setupEmail")
         let params = {
             "contact" :  [
                 this.PARAMS_MESSAGE, this.PARAMS_EMAIL_TYPE, this.PARAMS_NAME, this.PARAMS_EMAIL
