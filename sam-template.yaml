@@ -93,6 +93,13 @@ Resources:
             MemorySize: 1024
             Timeout: 30
             Events:
+                GolfRegister:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/register
+                        Method: ANY
+
                 Mail:
                     Type: Api
                     Properties:
