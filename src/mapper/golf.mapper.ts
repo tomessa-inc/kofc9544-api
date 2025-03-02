@@ -39,6 +39,24 @@ export class GolfMapper extends BaseMapper {
         console.log("the registration")
         console.log(params)
         try {
+            for (let x=0; x< params.players.length; x++) {
+                const playerObject = {
+                    name: params.players[x].player,
+                    email: params.players[x].email,
+                    phone: params.players[x].phone,
+                    individual: params.individual,
+                    TeamId: params.teamId ?? null,
+                    allergies: params.players[x].allergies,
+                    createdAt: moment().format('YYYY-MM-DD'),
+                    updatedAt: moment().format('YYYY-MM-DD'),
+                };
+                console.log("playe")
+                console.log(playerObject);
+                const test2 = await Player.create(playerObject);
+                console.log("test2")
+                console.log(test2.toJSON())
+                await mailMapper.setupEmail({email_type:EmailMessaging.EMAIL_TYPE_SEND_ID, data: test2.toJSON()})
+            }/*
             const test = params.players.map( async (player) => {
 
                 const playerObject = {
@@ -60,14 +78,14 @@ export class GolfMapper extends BaseMapper {
              ///   await mailMapper.apiSendMail()
                 return test2.toJSON()
 
-            })
+            }) */
 
-            console.log("the testing stuff")
-            console.log(test);
+         //   console.log("the testing stuff")
+           // console.log(test);
           //  test.email_type = EmailMessaging.EMAIL_TYPE_SEND_ID
             
 
-            return test
+            return true
         } catch (error) {
             console.log("the error here")
             console.log(error);
