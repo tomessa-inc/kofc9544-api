@@ -70,7 +70,7 @@ export class GolfController {
 
         //   await MailController.apiPostSendMail(req, res, next)
 
-        return res.status(200).json({ success: false, msg: "Registration successful" })
+        return res.status(200).json({ success: true, msg: "Registration successful" })
 
     }
 
