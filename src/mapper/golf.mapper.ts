@@ -39,7 +39,7 @@ export class GolfMapper extends BaseMapper {
         console.log("the registration")
         console.log(params)
         try {
-            const test =  await params.players.map( async (player) => {
+            const test = params.players.map( async (player) => {
 
                 const playerObject = {
                     name: player.player,
