@@ -44,10 +44,12 @@ export class TeamMapper extends BaseMapper {
                 createdAt: moment().format('YYYY-MM-DD'),
                 updatedAt: moment().format('YYYY-MM-DD'),
             };
-
-
+            console.log(team)
+            console.log("abuot to be entered in")
             const id = await Team.create(team);
-
+            console.log("the id")
+            console.log(id)
+            console.log("inserted in")
             return {success: true, data: id.toJSON()}
         } catch (error) {
             return {success: false, message: `Team name "${teamName}" already exists`};

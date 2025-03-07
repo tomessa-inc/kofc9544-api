@@ -53,14 +53,15 @@ export class GolfController {
                return res.status(500).json({ error_main:"Team name already exists" })
            }
         }
+
         console.log("about to crate reg")
-        const too = await golfMapper.createPlayerRegistration(optionsPlayer);
+        const too =  golfMapper.createPlayerRegistration(optionsPlayer);
         console.log("too");
         console.log(too);
         delete(req.body["individual"])
 
 
-        await mailMapper.setupEmail({email_type:EmailMessaging.EMAIL_TYPE_REGISTER, data: req.body})
+        // mailMapper.setupEmail({email_type:EmailMessaging.EMAIL_TYPE_REGISTER, data: req.body})
        // await mailMapper.apiSendMail();
 
 
@@ -71,7 +72,6 @@ export class GolfController {
         //   await MailController.apiPostSendMail(req, res, next)
 
         return res.status(200).json({ success: true, msg: "Registration successful" })
-
     }
 
     /**
