@@ -55,13 +55,13 @@ export class GolfController {
         }
 
         console.log("about to crate reg")
-        const too =  await golfMapper.createPlayerRegistration(optionsPlayer);
+        const too =  golfMapper.createPlayerRegistration(optionsPlayer);
         console.log("too");
         console.log(too);
         delete(req.body["individual"])
 
 
-        // mailMapper.setupEmail({email_type:EmailMessaging.EMAIL_TYPE_REGISTER, data: req.body})
+        mailMapper.setupEmail({email_type:EmailMessaging.EMAIL_TYPE_REGISTER, data: req.body})
        // await mailMapper.apiSendMail();
 
 
