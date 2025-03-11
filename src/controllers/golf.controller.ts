@@ -31,22 +31,13 @@ export class GolfController {
 
         if (optionsPlayer.players.length >= 2) {
            team =  await teamMapper.createTeamRegistration(optionsPlayer);
-           console.log("teamsssss")
-           console.log(team);
-
 
            if (!team.success) {
                return res.status(200).json({ success: team.success, msg: team.message })
            }
 
-           console.log("arrived")
-            console.log(team);
-           console.log(team.data.captain)
-           console.log(optionsPlayer);
-           console.log(optionsPlayer.players[0].player)
-
            if (team.data.captain === optionsPlayer.players[0].player) {
-               console.log('it good')
+
                optionsPlayer.teamId = team.id;
                optionsPlayer.individual = false;
            } else {
@@ -54,22 +45,9 @@ export class GolfController {
            }
         }
 
-        console.log("about to crate reg")
-        const too =  golfMapper.createPlayerRegistration(optionsPlayer);
-        console.log("too");
-        console.log(too);
-        delete(req.body["individual"])
-
+       golfMapper.createPlayerRegistration(optionsPlayer);
 
         mailMapper.setupEmail({email_type:EmailMessaging.EMAIL_TYPE_REGISTER, data: req.body})
-       // await mailMapper.apiSendMail();
-
-
-
-//        await golfMapper.createTeamRegistration(optionsPlayer);
-   //     await golfMapper.createPlayerRegistration(optionsPlayer);
-
-        //   await MailController.apiPostSendMail(req, res, next)
 
         return res.status(200).json({ success: true, msg: "Registration successful" })
     }
