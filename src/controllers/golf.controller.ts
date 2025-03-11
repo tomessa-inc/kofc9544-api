@@ -55,7 +55,7 @@ export class GolfController {
         }
 
         console.log("about to crate reg")
-        const too =  golfMapper.createPlayerRegistration(optionsPlayer);
+        const too =  await golfMapper.createPlayerRegistration(optionsPlayer);
         console.log("too");
         console.log(too);
         delete(req.body["individual"])
