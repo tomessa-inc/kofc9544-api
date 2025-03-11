@@ -246,7 +246,7 @@ export class MailMapper {
             case EmailMessaging.EMAIL_TYPE_VOLUNTEER:
                 this._params.Destination.ToAddresses = [];
                 this._params.Destination.ToAddresses.push('tcruicksh@gmail.com');
-                this._params.Destination.ToAddresses.push('resolvewithmarc@sympatico.ca');
+                this._params.Destination.ToAddresses.push('jpopulus@rogers.com');
                 await this.formatBody(body);
                 this._SUBJECT_CONTENT = EmailMessaging.VOLUNTEER_SUBJECT;
                 this._HTML_CONTENT = EmailMessaging.VOLUNTEER_CONTENT_HTML;
@@ -263,6 +263,7 @@ export class MailMapper {
                 this._params.Destination.ToAddresses = [];
                 this._params.Destination.ToAddresses.push('tcruicksh@gmail.com');
                 this._params.Destination.ToAddresses.push('bmilliere@sympatico.ca');
+                this._params.Destination.ToAddresses.push('resolvewithmarc@sympatico.ca');
                 this._SUBJECT_CONTENT = EmailMessaging.SPONSOR_SUBJECT;
                 this._HTML_CONTENT = EmailMessaging.SPONSOR_CONTENT_HTML;
                 this._TEXT_CONTENT = EmailMessaging.SPONSOR_CONTENT_TEXT;
