@@ -79,6 +79,22 @@ Resources:
                 - image/jpeg
                 - multipart/form-data
 
+    MyRDSProxy:
+        Type: AWS::RDS::DBProxy
+        Properties:
+            DBProxyName: my-rds-proxy
+            EngineFamily: MYSQL
+            RoleArn: !GetAtt ProxyRole.Arn
+            Auth:
+                - AuthScheme: SECRETS
+                  SecretArn: !Ref MyRDSSecret
+                  IAMAuth: DISABLED
+            VpcSubnetIds:
+                - !Ref PrivateSubnet1
+                - !Ref PrivateSubnet2
+            VpcSecurityGroupIds:
+                - !Ref ProxySecurityGroup
+
     ExpressLambdaFunction:
         Type: AWS::Serverless::Function
         Properties:
@@ -86,6 +102,13 @@ Resources:
             PackageType: Zip
             Runtime: nodejs20.x
             Handler: lambda.handler
+            VpcConfig:
+                SecurityGroupIds:
+                    - sg-035f0e525e927dadb
+                SubnetIds:
+                    - subnet-0a0938d82b952193c
+                    - subnet-0cbab0a7ac2ff9c9c
+                    - subnet-05e7d4fefa0daab59
             Environment:
                 Variables:
                     DB_NAME: !Ref DbName
