@@ -77,12 +77,7 @@ export class BaseMapper {
 
         const sequelizeApi = new SequelizeApi(this._DATABASE_NAME,process.env.DB_USERNAME,process.env.DB_PASSWORD, options);//.initialize();
         this._SEQUELIZE = sequelizeApi.initialize()
-        this._SEQUELIZE.authenticate().then(() => {
-            console.log("Connection has been established successfully.");
-        })
-            .catch((error) => {
-                console.error("Unable to connect to the database: ", error);
-            });
+
      }
 
     public async processArray(listing) {
