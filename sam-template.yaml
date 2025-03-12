@@ -299,7 +299,7 @@ Resources:
 
 
             Policies:
-                - AWSLambdaVPCAccessExecutionRole:
+                - AWSLambdaVPCAccessExecutionRole
                 - SESBulkTemplatedCrudPolicy_v2:
                       IdentityName: kofc9544.ca
                       TemplateName: DefaultEmailTemplate
