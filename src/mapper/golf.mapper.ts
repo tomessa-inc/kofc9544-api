@@ -58,9 +58,8 @@ export class GolfMapper extends BaseMapper {
                 console.log(playerObject)
                 console.log("Player")
 
-                console.log(Player.toString())
-                console.log("Player2")
                 const test2 = await Player.create(playerObject);
+
                 console.log("after before")
                 console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
         //        console.log("test2")
@@ -100,6 +99,10 @@ export class GolfMapper extends BaseMapper {
             console.log("the error here")
             console.log(error);
             return error
+        } finally {
+            // close any opened connections during the invocation
+            // this will wait for any in-progress queries to finish before closing the connections
+            await this.SEQUELIZE.connectionManager.close();
         }
 
     }
