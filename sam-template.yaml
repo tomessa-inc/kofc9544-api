@@ -301,8 +301,6 @@ Resources:
                         RestApiId: !Ref ExpressApi
                         Path: /event/publish
                         Method: ANY
-
-            ManagedPolicyArns:
             Policies:
                 - SESBulkTemplatedCrudPolicy_v2:
                       IdentityName: kofc9544.ca
