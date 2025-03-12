@@ -303,9 +303,6 @@ Resources:
                         Method: ANY
 
             ManagedPolicyArns:
-                - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-                - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
-                - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
             Policies:
                 - SESBulkTemplatedCrudPolicy_v2:
                       IdentityName: kofc9544.ca
@@ -320,7 +317,6 @@ Resources:
                             - tag:GetResources
                             - cloudfront:CreateInvalidation
                         Resource: '*'
-
     MyApiRoute53RecordSetGroup:
         Type: AWS::Route53::RecordSetGroup
    #     Condition: UseDomainName
