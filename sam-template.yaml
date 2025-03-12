@@ -50,8 +50,13 @@ Parameters:
         Default: $TokenSecret
     CacheId:
         Type: String
-        Description: Token Secret
+        Description: Cache ID
         Default: $CacheId
+
+    DEBUG:
+        Type: String
+        Description: Cache ID
+        Default: sequelize:sql*
 
 Conditions:
     UseDomainName: !Not
@@ -90,6 +95,7 @@ Resources:
                     DB_PASSWORD: !Ref DbPassword
                     NODE_ENV: !Ref NodeEnv
                     TOKEN_SECRET: !Ref TokenSecret
+                    DEBUG: !Ref DEBUG
             MemorySize: 1024
             Timeout: 30
             Events:
