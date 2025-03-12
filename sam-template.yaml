@@ -79,18 +79,6 @@ Resources:
                 - image/jpeg
                 - multipart/form-data
 
-    MyRDSProxy:
-        Type: AWS::RDS::DBProxy
-        Properties:
-            DBProxyName: my-rds-proxy
-            EngineFamily: MYSQL
-            VpcSubnetIds:
-                - subnet-0a0938d82b952193c
-                - subnet-0cbab0a7ac2ff9c9c
-                - subnet-05e7d4fefa0daab59
-            VpcSecurityGroupIds:
-                - sg-0d973cfc6f15c1695
-
     ExpressLambdaFunction:
         Type: AWS::Serverless::Function
         Properties:
