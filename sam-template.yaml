@@ -307,6 +307,7 @@ Resources:
                         Path: /event/publish
                         Method: ANY
             Policies:
+                - VPCAccessPolicy: {}
                 - SESBulkTemplatedCrudPolicy_v2:
                       IdentityName: kofc9544.ca
                       TemplateName: DefaultEmailTemplate
