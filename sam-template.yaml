@@ -84,16 +84,12 @@ Resources:
         Properties:
             DBProxyName: my-rds-proxy
             EngineFamily: MYSQL
-            RoleArn: !GetAtt ProxyRole.Arn
-            Auth:
-                - AuthScheme: SECRETS
-                  SecretArn: !Ref MyRDSSecret
-                  IAMAuth: DISABLED
             VpcSubnetIds:
-                - !Ref PrivateSubnet1
-                - !Ref PrivateSubnet2
+                - subnet-0a0938d82b952193c
+                - subnet-0cbab0a7ac2ff9c9c
+                - subnet-05e7d4fefa0daab59
             VpcSecurityGroupIds:
-                - !Ref ProxySecurityGroup
+                - sg-0d973cfc6f15c1695
 
     ExpressLambdaFunction:
         Type: AWS::Serverless::Function
