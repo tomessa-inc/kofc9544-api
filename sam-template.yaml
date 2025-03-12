@@ -88,6 +88,11 @@ Resources:
                 - IpProtocol: -1
                   CidrIp: 0.0.0.0/0
 
+            SecurityGroupIngress:
+                - IpProtocol: -1
+                  CidrIp: 0.0.0.0/0
+
+
     ExpressLambdaFunction:
         Type: AWS::Serverless::Function
         Properties:
