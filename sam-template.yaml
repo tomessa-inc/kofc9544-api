@@ -122,7 +122,6 @@ Resources:
                     - subnet-075daa3ab0302be27
                     - subnet-043c7ef5c5cf30397
                     - subnet-0cfc8e4086a9f81f7
-                    -
             Events:
                 GolfRegister:
                     Type: Api
