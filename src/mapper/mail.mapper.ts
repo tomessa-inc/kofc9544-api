@@ -7,6 +7,7 @@ import { emailFooter } from '../data/email.footer';
 import util, {format, inspect} from 'util';
 import { EmailMessaging } from '../models/EmailMessaging';
 import { imageService } from '../service';
+import bodyParser from "body-parser";
 
 export interface Params {
     //    Destination
@@ -293,7 +294,7 @@ export class MailMapper {
     }
 
     checkObject(data) {
-        if (typeof data === 'string' || data === undefined) {
+        if (typeof data === 'string' || data === undefined || typeof data === "boolean") {
             return data;
         }
 
