@@ -304,7 +304,6 @@ Resources:
 
 
             Policies:
-                - AWSLambdaVPCAccessExecutionRole
                 - SESBulkTemplatedCrudPolicy_v2:
                       IdentityName: kofc9544.ca
                       TemplateName: DefaultEmailTemplate
@@ -318,6 +317,7 @@ Resources:
                             - tag:GetResources
                             - cloudfront:CreateInvalidation
                         Resource: '*'
+                - AWSLambdaVPCAccessExecutionRole
 
     MyApiRoute53RecordSetGroup:
         Type: AWS::Route53::RecordSetGroup
