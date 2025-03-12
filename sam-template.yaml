@@ -113,6 +113,7 @@ Resources:
             MemorySize: 1024
             Timeout: 30
             VpcConfig:
+                Ipv6AllowedForDualStack: false
                 SecurityGroupIds:
                     - !Ref LambdaSecurityGroup
                 SubnetIds:
