@@ -48,9 +48,9 @@ export class GolfMapper extends BaseMapper {
                     phone: params.players[x].phone,
                     individual: params.individual,
                     TeamId: params.teamId ?? null,
-                    allergies: params.players[x].allergies,
-                    createdAt: moment().format('YYYY-MM-DD'),
-                    updatedAt: moment().format('YYYY-MM-DD'),
+                    allergies: params.players[x].allergies
+//                    createdAt: moment().format('YYYY-MM-DD'),
+  //                  updatedAt: moment().format('YYYY-MM-DD'),
                 };
     //            console.log("playe")
       //          console.log(playerObject);
