@@ -8,6 +8,7 @@ import {Team} from "../models/Team";
 import {Op} from "sequelize";
 
 
+
 export class TeamMapper extends BaseMapper {
     private _PARAMS_NAME: string = 'name';
     private _DEFAULT_SORT: string = 'name';
@@ -35,8 +36,6 @@ export class TeamMapper extends BaseMapper {
                 teamName = params.players[0].player
             }
 
-            console.log("the team name")
-            console.log(teamName)
             const team = {
                 id: teamName.replace(/\s+/g, '-').toLowerCase(),
                 name: teamName,
@@ -44,12 +43,12 @@ export class TeamMapper extends BaseMapper {
                 createdAt: moment().format('YYYY-MM-DD'),
                 updatedAt: moment().format('YYYY-MM-DD'),
             };
-            console.log(team)
-            console.log("abuot to be entered in")
+            console.log("before")
+            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
             const id = await Team.create(team);
-            console.log("the id")
-            console.log(id)
-            console.log("inserted in")
+            console.log("after")
+            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
+
             return {success: true, data: id.toJSON()}
         } catch (error) {
             return {success: false, message: `Team name "${teamName}" already exists`};

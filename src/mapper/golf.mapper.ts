@@ -36,8 +36,8 @@ export class GolfMapper extends BaseMapper {
 
     public async createPlayerRegistration(params: OptionsPlayer) {
 
-        console.log("the registration")
-        console.log(params)
+//        console.log("the registration")
+  //      console.log(params)
         try {
             for (let x=0; x< params.players.length; x++) {
                 const playerObject = {
@@ -50,11 +50,15 @@ export class GolfMapper extends BaseMapper {
                     createdAt: moment().format('YYYY-MM-DD'),
                     updatedAt: moment().format('YYYY-MM-DD'),
                 };
-                console.log("playe")
-                console.log(playerObject);
+    //            console.log("playe")
+      //          console.log(playerObject);
+                console.log("before player")
+                console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
                 const test2 = await Player.create(playerObject);
-                console.log("test2")
-                console.log(test2.toJSON())
+                console.log("after before")
+                console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
+        //        console.log("test2")
+         //       console.log(test2.toJSON())
                 await mailMapper.setupEmail({email_type:EmailMessaging.EMAIL_TYPE_SEND_ID, data: test2.toJSON()})
             }/*
             const test = params.players.map( async (player) => {

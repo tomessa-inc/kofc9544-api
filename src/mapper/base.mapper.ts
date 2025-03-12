@@ -48,6 +48,8 @@ export class BaseMapper {
     private _PARAM_FRONTCLOUD = 'https://images.kofc9544.ca'
     private _SEQUELIZE;
 
+
+
     /**
      * Initalizing the Sequelize instance with the configuration data taken from file
      * @param dbConfig
@@ -70,6 +72,7 @@ export class BaseMapper {
             dialectOptions: {
                 connectTimeout: 20000
             },
+          //  logging: console.log,
         }
 
         const sequelizeApi = new SequelizeApi(this._DATABASE_NAME,process.env.DB_USERNAME,process.env.DB_PASSWORD, options);//.initialize();

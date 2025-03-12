@@ -53,7 +53,6 @@ export class MailMapper {
     }
 
     async setupEmail(data, emailType = '') {
-        console.log("in setupEmail")
         let params = {
             "contact" :  [
                 this.PARAMS_MESSAGE, this.PARAMS_EMAIL_TYPE, this.PARAMS_NAME, this.PARAMS_EMAIL
@@ -80,8 +79,6 @@ export class MailMapper {
         let valid = true;
         try {
             const body = data.data;
-            console.log(body);
-            console.log(data);
 
             if (!body.email_type){
                 body.email_type = data[this.PARAMS_EMAIL_TYPE]
@@ -89,24 +86,17 @@ export class MailMapper {
 
             const paramCheck:string[] = params[body[this.PARAMS_EMAIL_TYPE]]
 
-            console.log("paramcheck")
-            console.log(paramCheck)
             Object.values(paramCheck).map(param   => {
                 if (!body[param]) {
                     valid = false;
                     missingParam.push(param);
                 }
             });
-                console.log("valid")
-            console.log(valid);
-                console.log(body)
+
             if (valid) {
-                console.log("preparep")
 
                 await this.prepareEmail(body);
-                console.log("after prepare")
                 const retVal = await this.apiSendMail();
-                console.log("sent")
                 if (retVal['$metadata']['httpStatusCode'] === 200) {
                     return {success:true, data: retVal}
 
@@ -130,14 +120,11 @@ export class MailMapper {
      */
     async prepareEmail(body) {
         this._params = emailParams;
-      //  await this.formatBody(body);
         this._params.Source = 'KOFC Site Admin <test@kofc9544.ca>';
         this._params.ReplyToAddresses = [];
         this._params.Template = 'DefaultEmailTemplate';
         this._PARAMS_CONTENT = '';
 
-        console.log("the body in prepared")
-        console.log(body);
         switch (body[this._PARAMS_EMAIL_TYPE]) {
             case EmailMessaging.EMAIL_TYPE_CALENDER_EVENT:
                 this._params.Destination.ToAddresses.push(body.email);
@@ -228,8 +215,6 @@ export class MailMapper {
                 break;
 
             case EmailMessaging.EMAIL_TYPE_SEND_ID:
-                console.log("testing stuff")
-                console.log(body);
                 this._params.Destination.ToAddresses = [];
                 this._params.Destination.ToAddresses.push(body['email']);
                 this._params.Destination.BccAddresses.push('tomc@tomvisions.com');
@@ -281,16 +266,11 @@ export class MailMapper {
 
     async formatBody(body) {
         this._PARAMS_CONTENT = '';
-        console.log("body for format body")
-        console.log(body)
 
         Object.keys(body).map((key) => {
-            console.log(key);
             this._PARAMS_CONTENT = this._PARAMS_CONTENT.concat(format(EmailMessaging.PARAMS_CONTENT, key, this.checkObject(body[key])));
 
         });
-        console.log("the content");
-        console.log(this._PARAMS_CONTENT);
     }
 
     checkObject(data) {
@@ -299,8 +279,7 @@ export class MailMapper {
         }
 
         let stringData = "";
-        console.log("data")
-        console.log(data);
+
         for (let row of data) {
             let format = `<p>player: ${row['player']}</p><p>email: ${row['email']}</p><p>phone: ${row['phone']}</p><p>allergies: ${row['allergies']}</p>`;
             stringData = stringData.concat(" ", format);
