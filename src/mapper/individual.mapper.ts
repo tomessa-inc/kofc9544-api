@@ -13,8 +13,8 @@ export class IndividualMapper extends BaseMapper {
     constructor() {
         super();
         this.DATABASE_NAME = 'kofc_golf';
-        this.initializeSequelize()
-        this.initializeIndividuals();
+    //    this.initializeSequelize()
+     //   this.initializeIndividuals();
     }
 
 
