@@ -54,6 +54,11 @@ export class GolfMapper extends BaseMapper {
       //          console.log(playerObject);
                 console.log("before player")
                 console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
+                console.log("playerObject")
+                console.log(playerObject)
+                console.log("Player")
+
+                console.log(Player)
                 const test2 = await Player.create(playerObject);
                 console.log("after before")
                 console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
