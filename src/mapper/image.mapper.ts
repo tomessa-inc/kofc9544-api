@@ -14,8 +14,8 @@ export class ImageMapper extends BaseMapper {
     constructor() {
         super();
         this.DATABASE_NAME = 'kofc_golf';
-        this.initializeSequelize()
-        this.initializeImage();
+     //   this.initializeSequelize()
+      //  this.initializeImage();
     }
 
 

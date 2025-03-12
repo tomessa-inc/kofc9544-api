@@ -24,8 +24,8 @@ export class AccessMapper extends BaseMapper {
     constructor() {
         super();
         this.DATABASE_NAME = 'kofc_golf';
-        this.initializeSequelize()
-        this.initializeUsers();
+     //   this.initializeSequelize()
+     //   this.initializeUsers();
     }
 
     private async initializeUsers() {

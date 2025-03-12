@@ -13,8 +13,8 @@ export class TagMapper extends BaseMapper {
     constructor() {
         super();
         this.DATABASE_NAME = 'kofc_golf';
-        this.initializeSequelize()
-        this.initializeTag();
+ //       this.initializeSequelize()
+   //     this.initializeTag();
     }
 
 

@@ -1,7 +1,7 @@
 import { BaseMapper } from ".";
 import moment from "moment";
 import * as uuid from 'uuid';
-import {Player} from "../models/Player";
+import {Player2} from "../models/Player2";
 import {GalleryTag} from "../models/GalleryTag";
 import {OptionsPlayer} from "../controllers/golf.controller";
 import {Team} from "../models/Team";
@@ -17,8 +17,8 @@ export class TeamMapper extends BaseMapper {
     constructor() {
         super();
         this.DATABASE_NAME = 'kofc_golf';
-        this.initializeSequelize()
-        this.initializeTeam();
+        //this.initializeSequelize()
+        //this.initializeTeam();
     }
 
 
@@ -153,7 +153,7 @@ export class TeamMapper extends BaseMapper {
                     updatedAt: moment().format('YYYY-MM-DD'),
                 };
 
-                return await Player.findOrCreate({ where: { name: player.player, email: player.email }, defaults: playerObject });
+                return await Player2.findOrCreate({ where: { name: player.player, email: player.email }, defaults: playerObject });
 
             })
 

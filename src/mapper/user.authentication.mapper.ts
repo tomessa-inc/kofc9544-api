@@ -37,8 +37,8 @@ export class UserAuthenticationMapper extends BaseMapper {
     constructor() {
         super();
         this.DATABASE_NAME = 'kofc_golf';
-        this.initializeSequelize()
-        this.initializeUserAuthentication();
+   //     this.initializeSequelize()
+     //   this.initializeUserAuthentication();
     }
 
     private async initializeUserAuthentication() {

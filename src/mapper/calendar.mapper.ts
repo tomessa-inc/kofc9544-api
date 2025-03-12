@@ -154,8 +154,8 @@ export class CalendarMapper extends BaseMapper {
     constructor() {
         super();
         this.DATABASE_NAME = 'kofc_golf';
-        this.initializeSequelize()
-        this.initializeCalendar();
+ //       this.initializeSequelize()
+   //     this.initializeCalendar();
     }
 
 

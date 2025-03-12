@@ -1,7 +1,8 @@
 import {BaseMapper, mailMapper, paramsOptions} from ".";
 import moment from "moment";
 import * as uuid from 'uuid';
-import {Player} from "../models/Player";
+import {Player2} from "../models/Player2";
+import {player} from  "../models/Player"
 import {GalleryTag} from "../models/GalleryTag";
 import {OptionsPlayer} from "../controllers/golf.controller";
 import {Tag} from "../models/Tag";
@@ -19,17 +20,18 @@ export class GolfMapper extends BaseMapper {
     constructor() {
         super();
         this.DATABASE_NAME = 'kofc_golf';
-        this.initializeSequelize()
-        this.initializePlayer();
+//        this.initializeSequelize()
+        this.initializeDrizzle()
+ //       this.initializePlayer();
     }
 
 
 
     private async initializePlayer() {
 
-        const team = Team.initialize(this.SEQUELIZE);
+       // const team = Team.initialize(this.SEQUELIZE);
 
-        Player.initialize(this.SEQUELIZE, team);
+     //   Player2.initialize(this.SEQUELIZE, team);
     }
 
 
@@ -58,13 +60,15 @@ export class GolfMapper extends BaseMapper {
                 console.log(playerObject)
                 console.log("Player")
 
-                const test2 = await Player.create(playerObject);
-
+                const test2 = await this.DRIZZLE.insert(player).values(playerObject);
+                console.log("user insert")
+                console.log(test2);
                 console.log("after before")
+
                 console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
         //        console.log("test2")
          //       console.log(test2.toJSON())
-                await mailMapper.setupEmail({email_type:EmailMessaging.EMAIL_TYPE_SEND_ID, data: test2.toJSON()})
+                await mailMapper.setupEmail({email_type:EmailMessaging.EMAIL_TYPE_SEND_ID, data: playerObject})
             }/*
             const test = params.players.map( async (player) => {
 
@@ -80,7 +84,7 @@ export class GolfMapper extends BaseMapper {
                 };
                 console.log("playe")
                 console.log(playerObject);
-                const test2 = await Player.create(playerObject);
+                const test2 = await Player2.create(playerObject);
                 console.log("test2")
                 console.log(test2.toJSON())
                 await mailMapper.setupEmail({email_type:EmailMessaging.EMAIL_TYPE_SEND_ID, data: test2.toJSON()})
@@ -102,7 +106,7 @@ export class GolfMapper extends BaseMapper {
         } finally {
             // close any opened connections during the invocation
             // this will wait for any in-progress queries to finish before closing the connections
-            await this.SEQUELIZE.connectionManager.close();
+        //    await this.SEQUELIZE.connectionManager.close();
         }
 
     }
@@ -120,7 +124,7 @@ export class GolfMapper extends BaseMapper {
                 include: [
                     {
                         Model: Team,
-                        association: Player.Team,
+                        association: Player2.Team,
                         required: false
                     },
                 ],
@@ -133,7 +137,7 @@ export class GolfMapper extends BaseMapper {
             console.log("players")
             console.log(players)
 
-            return await Player.findAll(players).then(data => {
+            return await Player2.findAll(players).then(data => {
                 console.log("the players")
                 console.log(data);
                 return this.processArray(data);
@@ -167,7 +171,7 @@ export class GolfMapper extends BaseMapper {
                 offset: offset,
                 limit: params.pageSize,
             }
-            return await Player.findAll(golfConfig).then(galleries => {
+            return await Player2.findAll(golfConfig).then(galleries => {
                 return this.processArray(galleries);
             }).catch(err => {
                 console.log('the error');
@@ -201,7 +205,7 @@ export class GolfMapper extends BaseMapper {
                 offset: offset,
                 limit: params.pageSize,
             }
-            return await Player.findAll(golfConfig).then(galleries => {
+            return await Player2.findAll(golfConfig).then(galleries => {
                 return this.processArray(galleries);
             }).catch(err => {
                 console.log('the error');

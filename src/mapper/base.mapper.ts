@@ -2,10 +2,12 @@ import nJwt from 'njwt';
 import dotenv from "dotenv";
 import * as uuid from 'uuid';
 import { s3Mapper } from './s3.mapper';
-import {SequelizeApi} from "../db/Sequelize";
+//import {SequelizeApi} from "../db/Sequelize";
 import process from "process";
 import {Promise, Schema} from "mongoose";
+import {DrizzleAPI} from "../db/Drizzle";
 import * as console from "node:console";
+import {size} from "lodash-es";
 
 //import {Sequelize} from "sequelize";
 
@@ -47,30 +49,29 @@ export class BaseMapper {
     private _DATABASE_NAME: string = 'kofc_golf';
     private _PARAM_FRONTCLOUD = 'https://images.kofc9544.ca'
     private _SEQUELIZE;
-
-
+    private _DRIZZLE;
 
     /**
      * Initalizing the Sequelize instance with the configuration data taken from file
      * @param dbConfig
      */
-    public initializeSequelize() {
-/*        let options = JSON.parse(`{
-                                            "host": "${process.env.DB_HOST}", 
-                                            "dialect": "mysql", 
-                                            "port":3306,  
-                                            "dialectOptions": {
-                                                "options": {
-                                                    "requestTimeout": 20000
-                                                }
-                                            },
-                                        }`); */
+    public initializeDrizzle() {
+        /*        let options = JSON.parse(`{
+                                                    "host": "${process.env.DB_HOST}",
+                                                    "dialect": "mysql",
+                                                    "port":3306,
+                                                    "dialectOptions": {
+                                                        "options": {
+                                                            "requestTimeout": 20000
+                                                        }
+                                                    },
+                                                }`); */
         let options = {
             host: process.env.DB_HOST,
             dialect: "mysql",
             port:3306,
             dialectOptions: {
-                connectTimeout: 20000
+                connectTimeout:320000
             },
             pool: {
                 /*
@@ -103,16 +104,12 @@ export class BaseMapper {
                  */
                 evict: 15,
             },
-          //  logging: console.log,
+            //  logging: console.log,
         }
 
-        const sequelizeApi = new SequelizeApi(this._DATABASE_NAME,process.env.DB_USERNAME,process.env.DB_PASSWORD, options);//.initialize();
-        this._SEQUELIZE = sequelizeApi.initialize()
-        this._SEQUELIZE.authenticate();
-        this._SEQUELIZE.connectionManager.initPools()
-
-
-     }
+        const drizzleAPI = new DrizzleAPI(this._DATABASE_NAME,process.env.DB_USERNAME,process.env.DB_PASSWORD,process.env.DB_HOST);//.initialize();
+        this._DRIZZLE = drizzleAPI.initialize()
+    }
 
     public async processArray(listing) {
      //   console.log('listing')
@@ -298,6 +295,10 @@ export class BaseMapper {
 
     get SEQUELIZE() {
         return this._SEQUELIZE;
+    }
+
+    get DRIZZLE() {
+        return this._DRIZZLE;
     }
 }
 

@@ -1,78 +1,19 @@
-"use strict";
+import { drizzle } from 'drizzle-orm/mysql2';
+import { mysqlTable, serial, varchar, int, boolean, DatetimeFsp, MySqlTimestamp, timestamp } from 'drizzle-orm/mysql-core';
+import mysql from 'mysql2/promise';
+import {DataTypes} from "../db";
 
-//import { GalleryTag } from "./GalleryTag";
 
-import Sequelize from "sequelize";
-
-const {DataTypes, Model} = require('../db');
-
-class Player extends Model
-{
-    /**
-     *
-     * @param sequelize
-     */
-    public static initialize(sequelize, team) {
-        const player = this.init({
-            id: {
-                type: Sequelize.INTEGER,
-                autoIncrement: true,
-                primaryKey: true
-            },
-            name: {
-                type: DataTypes.STRING,
-            },
-            email: {
-                type: DataTypes.STRING,
-            },
-            phone: {
-                type: DataTypes.STRING,
-            },
-            individual: {
-                type: DataTypes.BOOLEAN,
-            },
-            TeamId: {
-                type: DataTypes.STRING,
-            },
-            allergies: {
-                type: DataTypes.STRING,
-            },
-            payment: {
-                type: DataTypes.BOOLEAN,
-            },
-            createdAt: {
-                type: DataTypes.DATE,
-            },
-            updatedAt: {
-                type: DataTypes.DATE,
-            }
-        }, {
-            modelName: 'Player', sequelize: sequelize, tableName:"player"
-        });
-
-        player.Team = Player.hasOne(team,  {sourceKey: "TeamId", as: "team", foreignKey: 'id', onUpdate: 'cascade'})
-    }
-}
-/*
-Tag.init({
-    id: {
-        type: DataTypes.STRING,
-        primaryKey: true
-    },
-    name: {
-        type: DataTypes.STRING,
-    },
-    description: {
-        type: DataTypes.STRING,
-    },
-    createdAt: {
-        type: DataTypes.DATE,
-    },
-    updatedAt: {
-        type: DataTypes.DATE,
-    }
-}, {
-    modelName: 'Tag', sequelize: sequelize, tableName:"tag"
-});
-*/
-export {Player}
+// Define your schema
+export const player = mysqlTable('player', {
+    id: serial('id').primaryKey(),
+    name: varchar('name', {length: 255}).notNull(),
+    email: varchar('email', {length: 255}).notNull(),
+    phone: varchar('phone', {length: 255}).notNull(),
+    individual: varchar('individual', {length: 255}),
+    TeamId: varchar('TeamId', {length: 255}),
+    allergies: varchar('allergies', {length: 255}),
+    payment: boolean('payment')
+//    createdAt:timestamp().defaultNow(),
+  //  updatedAt: timestamp().defaultNow(),
+})
