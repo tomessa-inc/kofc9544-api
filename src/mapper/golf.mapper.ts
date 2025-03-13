@@ -71,7 +71,9 @@ export class GolfMapper extends BaseMapper {
                 const test =  await mailMapper.setupEmail({email_type:EmailMessaging.EMAIL_TYPE_SEND_ID, data: playerObject})
                 console.log("test")
                 console.log(test)
-            }/*
+            }
+            console.log("after for loop")
+            /*
             const test = params.players.map( async (player) => {
 
                 const playerObject = {
