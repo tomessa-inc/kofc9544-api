@@ -11,6 +11,18 @@ import {Team2} from "../models/Team2";
 import {Image2} from "../models/Image2";
 import {EmailMessaging} from "../models/EmailMessaging";
 
+export interface PlayerObject {
+    id?:number,
+    name:string,
+    email: string,
+    phone: string
+    individual: boolean
+    TeamId: string,
+    allergies: string
+//                    createdAt: moment().format('YYYY-MM-DD'),
+    //                  updatedAt: moment().format('YYYY-MM-DD'),
+}
+
 export class GolfMapper extends BaseMapper {
     private _PARAMS_NAME: string = 'name';
     private _DEFAULT_SORT: string = 'name';
@@ -42,7 +54,7 @@ export class GolfMapper extends BaseMapper {
   //      console.log(params)
         try {
             for (let x=0; x< params.players.length; x++) {
-                const playerObject = {
+                const playerObject :PlayerObject  = {
                     name: params.players[x].player,
                     email: params.players[x].email,
                     phone: params.players[x].phone,
@@ -61,6 +73,7 @@ export class GolfMapper extends BaseMapper {
                 console.log("Player")
 
                 const test2 = await this.DRIZZLE.insert(player).values(playerObject);
+                playerObject.id = test2[0].insertId
                 console.log("user insert")
                 console.log(test2);
                 console.log("after before")
