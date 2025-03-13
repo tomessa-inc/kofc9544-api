@@ -49,7 +49,12 @@ export class MailMapper {
 
 
     constructor() {
-        this._sesClient = new SESClient({ 'region': this._REGION });
+        this._sesClient = new SESClient({ 'region': this._REGION,   httpOptions: {
+                timeout: 5000, // 5 second timeout
+                connectTimeout: 5000
+            },
+            maxRetries: 3
+        });
     }
 
     async setupEmail(data, emailType = '') {
@@ -290,7 +295,7 @@ export class MailMapper {
     async apiSendMail() {
         console.log("the params")
         console.log(this._params);
-        console.log(await this._sesClient.send(new SendTemplatedEmailCommand(this._params)))
+        console.log(await this._sesClient.send(new SendTemplatedEmailCommand(this._params)).promise())
         return await this._sesClient.send(new SendTemplatedEmailCommand(this._params));
     }
 
