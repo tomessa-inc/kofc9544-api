@@ -49,7 +49,7 @@ export class MailMapper {
 
 
     constructor() {
-        this._sesClient = new SESClient({ 'region': this._REGION })
+        this._sesClient = new SESClient({ 'region': this._REGION,  endpoint: "https://email-smtp.us-east-1.amazonaws.com", })
     }
 
     async setupEmail(data, emailType = '') {
