@@ -5,10 +5,10 @@ import {Player2} from "../models/Player2";
 import {player} from  "../models/Player"
 import {GalleryTag} from "../models/GalleryTag";
 import {OptionsPlayer} from "../controllers/golf.controller";
-import {Tag} from "../models/Tag";
-import {Gallery} from "../models/Gallery";
+import {Tag2} from "../models/Tag2";
+import {Gallery2} from "../models/Gallery2";
 import {Team} from "../models/Team";
-import {Image} from "../models/Image";
+import {Image2} from "../models/Image2";
 import {EmailMessaging} from "../models/EmailMessaging";
 
 export class GolfMapper extends BaseMapper {
@@ -100,7 +100,7 @@ export class GolfMapper extends BaseMapper {
          //   console.log("the testing stuff")
            // console.log(test);
           //  test.email_type = EmailMessaging.EMAIL_TYPE_SEND_ID
-            
+
 
             return true
         } catch (error) {
@@ -166,8 +166,8 @@ export class GolfMapper extends BaseMapper {
             const golfConfig = {
                 include: [
                     {
-                        Model: Tag,
-                        association: Gallery.Tag,
+                        Model: Tag2,
+                        association: Gallery2.Tag,
                         required: false
                     },
                 ],
@@ -200,8 +200,8 @@ export class GolfMapper extends BaseMapper {
             const golfConfig = {
                 include: [
                     {
-                        Model: Tag,
-                        association: Gallery.Tag,
+                        Model: Tag2,
+                        association: Gallery2.Tag,
                         required: false
                     },
                 ],

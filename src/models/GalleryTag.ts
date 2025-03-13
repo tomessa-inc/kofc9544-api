@@ -1,7 +1,7 @@
 "use strict";
 
-import { Gallery } from "./Gallery";
-import { Tag } from "./Tag";
+import { Gallery2 } from "./Gallery2";
+import { Tag2 } from "./Tag2";
 const {DataTypes, Model, sequelize} = require('../db');
 
 class GalleryTag extends Model {

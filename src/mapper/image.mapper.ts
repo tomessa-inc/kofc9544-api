@@ -1,9 +1,13 @@
 import { BaseMapper } from ".";
 import { paramsOptions } from ".";
-import { Gallery } from "../models/Gallery";
-import {Tag} from "../models/Tag";
+import { Gallery2 } from "../models/Gallery2";
+import {Tag2} from "../models/Tag2";
 import {GalleryTag} from "../models/GalleryTag";
-import {Image} from "../models/Image";
+import {Image2} from "../models/Image2";
+import {image} from "../models/Image";
+import {tag} from "../models/Tag"
+import { eq, and } from 'drizzle-orm';
+import {gallery} from "../models/Gallery";
 //import { sequelize } from "../db";
 
 export class ImageMapper extends BaseMapper {
@@ -14,17 +18,18 @@ export class ImageMapper extends BaseMapper {
     constructor() {
         super();
         this.DATABASE_NAME = 'kofc_golf';
+        this.initializeDrizzle()
      //   this.initializeSequelize()
       //  this.initializeImage();
     }
 
 
     private async initializeImage() {
-        const tag = Tag.initialize(this.SEQUELIZE);
+        const tag = Tag2.initialize(this.SEQUELIZE);
         const galleryTag = GalleryTag.initialize(this.SEQUELIZE, tag);
-        const gallery = Gallery.initialize(this.SEQUELIZE, tag, galleryTag)
+        const gallery = Gallery2.initialize(this.SEQUELIZE, tag, galleryTag)
 
-        Image.initialize(this.SEQUELIZE, gallery, galleryTag);
+        Image2.initialize(this.SEQUELIZE, gallery, galleryTag);
     }
 
 
@@ -60,7 +65,7 @@ export class ImageMapper extends BaseMapper {
             const imageConfig = {
                 include: [{
                     attributes: { exclude: ['ImageId', 'GalleryTagTagId'] },
-                    association: Image.Gallery,
+                    association: Image2.Gallery,
                     required: true
                 },
                 ],
@@ -69,7 +74,7 @@ export class ImageMapper extends BaseMapper {
                 },
             }
 
-            return await Image.findOrCreate(imageConfig).then(data => {
+            return await Image2.findOrCreate(imageConfig).then(data => {
                 return data[0];
             }).catch(err => {
                 return err;
@@ -80,7 +85,7 @@ export class ImageMapper extends BaseMapper {
     }
 
     public async updateOrder(galleryId: string, id:string, order:number) {
-        Image.update({
+        Image2.update({
             order: order,
         }, {
             where: {
@@ -111,7 +116,7 @@ export class ImageMapper extends BaseMapper {
             },
         }
 
-        return await Image.findAll(imagesConfig).then(images => {
+        return await Image2.findAll(imagesConfig).then(images => {
             return this.processArray(images);
         }).catch(err => {
             return err;
@@ -130,7 +135,7 @@ export class ImageMapper extends BaseMapper {
             },
         }
        // console.log(imagesConfig)
-        const image =  await Image.findOne(imagesConfig);
+        const image =  await Image2.findOne(imagesConfig);
       //  Image.
         console.log(image);
         image.set('order', number);
@@ -153,7 +158,7 @@ export class ImageMapper extends BaseMapper {
                 },
             }
 
-            const image = await Image.findOrCreate(imageConfig).then(data => {
+            const image = await Image2.findOrCreate(imageConfig).then(data => {
 
                 return data[0];
             }).catch(err => {
@@ -189,7 +194,7 @@ export class ImageMapper extends BaseMapper {
                 },
             }
 
-            return await Image.findAll(imagesConfig).then(images => {
+            return await Image2.findAll(imagesConfig).then(images => {
                 return this.processArray(images);
             }).catch(err => {
                 return err;
@@ -240,7 +245,7 @@ export class ImageMapper extends BaseMapper {
           //SELECT `Image`.`id`, `Image`.`key`, `Image`.`GalleryId`, `Image`.`name`, `Image`.`description`, `Image`.`primaryImage`, (SELECT CAST(CONCAT('[',GROUP_CONCAT(JSON_OBJECT('TagId', TagId)),']') as JSON) as tags FROM gallery_tag where gallery_tag.GalleryId = `Image`.`GalleryId`), `gallery_tag`.`TagId`, gallery.name, gallery_tag.GalleryId FROM `image` AS `Image` INNER JOIN gallery ON gallery.id = `Image`.`GalleryId` INNER JOIN gallery_tag ON gallery_tag.GalleryId = `Image`.`GalleryId`  WHERE `Image`.`primaryImage` = 1 GROUP BY `Image`.`GalleryId`;
        
           //   SELECT CAST(CONCAT('[',GROUP_CONCAT(JSON_OBJECT('TagId', TagId)),']') as JSON) as tags FROM gallery_tag where GalleryId = 'model-workshop-april-2011';
-          return await this.SEQUELIZE.query(sql).then(galleries => {
+          return await this.DRIZZLE.execute(sql).then(galleries => {
            //     console.log('galleries')
            //   console.log(galleries)
                 return this.processImageArray(galleries[0])
@@ -265,8 +270,8 @@ export class ImageMapper extends BaseMapper {
             const images = {
                 include: [
                     {
-                        Model: Gallery,
-                        association: Image.Gallery,
+                        Model: Gallery2,
+                        association: Image2.Gallery,
                         required: false
                     },
                 ],
@@ -276,11 +281,33 @@ export class ImageMapper extends BaseMapper {
                 
             }
 
-            return await Image.findAll(images).then(data => {
+
+            return  await this.DRIZZLE.select({
+                id: image.id,
+                key: image.key,
+                active: image.active,
+                GalleryId: image.GalleryId,
+                name: image.name,
+                description: image.description,
+                primaryImage: image.primaryImage,
+                orientation: image.orientation,
+                order: image.order,
+                gallery: {
+                    id: gallery.id,
+                    name: gallery.name,
+                    description: gallery.description,
+                    viewing: gallery.viewing
+                }
+            }).from(image).innerJoin(gallery, eq(image.GalleryId, gallery.id))
+                .where(and(eq(image.GalleryId, options.id),
+                        eq(image.active, 1)
+                    )).offset(offset).limit(options.pageSize)
+
+         /*   return await Image2.findAll(images).then(data => {
                 return this.processArray(data);
             }).catch(err => {
                 return err;
-            })
+            }) */
         } catch (error) {
             console.log(`Could not fetch galleries ${error}`)
         }

@@ -10,8 +10,8 @@ import {parse} from "dotenv";
 import process from "process";
 import {Calendar} from "../models/Calendar"
 import {Event} from  "../models/Event"
-import {Tag} from "../models/Tag";
-import {Image} from "../models/Image";
+import {Tag2} from "../models/Tag2";
+import {Image2} from "../models/Image2";
 
 interface DateTime {
     date: {

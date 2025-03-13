@@ -6,8 +6,8 @@ import {hasSubscribers} from "diagnostics_channel";
 import * as uuid from 'uuid';
 import {SequelizeApi} from "../db/Sequelize";
 import process from "process";
-import {Tag} from "../models/Tag";
-import {Gallery} from "../models/Gallery";
+import {Tag2} from "../models/Tag2";
+import {Gallery2} from "../models/Gallery2";
 import {GalleryTag} from "../models/GalleryTag";
 
 export class GalleryMapper extends BaseMapper {
@@ -20,6 +20,7 @@ export class GalleryMapper extends BaseMapper {
     constructor() {
         super();
         this.DATABASE_NAME = 'kofc_golf';
+        this.initializeDrizzle()
    //     this.initializeSequelize()
      //   this.initializeGallery();
     }
@@ -50,8 +51,8 @@ export class GalleryMapper extends BaseMapper {
             const galleryConfig = {
                 include: [
                     {
-                        Model: Tag,
-                        association: Gallery.Tag,
+                        Model: Tag2,
+                        association: Gallery2.Tag,
                         required: false
                     },
                 ],
@@ -59,7 +60,7 @@ export class GalleryMapper extends BaseMapper {
                 offset: offset,
                 limit: params.pageSize,
             }
-            return await Gallery.findAll(galleryConfig).then(galleries => {
+            return await Gallery2.findAll(galleryConfig).then(galleries => {
                 return this.processArray(galleries);
             }).catch(err => {
                 console.log('the error');
@@ -74,9 +75,9 @@ export class GalleryMapper extends BaseMapper {
 
     private async initializeGallery() {
         try {
-            const tag = await Tag.initialize(this.SEQUELIZE);
+            const tag = await Tag2.initialize(this.SEQUELIZE);
             const galleryTag = GalleryTag.initialize(this.SEQUELIZE, tag);
-            Gallery.initialize(this.SEQUELIZE, tag, galleryTag);
+            Gallery2.initialize(this.SEQUELIZE, tag, galleryTag);
         } catch (error) {
             console.log(error);
 
@@ -156,8 +157,8 @@ export class GalleryMapper extends BaseMapper {
             const galleryParams = {
                 include: [
                     {
-                        Model: Tag,
-                        association: Gallery.Tag,
+                        Model: Tag2,
+                        association: Gallery2.Tag,
                         required: false
                     },
                 ],
@@ -165,7 +166,7 @@ export class GalleryMapper extends BaseMapper {
                 attributes: {exclude: ['ImageId', 'GalleryTagTagId']},
             }
 
-            return await Gallery.findOrCreate(galleryParams).then(data => {
+            return await Gallery2.findOrCreate(galleryParams).then(data => {
 
                 return data[0];
             }).catch(err => {

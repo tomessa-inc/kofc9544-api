@@ -10,8 +10,8 @@ import { get } from "lodash";
 import {UserAccess} from "../models/UserAccess";
 import {use} from "chai";
 import {Access} from "../models/Access";
-import {Tag} from "../models/Tag";
-import {Gallery} from "../models/Gallery";
+import {Tag2} from "../models/Tag2";
+import {Gallery2} from "../models/Gallery2";
 export class AccessMapper extends BaseMapper {
     private _PARAMS_ID: string = 'id';
     private _PARAMS_EMAIL: string = 'email';
@@ -160,8 +160,8 @@ export class AccessMapper extends BaseMapper {
             const galleryConfig = {
                 include: [
                     {
-                        Model: Tag,
-                        association: Gallery.Tag,
+                        Model: Tag2,
+                        association: Gallery2.Tag,
                         required: false
                     },
                 ],

@@ -1,7 +1,7 @@
 import { BaseMapper } from ".";
 import moment from "moment";
 import * as uuid from 'uuid';
-import {Tag} from "../models/Tag";
+import {Tag2} from "../models/Tag2";
 import {GalleryTag} from "../models/GalleryTag";
 
 export class IndividualMapper extends BaseMapper {
@@ -20,7 +20,7 @@ export class IndividualMapper extends BaseMapper {
 
 
     private async initializeIndividuals() {
-        Tag.initialize(this.SEQUELIZE);
+        Tag2.initialize(this.SEQUELIZE);
     }
 
     public async createRegistration(params) {
@@ -52,7 +52,7 @@ export class IndividualMapper extends BaseMapper {
                 updatedAt: moment().format('YYYY-MM-DD'),
             };
 
-            return await Tag.findOrCreate({ where: { name: params.name }, defaults: tag });
+            return await Tag2.findOrCreate({ where: { name: params.name }, defaults: tag });
         } catch (error) {
             console.log(error);
             return error.toString();
@@ -84,7 +84,7 @@ export class IndividualMapper extends BaseMapper {
             //            console.log('the gallery');
             //          console.log(gallery);
 
-            return await Tag.findAll(gallery).then(data => {
+            return await Tag2.findAll(gallery).then(data => {
                 return data[0];
             }).catch(err => {
                 return err;
@@ -107,7 +107,7 @@ export class IndividualMapper extends BaseMapper {
 
             }
 
-            return await Tag.findAll(tagConfig).then(images => {
+            return await Tag2.findAll(tagConfig).then(images => {
                 return this.processArray(images);
             }).catch(err => {
                 return err;
