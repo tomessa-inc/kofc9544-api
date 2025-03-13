@@ -79,20 +79,6 @@ Resources:
                 - image/jpeg
                 - multipart/form-data
 
-    LambdaSecurityGroup:
-        Type: AWS::EC2::SecurityGroup
-        Properties:
-            GroupDescription: Security Group for Lambda Function
-            VpcId: vpc-03195ca3919e7de7b
-            SecurityGroupEgress:
-                - IpProtocol: -1
-                  CidrIp: 0.0.0.0/0
-
-            SecurityGroupIngress:
-                - IpProtocol: -1
-                  CidrIp: 0.0.0.0/0
-
-
     ExpressLambdaFunction:
         Type: AWS::Serverless::Function
         Properties:
@@ -112,17 +98,6 @@ Resources:
                     DEBUG: !Ref DEBUG
             MemorySize: 1024
             Timeout: 30
-            VpcConfig:
-                Ipv6AllowedForDualStack: false
-                SecurityGroupIds:
-                    - !Ref LambdaSecurityGroup
-                SubnetIds:
-                    - subnet-075daa3ab0302be27
-                    - subnet-0a0938d82b952193c
-                    - subnet-0cbab0a7ac2ff9c9c
-                    - subnet-075daa3ab0302be27
-                    - subnet-043c7ef5c5cf30397
-                    - subnet-0cfc8e4086a9f81f7
             Events:
                 GolfRegister:
                     Type: Api
