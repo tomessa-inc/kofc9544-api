@@ -49,12 +49,7 @@ export class MailMapper {
 
 
     constructor() {
-        this._sesClient = new SESClient({ 'region': this._REGION,   httpOptions: {
-                timeout: 5000, // 5 second timeout
-                connectTimeout: 5000
-            },
-            maxRetries: 3
-        });
+        this._sesClient = new SESClient({ 'region': this._REGION })
     }
 
     async setupEmail(data, emailType = '') {
