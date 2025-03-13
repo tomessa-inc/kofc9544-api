@@ -110,7 +110,7 @@ Resources:
                     TOKEN_SECRET: !Ref TokenSecret
                     DEBUG: !Ref DEBUG
             MemorySize: 3008
-            Timeout: 30
+            Timeout: 900
             VpcConfig:
                 SecurityGroupIds:
                     - !Ref LambdaSecurityGroup
