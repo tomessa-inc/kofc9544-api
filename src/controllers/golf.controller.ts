@@ -33,19 +33,24 @@ export class GolfController {
         if (optionsPlayer.players.length >= 2) {
            team =  await teamMapper.createTeamRegistration(optionsPlayer);
 
+           console.log("first team")
+            console.log(team);
            if (!team.success) {
                return res.status(200).json({ success: team.success, msg: team.message })
            }
 
-           if (team.data.captain === optionsPlayer.players[0].player) {
-
-               optionsPlayer.teamId = team.id;
+           console.log("team results")
+            console.log(team);
+           if (team.data.affectedRows === 1) {
+                console.log("good")
+               optionsPlayer.teamId = team.data.id;
                optionsPlayer.individual = false;
            } else {
+               console.log("bad")
                return res.status(500).json({ error_main:"Team name already exists" })
            }
         }
-
+        console.log("next")
         await golfMapper.createPlayerRegistration(optionsPlayer);
 
         await mailMapper.setupEmail({email_type:EmailMessaging.EMAIL_TYPE_REGISTER, data: req.body})

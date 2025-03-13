@@ -44,7 +44,6 @@ export class DrizzleAPI {
         this._username = username;
         this._password = password;
         this._host = host;
-        console.log(this)
     }
 
     /**

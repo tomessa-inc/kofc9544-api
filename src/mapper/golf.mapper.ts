@@ -7,7 +7,7 @@ import {GalleryTag} from "../models/GalleryTag";
 import {OptionsPlayer} from "../controllers/golf.controller";
 import {Tag2} from "../models/Tag2";
 import {Gallery2} from "../models/Gallery2";
-import {Team} from "../models/Team";
+import {Team2} from "../models/Team2";
 import {Image2} from "../models/Image2";
 import {EmailMessaging} from "../models/EmailMessaging";
 
@@ -127,7 +127,7 @@ export class GolfMapper extends BaseMapper {
             const players = {
                 include: [
                     {
-                        Model: Team,
+                        Model: Team2,
                         association: Player2.Team,
                         required: false
                     },

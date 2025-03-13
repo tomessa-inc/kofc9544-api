@@ -4,8 +4,9 @@ import * as uuid from 'uuid';
 import {Player2} from "../models/Player2";
 import {GalleryTag} from "../models/GalleryTag";
 import {OptionsPlayer} from "../controllers/golf.controller";
-import {Team} from "../models/Team";
-import {Op} from "sequelize";
+import {Team2} from "../models/Team2";
+
+import {team} from "../models/Team";
 
 
 
@@ -17,13 +18,14 @@ export class TeamMapper extends BaseMapper {
     constructor() {
         super();
         this.DATABASE_NAME = 'kofc_golf';
+        this.initializeDrizzle()
         //this.initializeSequelize()
         //this.initializeTeam();
     }
 
 
     private async initializeTeam() {
-        Team.initialize(this.SEQUELIZE);
+        Team2.initialize(this.SEQUELIZE);
     }
 
     public async createTeamRegistration(params: OptionsPlayer) {
@@ -36,20 +38,23 @@ export class TeamMapper extends BaseMapper {
                 teamName = params.players[0].player
             }
 
-            const team = {
+            const teamObject = {
                 id: teamName.replace(/\s+/g, '-').toLowerCase(),
                 name: teamName,
                 captain: params.players[0].player,
-                createdAt: moment().format('YYYY-MM-DD'),
-                updatedAt: moment().format('YYYY-MM-DD'),
             };
             console.log("before")
+            console.log(teamObject)
             console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
-            const id = await Team.create(team);
+            const id = await this.DRIZZLE.insert(team).values(teamObject);
             console.log("after")
+            console.log(id)
+            console.log("json")
+            console.log(id[0].affectedRows)
+            console.log("json2")
             console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
 
-            return {success: true, data: id.toJSON()}
+            return {success: true, data: {id: teamName.replace(/\s+/g, '-').toLowerCase(), affectedRows: id[0].affectedRows}}
         } catch (error) {
             return {success: false, message: `Team name "${teamName}" already exists`};
         }
@@ -100,7 +105,7 @@ export class TeamMapper extends BaseMapper {
                     ]
                 }
             }
-            return await Team.findAll(team).then(data => {
+            return await Team2.findAll(team).then(data => {
                 return data;
             }).catch(err => {
                 return err;
@@ -124,7 +129,7 @@ export class TeamMapper extends BaseMapper {
                     ]
                 }
             }
-            return await Team.findAll(team).then(data => {
+            return await Team2.findAll(team).then(data => {
                 return data;
             }).catch(err => {
                 return err;
