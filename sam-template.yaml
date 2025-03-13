@@ -96,7 +96,7 @@ Resources:
                     NODE_ENV: !Ref NodeEnv
                     TOKEN_SECRET: !Ref TokenSecret
                     DEBUG: !Ref DEBUG
-            MemorySize: 4096
+            MemorySize: 3008
             Timeout: 30
             Events:
                 GolfRegister:
