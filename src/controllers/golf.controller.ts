@@ -45,7 +45,7 @@ export class GolfController {
            }
         }
 
-       golfMapper.createPlayerRegistration(optionsPlayer);
+       await golfMapper.createPlayerRegistration(optionsPlayer);
 
         mailMapper.setupEmail({email_type:EmailMessaging.EMAIL_TYPE_REGISTER, data: req.body})
 
