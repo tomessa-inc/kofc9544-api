@@ -2,6 +2,7 @@ import {mailMapper, golfMapper, teamMapper} from "../mapper/";
 import {MailController} from "./mail.controller";
 import {inspect} from "util";
 import {EmailMessaging} from "../models/EmailMessaging";
+import moment from "moment/moment";
 //import {golfMapper} from "../mapper/golf.mapper";
 //import {teamMapper} from "../mapper/team.mapper";
 
@@ -49,6 +50,7 @@ export class GolfController {
 
         await mailMapper.setupEmail({email_type:EmailMessaging.EMAIL_TYPE_REGISTER, data: req.body})
         console.log("right before end")
+        console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
         return res.status(200).json({ success: true, msg: "Registration successful" })
     }
 
