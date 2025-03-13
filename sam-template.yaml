@@ -307,11 +307,11 @@ Resources:
                         Path: /event/publish
                         Method: ANY
             Policies:
-                - VPCAccessPolicy: {}
                 - SESBulkTemplatedCrudPolicy_v2:
                       IdentityName: kofc9544.ca
                       TemplateName: DefaultEmailTemplate
                 - SESEmailTemplateCrudPolicy: {}
+                - VPCAccessPolicy: {}
                 - S3WritePolicy:
                       BucketName: !Ref BucketNameImages
                 - Version: '2012-10-17'

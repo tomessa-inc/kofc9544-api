@@ -45,10 +45,10 @@ export class GolfController {
            }
         }
 
-       await golfMapper.createPlayerRegistration(optionsPlayer);
+        await golfMapper.createPlayerRegistration(optionsPlayer);
 
-        mailMapper.setupEmail({email_type:EmailMessaging.EMAIL_TYPE_REGISTER, data: req.body})
-
+        await mailMapper.setupEmail({email_type:EmailMessaging.EMAIL_TYPE_REGISTER, data: req.body})
+        console.log("right before end")
         return res.status(200).json({ success: true, msg: "Registration successful" })
     }
 

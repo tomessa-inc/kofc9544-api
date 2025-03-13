@@ -288,6 +288,7 @@ export class MailMapper {
         return stringData;
     }
     async apiSendMail() {
+        console.log("the params")
         console.log(this._params);
         return await this._sesClient.send(new SendTemplatedEmailCommand(this._params));
     }
