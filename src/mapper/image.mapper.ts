@@ -2,13 +2,19 @@ import { BaseMapper } from ".";
 import { paramsOptions } from ".";
 import { Gallery2 } from "../models/Gallery2";
 import {Tag2} from "../models/Tag2";
-import {GalleryTag} from "../models/GalleryTag";
+import {GalleryTag2} from "../models/GalleryTag2";
 import {Image2} from "../models/Image2";
 import {image} from "../models/Image";
 import {tag} from "../models/Tag"
 import { eq, and } from 'drizzle-orm';
 import {gallery} from "../models/Gallery";
 //import { sequelize } from "../db";
+//import  https from "https";
+const https = require('https');
+import { sql } from "drizzle-orm";
+import {galleryTag} from "../models/GalleryTag";
+import axios from "axios";
+
 
 export class ImageMapper extends BaseMapper {
     private _PARAMS_NAME: string = 'name';
@@ -26,7 +32,7 @@ export class ImageMapper extends BaseMapper {
 
     private async initializeImage() {
         const tag = Tag2.initialize(this.SEQUELIZE);
-        const galleryTag = GalleryTag.initialize(this.SEQUELIZE, tag);
+        const galleryTag = GalleryTag2.initialize(this.SEQUELIZE, tag);
         const gallery = Gallery2.initialize(this.SEQUELIZE, tag, galleryTag)
 
         Image2.initialize(this.SEQUELIZE, gallery, galleryTag);
@@ -229,33 +235,160 @@ export class ImageMapper extends BaseMapper {
     }
     public async getAllPrimaryImages(options: paramsOptions) { //: Promise<string[] | string> {
         try {
-            let sql = 'SELECT `Image`.`id`, `Image`.`key`, `Image`.`GalleryId`, `Image`.`name`, `Image`.`description`, `Image`.`primaryImage`, (SELECT CAST(CONCAT(\'[\',GROUP_CONCAT(JSON_OBJECT(\'TagId\', TagId)),\']\') as JSON) FROM gallery_tag where gallery_tag.GalleryId = `Image`.`GalleryId`) as TagsId, gallery.name, gallery_tag.GalleryId FROM `image` AS `Image` INNER JOIN gallery ON gallery.id = `Image`.`GalleryId` INNER JOIN gallery_tag ON gallery_tag.GalleryId = `Image`.`GalleryId` ';
+            let sqls = 'SELECT `Image`.`id`, `Image`.`key`, `Image`.`GalleryId`, `Image`.`name`, `Image`.`description`, `Image`.`primaryImage`, (SELECT CAST(CONCAT(\'[\',GROUP_CONCAT(JSON_OBJECT(\'TagId\', TagId)),\']\') as JSON) FROM gallery_tag where gallery_tag.GalleryId = `Image`.`GalleryId`) as TagsId, gallery.name, gallery_tag.GalleryId FROM `image` AS `Image` INNER JOIN gallery ON gallery.id = `Image`.`GalleryId` INNER JOIN gallery_tag ON gallery_tag.GalleryId = `Image`.`GalleryId` ';
 
             if (options.logged) {
-                 sql = sql.concat(`WHERE (\`Image\`.\`primaryImage\` = 1) AND (gallery.viewing  = 1 OR gallery.viewing = 0)`);
+                sqls = sqls.concat(`WHERE (\`Image\`.\`primaryImage\` = 1) AND (gallery.viewing  = 1 OR gallery.viewing = 0)`);
             } else {
-                sql = sql.concat(`WHERE (\`Image\`.\`primaryImage\` = 1 AND gallery.viewing = 1)`);
+                sqls = sqls.concat(`WHERE (\`Image\`.\`primaryImage\` = 1 AND gallery.viewing = 1)`);
             }
-            sql = sql.concat(' GROUP BY `Image`.`GalleryId`');
+            sqls = sqls.concat(' GROUP BY `Image`.`GalleryId`');
 
 
-         //   console.log(this.SEQUELIZE);
-          //  console.log(sql);
+            //   console.log(this.SEQUELIZE);
+            //  console.log(sql);
 
-          //SELECT `Image`.`id`, `Image`.`key`, `Image`.`GalleryId`, `Image`.`name`, `Image`.`description`, `Image`.`primaryImage`, (SELECT CAST(CONCAT('[',GROUP_CONCAT(JSON_OBJECT('TagId', TagId)),']') as JSON) as tags FROM gallery_tag where gallery_tag.GalleryId = `Image`.`GalleryId`), `gallery_tag`.`TagId`, gallery.name, gallery_tag.GalleryId FROM `image` AS `Image` INNER JOIN gallery ON gallery.id = `Image`.`GalleryId` INNER JOIN gallery_tag ON gallery_tag.GalleryId = `Image`.`GalleryId`  WHERE `Image`.`primaryImage` = 1 GROUP BY `Image`.`GalleryId`;
-       
-          //   SELECT CAST(CONCAT('[',GROUP_CONCAT(JSON_OBJECT('TagId', TagId)),']') as JSON) as tags FROM gallery_tag where GalleryId = 'model-workshop-april-2011';
-          return await this.DRIZZLE.execute(sql).then(galleries => {
-           //     console.log('galleries')
-           //   console.log(galleries)
-                return this.processImageArray(galleries[0])
-            }).catch(err => {
-                return err;
+            //SELECT `Image`.`id`, `Image`.`key`, `Image`.`GalleryId`, `Image`.`name`, `Image`.`description`, `Image`.`primaryImage`, (SELECT CAST(CONCAT('[',GROUP_CONCAT(JSON_OBJECT('TagId', TagId)),']') as JSON) as tags FROM gallery_tag where gallery_tag.GalleryId = `Image`.`GalleryId`), `gallery_tag`.`TagId`, gallery.name, gallery_tag.GalleryId FROM `image` AS `Image` INNER JOIN gallery ON gallery.id = `Image`.`GalleryId` INNER JOIN gallery_tag ON gallery_tag.GalleryId = `Image`.`GalleryId`  WHERE `Image`.`primaryImage` = 1 GROUP BY `Image`.`GalleryId`;
+
+            //   SELECT CAST(CONCAT('[',GROUP_CONCAT(JSON_OBJECT('TagId', TagId)),']') as JSON) as tags FROM gallery_tag where GalleryId = 'model-workshop-april-2011';
+
+            // Define your schema
+            const imagesByGallery = this.DRIZZLE.select({
+                id: image.id,
+                key: image.key,
+                GalleryId: image.GalleryId,
+                name: gallery.name,
+                primaryImage: image.primaryImage,
+                description: image.description,
+                active: image.active,
+                orientation: image.orientation,
+                order: image.order,
+                TagsId: sql<string>`(SELECT JSON_ARRAYAGG(JSON_OBJECT('TagId', ${galleryTag.TagId}))
+                                    FROM ${galleryTag}
+                                    where ${galleryTag.GalleryId} = ${image.GalleryId})`.as('TagsId')
+            }).from(image).innerJoin(gallery, eq(image.GalleryId, gallery.id))
+
+
+            //.where(eq(image.active, 1))
+
+            if (options.logged) {
+                //    .where(and(eq(image.GalleryId, options.id),
+                //          eq(image.active, 1)
+                imagesByGallery.where(eq(image.primaryImage, 1));
+                //= sqls.concat(`WHERE (\`Image\`.\`primaryImage\` = 1) AND (gallery.viewing  = 1 OR gallery.viewing = 0)`);
+            } else {
+                imagesByGallery.where(and(eq(image.primaryImage, 1), eq(gallery.viewing, true)));
+
+                sqls = sqls.concat(`WHERE (\`Image\`.\`primaryImage\` = 1 AND gallery.viewing = 1)`);
+            }
+            sqls = sqls.concat(' GROUP BY `Image`.`GalleryId`');
+
+
+            /*
+                      const retval = this.DRIZZLE.prepare(sql`Select \`Image\`.\`id\`,
+                                                                     \`Image\`.\`key\`,
+                                                                     \`Image\`.\`GalleryId\`,
+                                                                     \`Image\`.\`name\`,
+                                                                     \`Image\`.\`description\`,
+                                                                     \`Image\`.\`primaryImage\`,
+                                                                     (SELECT CAST(CONCAT(\'[\', GROUP_CONCAT(JSON_OBJECT(\'TagId\', TagId)), \']\') as JSON)
+                                                                      FROM gallery_tag
+                                                                      where gallery_tag.GalleryId = \`Image\`.\`GalleryId\`) as TagsId,
+                                                                     gallery.name,
+                                                                     gallery_tag.GalleryId`); */
+
+
+            return this.getSQLData(imagesByGallery.toSQL(), true)
+/*            const ff = JSON.stringify(imagesByGallery.toSQL())
+            const sqlquery = ff.replace(/"/g, '\\\"').replace(/\\n/g, "")
+
+            const text = JSON.parse(`{"sql": "${sqlquery}"}`)
+            //     console.log('galleries')
+            //   console.log(galleries)
+
+            // console.log(imagesByGallery.toSQL())
+
+
+
+            let result;
+
+
+            return await axios.post('https://api-stage.db.tomessa.ca/kofc_golf',
+                text
+            )
+                .then( async (response) => {
+                 ///   console.log(this.processImageArray(response.data.data[0]))
+                    return await this.processImageArray(response.data.data[0])
+                })
+                .catch( (error)=>  {
+                    console.log(error);
+                });
+       //     console.log("look")
+         //   console.log(look);
+/*
+            const optionsHttp = {
+                hostname: 'api-stage.db.tomessa.ca',
+                port: 443,
+                path: '/kofc_golf',
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            };
+            console.log("right here")
+            https.post({
+                hostname: 'api-stage.db.tomessa.ca',
+                port: 443,
+                path: '/kofc_golf',
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+
+            }, {
+            `"sql": "${sqlquery}"`
+            }, (error, response, text) => {
+                console.log(error);
+                console.log(response);
+                console.log(text)
+
             })
-        } catch (error) {
 
-            return error.toString();
-        }
+            /*
+                        const req = https.request(optionsHttp, (res) => {
+                            console.log("the response")
+                            console.log(res);
+                            let data = '';
+
+                            res.on('data', (chunk) => {
+                                console.log("hello")
+                                data += chunk;
+                            });
+
+                            res.on('end', () => {
+
+            //                    console.log(JSON.parse(data));
+                                result = data;
+                                console.log("finished")
+                            });
+                        });
+
+                        req.on('error', (error) => {
+                            console.error(error);
+                        });
+                        req.write(text);
+                        req.end();
+
+                        console.log("the result")
+                        console.log(result);
+
+                        return this.processImageArray(result) */
+
+                    } catch (error) {
+
+                        return error.toString();
+                    }
+
     }
 
  /**
@@ -282,7 +415,7 @@ export class ImageMapper extends BaseMapper {
             }
 
 
-            return  await this.DRIZZLE.select({
+            const select =  this.DRIZZLE.select({
                 id: image.id,
                 key: image.key,
                 active: image.active,
@@ -302,6 +435,18 @@ export class ImageMapper extends BaseMapper {
                 .where(and(eq(image.GalleryId, options.id),
                         eq(image.active, 1)
                     )).offset(offset).limit(options.pageSize)
+
+            return this.getSQLData(select.toSQL())
+
+/*
+            const ff = JSON.stringify(select.toSQL())
+
+            const str = ff.replace(/"/g, '\\\"')
+
+
+
+          //  console.log(select.toSQL())
+           // console.log(select.toSQL().params.join(","))
 
          /*   return await Image2.findAll(images).then(data => {
                 return this.processArray(data);

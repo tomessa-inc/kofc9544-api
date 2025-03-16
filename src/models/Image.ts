@@ -3,7 +3,8 @@ import { drizzle } from 'drizzle-orm/mysql2';
 import { mysqlTable, serial, varchar, int, boolean, DatetimeFsp, MySqlTimestamp, timestamp, tinyint } from 'drizzle-orm/mysql-core';
 import mysql from 'mysql2/promise';
 import {DataTypes} from "../db";
-
+import { sql } from "drizzle-orm";
+import {galleryTag} from "./GalleryTag"
 
 // Define your schema
 export const image = mysqlTable('image', {
@@ -19,3 +20,4 @@ export const image = mysqlTable('image', {
 //    createdAt:timestamp().defaultNow(),
     //  updatedAt: timestamp().defaultNow(),
 })
+

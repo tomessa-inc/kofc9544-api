@@ -2,7 +2,7 @@ import { BaseMapper } from ".";
 import moment from "moment";
 import * as uuid from 'uuid';
 import {Player2} from "../models/Player2";
-import {GalleryTag} from "../models/GalleryTag";
+import {GalleryTag2} from "../models/GalleryTag2";
 import {OptionsPlayer} from "../controllers/golf.controller";
 import {Team2} from "../models/Team2";
 

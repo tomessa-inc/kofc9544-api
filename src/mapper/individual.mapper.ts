@@ -2,7 +2,7 @@ import { BaseMapper } from ".";
 import moment from "moment";
 import * as uuid from 'uuid';
 import {Tag2} from "../models/Tag2";
-import {GalleryTag} from "../models/GalleryTag";
+import {GalleryTag2} from "../models/GalleryTag2";
 
 export class IndividualMapper extends BaseMapper {
     private _PARAMS_NAME: string = 'name';
@@ -70,8 +70,8 @@ export class IndividualMapper extends BaseMapper {
 
             const gallery = {
                 include: [{
-                    model: GalleryTag,
-                    association: GalleryTag.Tag,
+                    model: GalleryTag2,
+                    association: GalleryTag2.Tag,
                     required: true
                 }],
                 where: {

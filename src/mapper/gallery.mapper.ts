@@ -8,7 +8,7 @@ import {SequelizeApi} from "../db/Sequelize";
 import process from "process";
 import {Tag2} from "../models/Tag2";
 import {Gallery2} from "../models/Gallery2";
-import {GalleryTag} from "../models/GalleryTag";
+import {GalleryTag2} from "../models/GalleryTag2";
 
 export class GalleryMapper extends BaseMapper {
     private _PARAMS_ID: string = 'id';
@@ -76,7 +76,7 @@ export class GalleryMapper extends BaseMapper {
     private async initializeGallery() {
         try {
             const tag = await Tag2.initialize(this.SEQUELIZE);
-            const galleryTag = GalleryTag.initialize(this.SEQUELIZE, tag);
+            const galleryTag = GalleryTag2.initialize(this.SEQUELIZE, tag);
             Gallery2.initialize(this.SEQUELIZE, tag, galleryTag);
         } catch (error) {
             console.log(error);
@@ -125,7 +125,7 @@ export class GalleryMapper extends BaseMapper {
                 updatedAt: moment().format('YYYY-MM-DD'),
             };
 
-            return await GalleryTag.findOrCreate({where: [{GalleryId: GalleryId}, {TagId: TagId}], defaults: tag});
+            return await GalleryTag2.findOrCreate({where: [{GalleryId: GalleryId}, {TagId: TagId}], defaults: tag});
         } catch (error) {
             console.log('the error');
             console.log(error);
@@ -135,7 +135,7 @@ export class GalleryMapper extends BaseMapper {
 
     private async deleteGalleryTagsByParams(where) {
         try {
-            await GalleryTag.destroy(where);
+            await GalleryTag2.destroy(where);
 
             return true;
         } catch (error) {

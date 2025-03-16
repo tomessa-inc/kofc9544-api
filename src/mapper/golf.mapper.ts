@@ -3,13 +3,14 @@ import moment from "moment";
 import * as uuid from 'uuid';
 import {Player2} from "../models/Player2";
 import {player} from  "../models/Player"
-import {GalleryTag} from "../models/GalleryTag";
+import {GalleryTag2} from "../models/GalleryTag2";
 import {OptionsPlayer} from "../controllers/golf.controller";
 import {Tag2} from "../models/Tag2";
 import {Gallery2} from "../models/Gallery2";
 import {Team2} from "../models/Team2";
 import {Image2} from "../models/Image2";
 import {EmailMessaging} from "../models/EmailMessaging";
+
 
 export interface PlayerObject {
     id?:number,
@@ -49,7 +50,7 @@ export class GolfMapper extends BaseMapper {
 
 
     public async createPlayerRegistration(params: OptionsPlayer) {
-
+        let retval;
 //        console.log("the registration")
   //      console.log(params)
         try {
@@ -72,12 +73,11 @@ export class GolfMapper extends BaseMapper {
                 console.log(playerObject)
                 console.log("Player")
 
-                const test2 = await this.DRIZZLE.insert(player).values(playerObject);
-                playerObject.id = test2[0].insertId
-                console.log("user insert")
-                console.log(test2);
-                console.log("after before")
 
+                const test2 = this.DRIZZLE.insert(player).values(playerObject)
+               retval = await this.getSQLData(test2.toSQL())
+
+                playerObject.id = retval.insertId
                 console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
         //        console.log("test2")
          //       console.log(test2.toJSON())
@@ -115,7 +115,7 @@ export class GolfMapper extends BaseMapper {
           //  test.email_type = EmailMessaging.EMAIL_TYPE_SEND_ID
 
 
-            return true
+            return retval
         } catch (error) {
             console.log("the error here")
             console.log(error);

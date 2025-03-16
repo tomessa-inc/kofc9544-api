@@ -48,6 +48,7 @@
         "@aws-sdk/client-s3": "^3.441.0",
         "@aws-sdk/client-ses": "^3.435.0",
         "@vendia/serverless-express": "^4.12.6",
+        "axios": "^1.8.3",
         "body-parser": "^1.17.1",
         "check-image-type": "^0.1.4",
         "child_process": "^1.0.2",

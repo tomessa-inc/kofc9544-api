@@ -8,6 +8,7 @@ import {Promise, Schema} from "mongoose";
 import {DrizzleAPI} from "../db/Drizzle";
 import * as console from "node:console";
 import {size} from "lodash-es";
+import axios from "axios";
 
 //import {Sequelize} from "sequelize";
 
@@ -147,14 +148,36 @@ export class BaseMapper {
                
                 listArray.push(item);
             }
-            console.log('the list')
-            console.log(listArray);    
+
             return listArray;
         }
 
         return [];
     }
 
+    public async getSQLData(preparedSQL, processKeyImage:boolean = false) {
+        const ff = JSON.stringify(preparedSQL)
+        const sqlquery = ff.replace(/"/g, '\\\"').replace(/\\n/g, "")
+
+        const text = JSON.parse(`{"sql": "${sqlquery}"}`)
+        const text2 = `{"sql": "${sqlquery}"}`
+        console.log(text);
+        console.log(text2);
+
+        return await axios.post('https://api-stage.db.tomessa.ca/kofc_golf',
+            text
+        )
+            .then( async (response) => {
+                if (processKeyImage) {
+                    return await this.processImageArray(response.data.data[0])
+                }
+
+                return response.data.data[0]
+            })
+            .catch( (error)=>  {
+                console.log(error);
+            });
+    }
 
 
     /**

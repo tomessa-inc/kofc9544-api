@@ -59,7 +59,8 @@ export class DrizzleAPI {
             database: this._database,
 
         });
-        return drizzle(pool)
+
+        return drizzle(pool, { logger: true })
 //        return new Sequelize(this._database, this._username, this._password, this._options);
     };
 }
