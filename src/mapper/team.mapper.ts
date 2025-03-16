@@ -48,7 +48,7 @@ export class TeamMapper extends BaseMapper {
             console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
             const sqlPrepared =  this.DRIZZLE.insert(team).values(teamObject);
 
-            const retval = await this.DRIZZLE.getSQLData(sqlPrepared.getSQL())
+            const retval = await this.getSQLData(sqlPrepared.getSQL())
             console.log("after")
             console.log(retval)
             console.log("json")
