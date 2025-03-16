@@ -46,15 +46,17 @@ export class TeamMapper extends BaseMapper {
             console.log("before")
             console.log(teamObject)
             console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
-            const id = await this.DRIZZLE.insert(team).values(teamObject);
+            const sqlPrepared =  this.DRIZZLE.insert(team).values(teamObject);
+
+            const retval = await this.DRIZZLE.getSQLData(sqlPrepared.getSQL())
             console.log("after")
-            console.log(id)
+            console.log(retval)
             console.log("json")
-            console.log(id[0].affectedRows)
+            console.log(retval[0].affectedRows)
             console.log("json2")
             console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
 
-            return {success: true, data: {id: teamName.replace(/\s+/g, '-').toLowerCase(), affectedRows: id[0].affectedRows}}
+            return {success: true, data: {id: teamName.replace(/\s+/g, '-').toLowerCase(), affectedRows: retval[0].affectedRows}}
         } catch (error) {
             return {success: false, message: `Team name "${teamName}" already exists`};
         }
