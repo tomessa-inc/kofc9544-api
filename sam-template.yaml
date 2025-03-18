@@ -86,6 +86,9 @@ Resources:
             PackageType: Zip
             Runtime: nodejs20.x
             Handler: lambda.handler
+            AutoPublishAlias:
+                ProvisionedConcurrencyConfig:
+                    ProvisionedConcurrentExecutions: 2
             Environment:
                 Variables:
                     DB_NAME: !Ref DbName
