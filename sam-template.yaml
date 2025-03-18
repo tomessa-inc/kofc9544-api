@@ -88,7 +88,7 @@ Resources:
             Handler: lambda.handler
             AutoPublishAlias: live
             ProvisionedConcurrencyConfig:
-                ProvisionedConcurrentExecutions: 2
+                ProvisionedConcurrentExecutions: 1
             Environment:
                 Variables:
                     DB_NAME: !Ref DbName
