@@ -1,5 +1,6 @@
 import { imageMapper, paramsOptions } from "../mapper";
 import {mediaRouter} from "../routes";
+import moment from "moment/moment";
 
 export class ImageController {
     /**
@@ -217,6 +218,8 @@ export class ImageController {
    */
     public static async apiGetAllPrimaryImages(req: any, res: any, next: any) {
         try {
+            console.log(1)
+            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
             //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
             //        return res.status(500).json({error: 'Not Authorized to access the API'})
             //      }
@@ -232,7 +235,9 @@ export class ImageController {
             }
 
             //   const paginationResults = imageMapper.prepareListResults(galleries, req.query);
+            console.log(5)
 
+            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
             return res.status(200).json({ "images": images });
 
         } catch (error) {
@@ -253,7 +258,8 @@ export class ImageController {
             //        return res.status(500).json({error: 'Not Authorized to access the API'})
             //      }
 
-
+            console.log(1)
+            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
             const options: paramsOptions = { id: "string", pageIndex: 1, pageSize: 20, filterQuery: "" };
 
 
@@ -274,16 +280,21 @@ export class ImageController {
             }
 
             const images = await imageMapper.getImagesByGallery(options);
-
+            console.log(9)
+            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
             if (typeof images === 'string') {
                 return res.status(500).json({ errors_string: images })
             }
 
-
+            console.log(5)
+            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
             options.listLength = await imageMapper.getListLength(options);
+            console.log(8)
+            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
             const paginationResults = imageMapper.prepareListResults(images, options);
        //     const paginationResults = imageMapper.prepareListResults(galleries, req.query);
-
+            console.log(8)
+            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
             return res.status(200).json(paginationResults);
 
         } catch (error) {

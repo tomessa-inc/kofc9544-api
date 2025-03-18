@@ -160,9 +160,9 @@ export class BaseMapper {
         const sqlquery = ff.replace(/"/g, '\\\"').replace(/\\n/g, "")
 
         const text = JSON.parse(`{"sql": "${sqlquery}"}`)
-        const text2 = `{"sql": "${sqlquery}"}`
-        console.log(text);
-        console.log(text2);
+   //     const text2 = `{"sql": "${sqlquery}"}`
+      //  console.log(text);
+     //   console.log(text2);
 
         return await axios.post('https://api-stage.db.tomessa.ca/kofc_golf',
             text

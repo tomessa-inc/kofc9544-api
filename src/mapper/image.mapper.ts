@@ -6,14 +6,14 @@ import {GalleryTag2} from "../models/GalleryTag2";
 import {Image2} from "../models/Image2";
 import {image} from "../models/Image";
 import {tag} from "../models/Tag"
-import { eq, and } from 'drizzle-orm';
+import { eq, and , sql, count} from 'drizzle-orm';
 import {gallery} from "../models/Gallery";
 //import { sequelize } from "../db";
 //import  https from "https";
 const https = require('https');
-import { sql } from "drizzle-orm";
 import {galleryTag} from "../models/GalleryTag";
 import axios from "axios";
+import moment from "moment/moment";
 
 
 export class ImageMapper extends BaseMapper {
@@ -218,7 +218,24 @@ export class ImageMapper extends BaseMapper {
      */
     public async getListLength(options = null) {
         try {
+            const imagesCount = this.DRIZZLE.select({
+                count:count()}).from(image);
 
+            if (options) {
+                imagesCount. where(and(eq(image.active, 1), eq(image.GalleryId, options['id'])));
+            } else {
+                imagesCount. where(eq(image.active, 1))
+            }
+            console.log(6)
+            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
+
+            const test = this.getSQLData(imagesCount.toSQL(), true)
+            console.log(7)
+            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
+
+
+            return test
+            /*
             let sql = 'SELECT count(`id`) as count FROM image WHERE active = 1 ';
             if (options) {
                 sql += ` AND GalleryId = "${options['id']}"`;
@@ -228,7 +245,7 @@ export class ImageMapper extends BaseMapper {
                 return imageCount[0][0]['count'];
             }).catch(err => {
                 return err;
-            })
+            }) */
         } catch (error) {
             return error.toString();
         }
@@ -253,6 +270,9 @@ export class ImageMapper extends BaseMapper {
             //   SELECT CAST(CONCAT('[',GROUP_CONCAT(JSON_OBJECT('TagId', TagId)),']') as JSON) as tags FROM gallery_tag where GalleryId = 'model-workshop-april-2011';
 
             // Define your schema
+            console.log(2)
+
+            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
             const imagesByGallery = this.DRIZZLE.select({
                 id: image.id,
                 key: image.key,
@@ -296,9 +316,16 @@ export class ImageMapper extends BaseMapper {
                                                                       where gallery_tag.GalleryId = \`Image\`.\`GalleryId\`) as TagsId,
                                                                      gallery.name,
                                                                      gallery_tag.GalleryId`); */
+            console.log(3)
 
+            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
 
-            return this.getSQLData(imagesByGallery.toSQL(), true)
+            const test = this.getSQLData(imagesByGallery.toSQL(), true)
+            console.log(4)
+
+            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
+
+            return test
 /*            const ff = JSON.stringify(imagesByGallery.toSQL())
             const sqlquery = ff.replace(/"/g, '\\\"').replace(/\\n/g, "")
 
@@ -400,21 +427,9 @@ export class ImageMapper extends BaseMapper {
         try {
 
             const offset = ((options.pageIndex - 1) * options.pageSize)
-            const images = {
-                include: [
-                    {
-                        Model: Gallery2,
-                        association: Image2.Gallery,
-                        required: false
-                    },
-                ],
-                where: [{ GalleryId: options.id }, {active:1}],
-                offset: offset,
-                limit: options.pageSize,
-                
-            }
 
-
+            console.log(2)
+            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
             const select =  this.DRIZZLE.select({
                 id: image.id,
                 key: image.key,
@@ -435,9 +450,12 @@ export class ImageMapper extends BaseMapper {
                 .where(and(eq(image.GalleryId, options.id),
                         eq(image.active, 1)
                     )).offset(offset).limit(options.pageSize)
-
-            return this.getSQLData(select.toSQL())
-
+            console.log(3)
+            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
+            const test = this.getSQLData(select.toSQL())
+            console.log(4)
+            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
+            return test
 /*
             const ff = JSON.stringify(select.toSQL())
 
