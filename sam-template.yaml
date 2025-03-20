@@ -96,7 +96,7 @@ Resources:
                     NODE_ENV: !Ref NodeEnv
                     TOKEN_SECRET: !Ref TokenSecret
                     DEBUG: !Ref DEBUG
-            MemorySize: 3008
+            MemorySize: 1024
             Timeout: 900
             Events:
                 GolfRegister:
@@ -300,9 +300,9 @@ Resources:
     WarmupRule:
         Type: AWS::Events::Rule
         Properties:
-            ScheduleExpression: rate(30 minutes)
+            ScheduleExpression: rate(12 minutes)
             State: ENABLED
-            Description: Rule to ping Lambda function every 30 minutes to keep it warm
+            Description: Rule to ping Lambda function every 12 minutes to keep it warm
             Targets:
                 - Id: TargetFunction
                   Arn: !GetAtt ExpressLambdaFunction.Arn
