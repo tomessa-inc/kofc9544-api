@@ -300,9 +300,9 @@ Resources:
     WarmupRule:
         Type: AWS::Events::Rule
         Properties:
-            ScheduleExpression: rate(12 minutes)
+            ScheduleExpression: rate(2 minutes)
             State: ENABLED
-            Description: Rule to ping Lambda function every 12 minutes to keep it warm
+            Description: Rule to ping Lambda function every 2 minutes to keep it warm
             Targets:
                 - Id: TargetFunction
                   Arn: !GetAtt ExpressLambdaFunction.Arn
