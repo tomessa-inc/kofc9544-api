@@ -1,78 +1,14 @@
-"use strict";
-
-import { Gallery2 } from "./Gallery2";
-import { Tag2 } from "./Tag2";
-const {DataTypes, Model, sequelize} = require('../db');
-class UserAccess extends Model {
-
-    /**
-     *
-     * @param sequelize
-     * @param access
-     */
-    public static initialize(sequelize, model) {
-        const userAccess = this.init({
-            AccessId: {
-                type: DataTypes.STRING,
-                primaryKey: true
-            },
-            UserId: {
-                type: DataTypes.STRING,
-            },
-            createdAt: {
-                type: DataTypes.DATE,
-            },
-            updatedAt: {
-                type: DataTypes.DATE,
-            }
-        }, {
-            modelName: 'UserAccess', sequelize: sequelize, tableName:"user_access"
-        });
-
-        userAccess.Access = model.access.hasMany(userAccess,  {sourceKey: "id",  foreignKey: 'AccessId', onUpdate: 'cascade'})
-
-        return userAccess;
-    }
-}
-/*
-GalleryTag.init({
-    TagId: {
-        type: DataTypes.STRING,
-        primaryKey: true
-    },
-    GalleryId: {
-        type: DataTypes.STRING,
-    },
-    createdAt: {
-        type: DataTypes.DATE,
-    },
-    updatedAt: {
-        type: DataTypes.DATE,
-    }
-}, {
-    modelName: 'GalleryTag', sequelize: sequelize, tableName:"gallery_tag"
-});
-
-//GalleryTag.hasOne(Tag, {
-  //  foreignKey:  {
-    //    name: 'tag_id'
-  //  }
-//});
+import { drizzle } from 'drizzle-orm/mysql2';
+import { mysqlTable, serial, varchar, int, boolean, DatetimeFsp, MySqlTimestamp, timestamp } from 'drizzle-orm/mysql-core';
+import mysql from 'mysql2/promise';
+import {DataTypes} from "../db";
 
 
-//Gallery.GalleryTag = Gallery.hasMany(GalleryTag,{sourceKey: "id", as: "gallery_tag", foreignKey: 'gallery_id', onUpdate: 'cascade'} )
-///Tag.GalleryTag = Tag.hasMany(GalleryTag,  {sourceKey: "id", as: "gallery_tag",  foreignKey: 'tag_id', onUpdate: 'cascade'})
+// Define your schema
+export const userAccess = mysqlTable('user_access', {
+    accessId: varchar('AccessId', {length: 255}).notNull(),
+    userId: varchar('UserId', {length: 255}).notNull(),
 
-//User.TeamUser = User.hasMany(TeamUser, {as: 'teams', foreignKey: 'UserId', onUpdate: 'cascade'});
-//User.Access.ts = User.hasOne(Access.ts, {sourceKey: "AccessId", as: 'access', foreignKey: 'slug', onUpdate: 'cascade'});
-
-
-//Tag.belongsTo(GalleryTag);
-/*Tag.hasOne(GalleryTag, {
-    foreignKey:  {
-        name: 'tag_id'
-    }
-});
-GalleryTag.belongsTo(Tag);
-*/
-export {UserAccess}
+//    createdAt:timestamp().defaultNow(),
+    //  updatedAt: timestamp().defaultNow(),
+})

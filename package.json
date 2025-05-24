@@ -58,7 +58,7 @@
         "crypto": "^1.0.1",
         "crypto-js": "^4.2.0",
         "dotenv": "^16.0.3",
-        "drizzle-orm": "^0.40.0",
+        "drizzle-orm": "^0.41.0",
         "ejs": "^3.1.10",
         "express": "^4.21.1",
         "express-fileupload": "^1.5.1",

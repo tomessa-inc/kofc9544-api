@@ -7,9 +7,9 @@ import dotenv from 'dotenv';
 import * as uuid from 'uuid';
 import moment from "moment";
 import { get } from "lodash";
-import {UserAccess} from "../models/UserAccess";
+import {UserAccess2} from "../models/UserAccess2";
 import {use} from "chai";
-import {Access} from "../models/Access";
+import {Access2} from "../models/Access2";
 import {Tag2} from "../models/Tag2";
 import {Gallery2} from "../models/Gallery2";
 export class AccessMapper extends BaseMapper {
@@ -32,7 +32,7 @@ export class AccessMapper extends BaseMapper {
         try {
             // const tag = await Tag.initialize(this.SEQUELIZE);
             // const galleryTag = GalleryTag.initialize(this.SEQUELIZE, tag);
-            Access.initialize(this.SEQUELIZE);
+            Access2.initialize(this.SEQUELIZE);
 //            Gallery.initialize(this.SEQUELIZE, tag, galleryTag);
         } catch (error) {
             console.log(error);
@@ -48,7 +48,7 @@ export class AccessMapper extends BaseMapper {
 
             const teams = userUpdate['teams'];
 
-            const userUpdateResult = await Access.update(userUpdate, {where: {id: id}}).then(data => {
+            const userUpdateResult = await Access2.update(userUpdate, {where: {id: id}}).then(data => {
                 return true;
             }).catch(data => {
                 return false;
@@ -76,7 +76,7 @@ export class AccessMapper extends BaseMapper {
             //  console.log('the params');
             //  console.log(params);
             console.log(accessDefaults);
-            return await Access.findOrCreate({ where: { name: params.name },  defaults: accessDefaults })
+            return await Access2.findOrCreate({ where: { name: params.name },  defaults: accessDefaults })
                 //const result = await User.findOrCreate(user, defaults: userDefaults
                 .then(data => {
 
@@ -94,7 +94,7 @@ export class AccessMapper extends BaseMapper {
 
     public async apiDeleteAccess(id) {
         try {
-            return await UserAccess.destroy({ where: { UserId: id }})
+            return await UserAccess2.destroy({ where: { UserId: id }})
                 //const result = await User.findOrCreate(user, defaults: userDefaults
 
         } catch (error) {
@@ -114,7 +114,7 @@ export class AccessMapper extends BaseMapper {
             }
 
             console.log(userParams)
-            return await UserAccess.findOrCreate(userParams)
+            return await UserAccess2.findOrCreate(userParams)
         } catch (error) {
             return error.toString;
         }
@@ -137,7 +137,7 @@ export class AccessMapper extends BaseMapper {
             };
 
             console.log(userParams);
-            return await Access.findOrCreate(userParams).then(data => {
+            return await Access2.findOrCreate(userParams).then(data => {
                 console.log('in find')
                 console.log(data)
                 return data[0];
@@ -175,7 +175,7 @@ export class AccessMapper extends BaseMapper {
                 limit: check.pageSize,
             };
 
-            return await Access.findAll(params).then(users => {
+            return await Access2.findAll(params).then(users => {
                 return this.processArray(users);
             }).catch(error => {
                 return error.toString();

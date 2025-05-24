@@ -34,7 +34,7 @@ const params = {
             Data: "EMAIL_SUBJECT",
         },
     },
-    Source: "tomc@tomvisions.com", // SENDER_ADDRESS
+    Source: "test@kofc9544.ca", // SENDER_ADDRESS
     ReplyToAddresses: [
         /* more items */
     ],

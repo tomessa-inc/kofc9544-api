@@ -1,7 +1,6 @@
 import {BaseMapper, mailMapper, paramsOptions} from ".";
 import moment from "moment";
 import * as uuid from 'uuid';
-import {Player2} from "../models/Player2";
 import {player} from  "../models/Player"
 import {GalleryTag2} from "../models/GalleryTag2";
 import {OptionsPlayer} from "../controllers/golf.controller";
@@ -10,6 +9,8 @@ import {Gallery2} from "../models/Gallery2";
 import {Team2} from "../models/Team2";
 import {Image2} from "../models/Image2";
 import {EmailMessaging} from "../models/EmailMessaging";
+import {team} from "../models/Team";
+import {eq, and, sql, count, lt, isNotNull} from 'drizzle-orm';
 
 
 export interface PlayerObject {
@@ -27,6 +28,7 @@ export interface PlayerObject {
 export class GolfMapper extends BaseMapper {
     private _PARAMS_NAME: string = 'name';
     private _DEFAULT_SORT: string = 'name';
+    private _LABEL_SORT: string = 'label';
 
 
 
@@ -74,10 +76,15 @@ export class GolfMapper extends BaseMapper {
                 console.log("Player")
 
 
-                const test2 = this.DRIZZLE.insert(player).values(playerObject)
-               retval = await this.getSQLData(test2.toSQL())
+                const retval = await this.DRIZZLE.insert(player).values(playerObject).$returningId();
+                console.log("test2")
+               console.log(retval);
 
-                playerObject.id = retval.insertId
+           //    retval = await this.getSQLData(test2.toSQL())
+
+                playerObject.id = retval[0].id
+                console.log("ttests")
+                console.log(playerObject);
                 console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
         //        console.log("test2")
          //       console.log(test2.toJSON())
@@ -128,6 +135,70 @@ export class GolfMapper extends BaseMapper {
 
     }
 
+
+    /**
+     *
+     * @param player
+     * @param id
+     * @returns
+     */
+    public async updatePlayerById(playerObject, id) {
+        try {
+
+            console.log("checking")
+            console.log(playerObject);
+            console.log(playerObject.name)
+            console.log({
+                name: playerObject.name,
+                email: playerObject.email,
+                phone: playerObject.phone,
+                TeamId: playerObject.TeamId
+            })
+            const playerSQL = this.DRIZZLE.update(player).set({
+                name: playerObject.name,
+                email: playerObject.email,
+                phone: playerObject.phone,
+                TeamId: playerObject.TeamId
+            }).where(eq(player.id, id))
+            console.log("eoot")
+            console.log(playerSQL.toSQL())
+
+            const too = this.getSQLData(playerSQL.toSQL())
+
+            console.log('too')
+            console.log(too);
+            return true;
+            /*
+                        const offset = ((options.pageIndex - 1) * options.pageSize)
+                        const players = {
+                            include: [
+                                {
+                                    Model: Team2,
+                                    association: Player2.Team,
+                                    required: false
+                                },
+                            ],
+                            where: [{ TeamId: options.id }],
+                            offset: offset,
+                            limit: options.pageSize,
+
+                        }
+
+                        console.log("players")
+                        console.log(players)
+
+                        return await Player2.findAll(players).then(data => {
+                            console.log("the players")
+                            console.log(data);
+                            return this.processArray(data);
+                        }).catch(err => {
+                            return err;
+                        }) */
+        } catch (error) {
+            return error.toString()
+        }
+    }
+
     /**
      *
      * @param options
@@ -135,7 +206,15 @@ export class GolfMapper extends BaseMapper {
      */
     public async getPlayersByTeamId(options: paramsOptions) {
         try {
+            const playerSQL = this.DRIZZLE.select({
+                id: player.id,
+                name: player.name,
+                email: player.email,
+                phone: player.phone
+            }).from(player).innerJoin(team, eq(player.TeamId, team.id)).where(eq(team.id, options.id))
 
+            return this.getSQLData(playerSQL.toSQL())
+/*
             const offset = ((options.pageIndex - 1) * options.pageSize)
             const players = {
                 include: [
@@ -160,7 +239,7 @@ export class GolfMapper extends BaseMapper {
                 return this.processArray(data);
             }).catch(err => {
                 return err;
-            })
+            }) */
         } catch (error) {
             console.log(`Could not fetch galleries ${error}`)
         }
@@ -170,6 +249,24 @@ export class GolfMapper extends BaseMapper {
     public async getAllPlayers(params: paramsOptions) { //: Promise<string[] | string> {
         try {
             console.log(params);
+
+            const offset = ((params.pageIndex - 1) * params.pageSize) ?? 1
+
+            console.log("offset")
+            console.log(offset);
+            const playerSQL = this.DRIZZLE.select().from(player).offset(offset).limit(params.pageSize)
+
+            return this.getSQLData(playerSQL.toSQL());
+        } catch (error) {
+
+            return error.toString();
+        }
+    }
+
+/*
+    public async getAllTeamsMissingPlayers(params: paramsOptions) { //: Promise<string[] | string> {
+        try {
+/*            console.log(params);
 
             const offset = ((params.pageIndex - 1) * params.pageSize) ?? 1
 
@@ -188,7 +285,7 @@ export class GolfMapper extends BaseMapper {
                 offset: offset,
                 limit: params.pageSize,
             }
-            return await Player2.findAll(golfConfig).then(galleries => {
+            return await Player.findAll(golfConfig).then(galleries => {
                 return this.processArray(galleries);
             }).catch(err => {
                 console.log('the error');
@@ -200,7 +297,47 @@ export class GolfMapper extends BaseMapper {
             return error.toString();
         }
     }
+*/
+    public async getAllPlayersNeedingTeamsLabelValue(params) {
 
+        try {
+            //  this.DRIZZLE.select().count().from(team).where(eq(team.id, ${team.id}));
+
+            console.log("before")
+            let teamsNeedingPlayersSQL = this.DRIZZLE.select({
+                value: sql<string>`${team.id}`.as("value"),
+                label: sql<string>`${team.name}`.as("label"),
+                /*
+                                sql<bigint>`(SELECT count(player.id)
+                                                    from ${player}
+                                                    inner join team as subteam on player.teamId = subteam.id
+                                                    where subteam.id = value
+                                                    GROUP BY subteam.id
+
+                                                    )`.as('countPlayers') */
+            }).from(player).where(isNotNull(player.TeamId));
+            // const test = teamsNeedingPlayersSQL.config.fields.countPlayers.fieldAlias;
+            //  console.log(test);
+            //  console.log("test")
+            //  console.log( teamsNeedingPlayersSQL.config.fields)
+          //  teamsNeedingPlayersSQL = teamsNeedingPlayersSQL.innerJoin(player, eq(team.id, player.TeamId)).having(lt(teamsNeedingPlayersSQL.config.fields.countPlayers, 4)).groupBy(team.id, team.name)
+
+
+
+
+            //    teamsNeedingPlayersSQL = teamsNeedingPlayersSQL.where(lt(teamsNeedingPlayersSQL.config.fields.countPlayers.fieldAlias, 3));
+            console.log(teamsNeedingPlayersSQL.toSQL())
+            /* SELECT count(*)
+
+                                         FROM ${player}
+                                         left join team on player.teamId = team.id)`, 3)); */
+            //return true;
+            return this.getSQLData(teamsNeedingPlayersSQL.toSQL());
+        } catch (error) {
+            return error.toString()
+        }
+    }
+/*
     public async getAllPlayersWithoutTeams(params: paramsOptions) { //: Promise<string[] | string> {
         try {
             console.log(params);
@@ -222,7 +359,7 @@ export class GolfMapper extends BaseMapper {
                 offset: offset,
                 limit: params.pageSize,
             }
-            return await Player2.findAll(golfConfig).then(galleries => {
+            return await Player.findAll(golfConfig).then(galleries => {
                 return this.processArray(galleries);
             }).catch(err => {
                 console.log('the error');
@@ -234,7 +371,7 @@ export class GolfMapper extends BaseMapper {
             return error.toString();
         }
     }
-
+*/
 
     /**
      *
@@ -303,6 +440,10 @@ export class GolfMapper extends BaseMapper {
         return this._PARAMS_NAME;
     }
 
+
+    get LABEL_SORT(): string {
+        return this._LABEL_SORT;
+    }
 }
 
 export const golfMapper = new GolfMapper();

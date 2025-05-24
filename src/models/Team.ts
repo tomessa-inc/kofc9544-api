@@ -9,6 +9,7 @@ export const team = mysqlTable('team', {
     id: varchar('id', {length: 25}).primaryKey(),
     name: varchar('name', {length: 255}).notNull(),
     captain: varchar('captain', {length: 255}).notNull(),
+
 //    createdAt:timestamp().defaultNow(),
     //  updatedAt: timestamp().defaultNow(),
 })

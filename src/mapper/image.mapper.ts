@@ -30,15 +30,6 @@ export class ImageMapper extends BaseMapper {
     }
 
 
-    private async initializeImage() {
-        const tag = Tag2.initialize(this.SEQUELIZE);
-        const galleryTag = GalleryTag2.initialize(this.SEQUELIZE, tag);
-        const gallery = Gallery2.initialize(this.SEQUELIZE, tag, galleryTag)
-
-        Image2.initialize(this.SEQUELIZE, gallery, galleryTag);
-    }
-
-
     /**
      * Update image based on Id
      * @param id 
@@ -67,7 +58,20 @@ export class ImageMapper extends BaseMapper {
    */
     public async getImageById(id) {
         try {
+            const imageSQL = this.DRIZZLE.select({
+                id: image.id,
+                key: image.key,
+                name: image.name,
+                primaryImage: image.primaryImage,
+                gallery: sql<string>`(SELECT JSON_OBJECT('id', ${gallery.id}, 'name', ${gallery.name})
+                                    FROM ${gallery}
+                                    where ${image.GalleryId} = ${gallery.id})`.as('gallery')
 
+
+            }).from(image).leftJoin(gallery, eq(gallery.id, image.GalleryId)).where(eq(image.id, id));
+
+
+/*
             const imageConfig = {
                 include: [{
                     attributes: { exclude: ['ImageId', 'GalleryTagTagId'] },
@@ -84,7 +88,9 @@ export class ImageMapper extends BaseMapper {
                 return data[0];
             }).catch(err => {
                 return err;
-            })
+            }) */
+
+            return this.getSQLData(imageSQL.toSQL())
         } catch (error) {
             return error.toString();
         }
@@ -320,12 +326,13 @@ export class ImageMapper extends BaseMapper {
 
             console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
 
-            const test = this.getSQLData(imagesByGallery.toSQL(), true)
+            const testing = this.processImageArray(await imagesByGallery)
+         //   const test = this.getSQLData(imagesByGallery.toSQL(), true)
             console.log(4)
 
             console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
 
-            return test
+            return testing
 /*            const ff = JSON.stringify(imagesByGallery.toSQL())
             const sqlquery = ff.replace(/"/g, '\\\"').replace(/\\n/g, "")
 
@@ -440,13 +447,10 @@ export class ImageMapper extends BaseMapper {
                 primaryImage: image.primaryImage,
                 orientation: image.orientation,
                 order: image.order,
-                gallery: {
-                    id: gallery.id,
-                    name: gallery.name,
-                    description: gallery.description,
-                    viewing: gallery.viewing
-                }
-            }).from(image).innerJoin(gallery, eq(image.GalleryId, gallery.id))
+                gallery: sql<string>`(SELECT JSON_OBJECT('id', ${gallery.id}, 'name', ${gallery.name})
+                                    FROM ${gallery}
+                                    where ${gallery.id} = ${image.GalleryId})`.as('gallery'),
+            }).from(image)
                 .where(and(eq(image.GalleryId, options.id),
                         eq(image.active, 1)
                     )).offset(offset).limit(options.pageSize)

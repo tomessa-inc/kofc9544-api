@@ -1,5 +1,8 @@
 "use strict";
 import {BaseMapper, paramsOptions} from "./base.mapper";
+import {access} from "../models/Access";
+import {userAuthentication} from "../models/UserAuthentication"
+import {user} from "../models/User"
 
 //import {Access, Gallery, GalleryTag, Tag, User, UserAuthentication} from "../models";
 
@@ -10,12 +13,13 @@ import dotenv from 'dotenv';
 import * as uuid from 'uuid';
 import moment from "moment";
 import { get } from "lodash";
-import {UserAccess} from "../models/UserAccess";
+import {UserAccess2} from "../models/UserAccess2";
 import  crypto from "crypto";
 //import {Access, User, UserAuthentication} from "../models";
-import {Access} from "../models/Access";
-import {User} from "../models/User";
-import {UserAuthentication} from "../models/UserAuthentication";
+import {Access2} from "../models/Access2";
+import {User2} from "../models/User2";
+import {sql, gt, lt, eq, SQL} from "drizzle-orm";
+import {player} from "../models/Player";
 
 
 const algorithm = 'aes-256-cbc'; //Using AES encryption
@@ -37,29 +41,9 @@ export class UserAuthenticationMapper extends BaseMapper {
     constructor() {
         super();
         this.DATABASE_NAME = 'kofc_golf';
+        this.initializeDrizzle()
    //     this.initializeSequelize()
      //   this.initializeUserAuthentication();
-    }
-
-    private async initializeUserAuthentication() {
-        try {
-            const model = {access: null, userAccess: null,  user: null}
-
-            //    console.log('the sequelize')
-            //  console.log(this.SEQUELIZE)
-            model.access  = await Access.initialize(this.SEQUELIZE);
-
-            ///  this.MODEL({access: access})
-            model.userAccess = await UserAccess.initialize(this.SEQUELIZE, model);
-
-            model.user = await User.initialize(this.SEQUELIZE, model);
-
-            UserAuthentication.initialize(this.SEQUELIZE, model);
-//            Gallery.initialize(this.SEQUELIZE, tag, galleryTag);
-        } catch (error) {
-            console.log(error);
-
-        }
     }
 
 
@@ -69,16 +53,32 @@ export class UserAuthenticationMapper extends BaseMapper {
      */
     async getUserBasedOnToken(params) {
         try {
+            const tokenSQL = this.DRIZZLE.select({
+                id:user.id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                access: sql<string>`(SELECT *
+                                    from ${access}
+                                    inner join ${userAuthentication} on ${userAuthentication.UserId} = user.id)`.as('access')
+
+                }
+
+
+            ).from(userAuthentication).innerJoin(user, eq(user.id, userAuthentication.UserId)).where(eq(userAuthentication.token, params.token));
+
+            return this.getSQLData(tokenSQL.toSQL())
+
+/*
             const userParams = {
                 include: [
                     {
-                        Model: User,
-                        association: UserAuthentication.User,
+                        Model: User2,
+                        association: UserAuthentication2.User,
                         required: true,
                         include: [
                             {
-                                Model: Access,
-                                association: User.Access,
+                                Model: Access2,
+                                association: User2.Access,
                                 required: false,
                                 as: 'Access'
                             },
@@ -90,13 +90,13 @@ export class UserAuthenticationMapper extends BaseMapper {
             }
 
             console.log(userParams);
-            return await UserAuthentication.findAll(userParams).then(data => {
+            return await UserAuthentication2.findAll(userParams).then(data => {
                 console.log(data)
                 return data[0];
 //                data[0].accessToken = this.generateJWTToken();
             }).catch(data => {
                 return data;
-            });
+            }); */
         } catch (error) {
             console.log(`Could not fetch users ${error}`)
         }
@@ -110,25 +110,9 @@ export class UserAuthenticationMapper extends BaseMapper {
      */
     async deleteTokenEntry(id:string) {
         try {
-            const userParams = {
-                where: {UserId: id},
-            }
-            // get config vars
-            //    dotenv.config();
+            const deleteSQL = this.DRIZZLE.destroy(userAuthentication).where(eq(userAuthentication.UserId, id));
 
-
-            /*   const userParams = {
-                   where: {
-                       UserId: userId,
-                       AccessId: access,
-                       createdAt: moment().format('YYYY-MM-DD'),
-                       updatedAt: moment().format('YYYY-MM-DD')
-                   },
-               } */
-
-            //     return await UserAuthentication.create(userParams);
-
-            return await UserAuthentication.destroy(userParams);
+            return this.getSQLData(deleteSQL.toSQL())
         } catch (error) {
             console.log(`Could not create token ${error}`)
             console.log(error);
@@ -142,29 +126,13 @@ export class UserAuthenticationMapper extends BaseMapper {
      */
     async createTokenEntry(id,token) {
         try {
-            // get config vars
-            //    dotenv.config();
-            const userParams = {
+            const tokenSQL = this.DRIZZLE.insert(userAuthentication).values({
                 id: `${id}-${token}`,
                 UserId: id,
                 token: token,
                 eventType: "PASSWORD_RESET",
-                createdAt: moment().format('YYYY-MM-DD'),
-                updatedAt: moment().format('YYYY-MM-DD')
-            };
-
-            /*   const userParams = {
-                   where: {
-                       UserId: userId,
-                       AccessId: access,
-                       createdAt: moment().format('YYYY-MM-DD'),
-                       updatedAt: moment().format('YYYY-MM-DD')
-                   },
-               } */
-
-            //     return await UserAuthentication.create(userParams);
-
-            return await UserAuthentication.create(userParams);
+            })
+            return this.getSQLData(tokenSQL.toSQL())
         } catch (error) {
             console.log(`Could not create token ${error}`)
             console.log(error);

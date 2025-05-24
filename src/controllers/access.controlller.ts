@@ -12,7 +12,7 @@ export class AccessController {
         try {
             if (req.body[accessMapper.PARAMS_NAME] && req.body[accessMapper.PARAMS_DESCRIPTION]) {
                 const user = await accessMapper.getUserBasedOnPassword(req.body);
-                console.log('user');
+                console.log('user1');
                 console.log(user);
                 if (typeof(user) !== "object") {
 

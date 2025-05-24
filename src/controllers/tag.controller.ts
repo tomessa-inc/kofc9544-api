@@ -26,9 +26,6 @@ export class TagController {
     }
 
 
-    apiGetAllTagsAsLabelValues
-
-
     /**
        * Calling all galleries
        * @param req

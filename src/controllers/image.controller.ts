@@ -131,7 +131,7 @@ export class ImageController {
 
             //            const paginationResults = galleryMapper.prepareListResults(images, req.query);
 
-            return res.status(200).json(images);
+            return res.status(200).json(images[0]);
 
         } catch (error) {
             res.status(500).json({ error_main: error.toString() })

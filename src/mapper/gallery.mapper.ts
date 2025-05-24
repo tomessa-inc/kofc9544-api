@@ -9,6 +9,11 @@ import process from "process";
 import {Tag2} from "../models/Tag2";
 import {Gallery2} from "../models/Gallery2";
 import {GalleryTag2} from "../models/GalleryTag2";
+import {gallery} from "../models/Gallery";
+import {sql} from "drizzle-orm";
+import {galleryTag} from "../models/GalleryTag";
+import {image} from "../models/Image";
+import {tag} from "../models/Tag";
 
 export class GalleryMapper extends BaseMapper {
     private _PARAMS_ID: string = 'id';
@@ -48,7 +53,21 @@ export class GalleryMapper extends BaseMapper {
             console.log("offset")
 
             console.log(offset);
-            const galleryConfig = {
+
+            const gallerySQL = this.DRIZZLE.select({
+                id:gallery.id,
+                name: gallery.name,
+                Tags: sql<string>`(SELECT JSON_ARRAYAGG(JSON_OBJECT('id', \`tag\`.\`id\`, 'name',\`tag\`.\`name\`))
+                                    FROM gallery_tag
+                                    INNER JOIN tag ON tag.id = gallery_tag.TagId
+                                    where gallery_tag.GalleryId = gallery.id)`.as('Tags')
+
+
+            }).from(gallery).offset(offset).limit(params.pageSize)
+
+            return this.getSQLData(gallerySQL.toSQL())
+
+/*            const galleryConfig = {
                 include: [
                     {
                         Model: Tag2,
@@ -66,7 +85,7 @@ export class GalleryMapper extends BaseMapper {
                 console.log('the error');
                 console.log(err);
                 return err;
-            })
+            }) */
         } catch (error) {
 
             return error.toString();

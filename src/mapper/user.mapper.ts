@@ -1,22 +1,21 @@
 "use strict";
 import {BaseMapper, paramsOptions} from "./base.mapper";
-
-
-//import { User} from "../models";
-import {Op} from "sequelize"
-import {or} from "../db";
+import {user} from "../models/User"
 import dotenv from 'dotenv';
 import * as uuid from 'uuid';
 import moment from "moment";
 import { get } from "lodash";
-import {UserAccess} from "../models/UserAccess";
+import {UserAccess2} from "../models/UserAccess2";
 import  crypto from "crypto";
-import {Access} from "../models/Access";
-import {User} from "../models/User";
+import {Access2} from "../models/Access2";
+import {User2} from "../models/User2";
 const algorithm = 'aes-256-cbc'; //Using AES encryption
 const key = crypto.randomBytes(32);
 const iv = crypto.randomBytes(16);
-
+import {sql, gt, lt, eq, SQL, like, and, or} from "drizzle-orm";
+import {access} from "../models/Access";
+import {userAuthentication} from "../models/UserAuthentication";
+import {userAccess} from "../models/UserAccess";
 
 export class UserMapper extends BaseMapper {
     private _PARAMS_ID: string = 'id';
@@ -32,30 +31,8 @@ export class UserMapper extends BaseMapper {
     constructor() {
         super();
         this.DATABASE_NAME = 'kofc_golf';
- //       this.initializeSequelize()
-   //     this.initializeUsers();
+        this.initializeDrizzle();
     }
-
-    private async initializeUsers() {
-        try {
-            const model = {access: null, userAccess: null}
-
-        //    console.log('the sequelize')
-          //  console.log(this.SEQUELIZE)
-            model.access  = await Access.initialize(this.SEQUELIZE);
-
-          ///  this.MODEL({access: access})
-            model.userAccess = await UserAccess.initialize(this.SEQUELIZE, model);
-         //   model.authentication = await UserAuthentication.initialize(this.SEQUELIZE, model);
-
-            User.initialize(this.SEQUELIZE, model);
-//            Gallery.initialize(this.SEQUELIZE, tag, galleryTag);
-        } catch (error) {
-            console.log(error);
-
-        }
-    }
-
 
     public async apiUpdateUser(params, body) {
         try {
@@ -64,7 +41,7 @@ export class UserMapper extends BaseMapper {
 
            // const teams = userUpdate['teams'];
     
-            const userUpdateResult = await User.update(body, {where: {id: id}}).then(data => {
+            const userUpdateResult = await User2.update(body, {where: {id: id}}).then(data => {
                 return true;
             }).catch(data => {
                 return false;
@@ -93,7 +70,7 @@ export class UserMapper extends BaseMapper {
           //  console.log('the params');
           //  console.log(params);
             console.log(userDefaults);
-            return await User.findOrCreate({ where: { userName: params.userName },  defaults: userDefaults })
+            return await User2.findOrCreate({ where: { userName: params.userName },  defaults: userDefaults })
             //const result = await User.findOrCreate(user, defaults: userDefaults
             .then(data => {
 
@@ -119,34 +96,28 @@ export class UserMapper extends BaseMapper {
             // get config vars
             dotenv.config();
 
+            const userSQL = this.DRIZZLE.select({
+                id: user.id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                access: sql<string>`(SELECT JSON_ARRAYAGG(JSON_OBJECT('id', access.id,'name', access.name, 'name', access.name))
+                                     from ${access}
+                                    inner join user_access on access.id = user_access.AccessId
+                                    where user_access.UserId = user.id)`.as('access')
+            }).from(user)
 
-            const userParams = {
-                include: [
-                    {
-                        Model: Access,
-                        association: User.Access,
-                        required: false,
-                        as: 'access'
-                    },
-                ],
-           //     raw: true,
-                where: {
-                    password: params.password,
-                    userName: params.userName
-                },
-            };
+             userSQL.where(and(eq(user.password, params.password), or(eq(user.email, params.userName), eq(user.id, params.userName))));
+       //     console.log(userSQL.toSQL())
+            ///console.log(params.userName);
+        ///    userSQL.where(or(eq(user.userName, params.userName), eq(user.id, params.userName)));
+            console.log(userSQL.toSQL())
 
-            console.log(userParams);
-            return await User.findOne(userParams).then(data => {
-                console.log('in find')
-                console.log(data)
-                return data;
-//                data[0].accessToken = this.generateJWTToken();
-            }).catch(data => {
-                return data;
-            });
+          //  or(eq(user.userName, params.userName)), eq(user.id), params.userName)));
+
+            return this.getSQLData(userSQL.toSQL())
         } catch (error) {
-            console.log(`Could not fetch users ${error}`)
+           return error.toString();
         }
     }
 
@@ -162,8 +133,8 @@ export class UserMapper extends BaseMapper {
             const userParams = {
                 include: [
                     {
-                        Model: Access,
-                        association: User.Access,
+                        Model: Access2,
+                        association: User2.Access,
                         required: false,
                         as: 'access'
                     },
@@ -172,7 +143,7 @@ export class UserMapper extends BaseMapper {
                 attributes: {exclude: ['ImageId', 'GalleryTagTagId']},
             }
 
-            return await User.findOrCreate(userParams).then(data => {
+            return await User2.findOrCreate(userParams).then(data => {
               //  return this.processArray(data, User)
                 console.log('data')
                 console.log(data);
@@ -188,23 +159,14 @@ export class UserMapper extends BaseMapper {
     /**
      *
      * @param email
-     * @returns User
+     * @returns User2
      */
     public async getUserByEmail(email:string) {
         try {
-            const userParams = {
-                where: {email: email},
-                attributes: {exclude: ['ImageId', 'GalleryTagTagId']},
-            }
 
-            return await User.findOne(userParams).then(data => {
-                //  return this.processArray(data, User)
+            const userSQL = this.DRIZZLE.select(user).from(user).where(eq(user.email, email))
 
-                return data
-            }).catch(err => {
-
-                return err;
-            })
+            return this.getSQLData(userSQL.toSQL());
         } catch (error) {
             return error.toString();
         }
@@ -214,41 +176,17 @@ export class UserMapper extends BaseMapper {
        const check = params;
 
         try {
-            console.log(check);
             const offset = ((check.pageIndex - 1) * check.pageSize);
+            const userSQL = this.DRIZZLE.select(user).from(user)
 
-
-            const params = {
-                offset: offset,
-                limit: check.pageSize,
-                where: null,
-            };
 
             if (check.filterQuery) {
-                params.where =  {
-                    [Op.or]: [
-                        {
-                            firstName:
-                                {
-                                    [Op.like]: `%${check.filterQuery}%`
-                                }
-                        },
-                        {
-                            lastName:
-                                {
-                                    [Op.like]: `%${check.filterQuery}%`
-                                }
-                        },
-                    ]
-                }
+                userSQL.where(or(like(user.firstName, `%${check.filterQuery}%`)), like(user.lastName, `%${check.filterQuery}%`))
             }
+            userSQL.offset(offset);
+            userSQL.limit(check.pageSize)
 
-            return await User.findAll(params).then(users => {
-                return this.processArray(users);
-            }).catch(error => {
-                return error.toString();
-            });
-
+            return this.getSQLData(userSQL.toSQL());
         } catch (error) {
             return error.toString() //["error" => error.toString()];
         }

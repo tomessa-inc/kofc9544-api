@@ -14,7 +14,7 @@ export class UserController {
         try {
             if (req.body[userMapper.PARAMS_USERNAME] && req.body[userMapper.PARAMS_PASSWORD]) {
                 const user = await userMapper.getUserBasedOnPassword(req.body);
-                console.log('user');
+                console.log('userpostfin');
                 console.log(user);
                 if (typeof(user) !== "object") {
 

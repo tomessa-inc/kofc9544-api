@@ -1,33 +1,14 @@
-const {DataTypes, Model} = require("sequelize");
-//import {sequelize} from '../db/';
-import {S3Mapper} from "../mapper/s3.mapper";
+import { drizzle } from 'drizzle-orm/mysql2';
+import { mysqlTable, serial, varchar, int, boolean, DatetimeFsp, MySqlTimestamp, timestamp } from 'drizzle-orm/mysql-core';
+import mysql from 'mysql2/promise';
+import {DataTypes} from "../db";
 
-class Access extends Model {
 
-    public static initialize(sequelize) {
-        return this.init({
-            id: {
-                type: DataTypes.STRING,
-                primaryKey: true
-            },
-            name: {
-                type: DataTypes.STRING,
-            },
-            description: {
-                type: DataTypes.STRING,
-            },
-            createdAt: {
-                type: DataTypes.DATE,
-            },
-            updatedAt: {
-                type: DataTypes.DATE,
-            },
-        }, {
-            modelName: 'Access', sequelize, tableName: "access"
-        });
-
-    }
-}
-
-export {Access}
-
+// Define your schema
+export const access = mysqlTable('access', {
+    id: varchar('id', {length: 30}).primaryKey(),
+    name: varchar('name', {length: 50}).notNull(),
+    description: varchar('description', {length: 50}).notNull(),
+//    createdAt:timestamp().defaultNow(),
+    //  updatedAt: timestamp().defaultNow(),
+})

@@ -56,7 +56,7 @@ export class BaseMapper {
      * Initalizing the Sequelize instance with the configuration data taken from file
      * @param dbConfig
      */
-    public initializeDrizzle() {
+    public async initializeDrizzle() {
         /*        let options = JSON.parse(`{
                                                     "host": "${process.env.DB_HOST}",
                                                     "dialect": "mysql",
@@ -109,7 +109,7 @@ export class BaseMapper {
         }
 
         const drizzleAPI = new DrizzleAPI(this._DATABASE_NAME,process.env.DB_USERNAME,process.env.DB_PASSWORD,process.env.DB_HOST);//.initialize();
-        this._DRIZZLE = drizzleAPI.initialize()
+        this._DRIZZLE = await drizzleAPI.initialize()
     }
 
     public async processArray(listing) {
@@ -160,18 +160,25 @@ export class BaseMapper {
         const sqlquery = ff.replace(/"/g, '\\\"').replace(/\\n/g, "")
 
         const text = JSON.parse(`{"sql": "${sqlquery}"}`)
-   //     const text2 = `{"sql": "${sqlquery}"}`
-      //  console.log(text);
-     //   console.log(text2);
+        const text2 = `{"sql": "${sqlquery}"}`
+        console.log(text);
+        console.log(text2);
+//        const url = 'https://api-stage.db.tomessa.ca/kofc_golf`;
+        const url = 'http://localhost:8000/kofc_golf';
 
-        return await axios.post('https://api-stage.db.tomessa.ca/kofc_golf',
+
+
+        return await axios.post(url,
             text
         )
             .then( async (response) => {
                 if (processKeyImage) {
+
                     return await this.processImageArray(response.data.data[0])
                 }
+             //   console.log("no image")
 
+               // console.log(response.data.data[0])
                 return response.data.data[0]
             })
             .catch( (error)=>  {

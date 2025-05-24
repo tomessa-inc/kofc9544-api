@@ -64,7 +64,7 @@ export class GolfController {
      * @param req
      * @param res
      * @param next
-     */
+     *//*
     public static async apiGetAllPlayersWithoutTeams(req: any, res: any, next: any) {
         try {
             //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
@@ -83,7 +83,7 @@ export class GolfController {
                 }
             })
 
-            const galleries = await golfMapper.getAllPlayers(options);
+                 const galleries = await golfMapper.getAllPlayersWithoutTeams(options);
 
             if (typeof galleries === 'string') {
                 return res.status(500).json({ errors_string: galleries })
@@ -96,7 +96,133 @@ export class GolfController {
             res.status(500).json({ error_main: error.toString() })
         }
 
+    } */
+
+
+    /**
+     * Calling all galleries
+     * @param req
+     * @param res
+     * @param next
+     */
+    public static async getAllTeamsNeedingPlayersLabelValue(req: any, res: any, next: any) {
+        try {
+            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
+            //        return res.status(500).json({error: 'Not Authorized to access the API'})
+            //      }
+
+            const options = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: golfMapper.LABEL_SORT, order: golfMapper.DEFAULT_ORDER };
+
+            Object.entries(req.params).map(([key, value]) => {
+                if (value !== 'undefined') {
+                    if (isNaN(Number(value))) {
+                        options[key] = value;
+                    } else {
+                        options[key] = Number(value);
+                    }
+                }
+            })
+            const teams = await teamMapper.getAllTeamsNeedingPlayersLabelValue(options);
+
+            console.log("gallkery")
+            console.log(teams)
+            console.log(options);
+            if (typeof teams === 'string') {
+                return res.status(500).json({ errors_string: teams })
+            }
+
+            return res.status(200).json(teams);
+
+        } catch (error) {
+            res.status(500).json({ error_main: error.toString() })
+        }
+
     }
+
+    /**
+     * Calling all galleries
+     * @param req
+     * @param res
+     * @param next
+     */
+    public static async getAllPlayersNeedingTeamsLabelValue(req: any, res: any, next: any) {
+        try {
+            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
+            //        return res.status(500).json({error: 'Not Authorized to access the API'})
+            //      }
+
+            const options = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: golfMapper.LABEL_SORT, order: golfMapper.DEFAULT_ORDER };
+
+            Object.entries(req.params).map(([key, value]) => {
+                if (value !== 'undefined') {
+                    if (isNaN(Number(value))) {
+                        options[key] = value;
+                    } else {
+                        options[key] = Number(value);
+                    }
+                }
+            })
+            const teams = await golfMapper.getAllPlayersNeedingTeamsLabelValue(options);
+
+            console.log("gallkery")
+            console.log(teams)
+            console.log(options);
+            if (typeof teams === 'string') {
+                return res.status(500).json({ errors_string: teams })
+            }
+
+            return res.status(200).json(teams);
+
+        } catch (error) {
+            res.status(500).json({ error_main: error.toString() })
+        }
+
+    }
+
+
+
+    /**
+     * Calling all galleries
+     * @param req
+     * @param res
+     * @param next
+     */
+    public static async apiGetTeamsMissingPlayers(req: any, res: any, next: any) {
+        try {
+            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
+            //        return res.status(500).json({error: 'Not Authorized to access the API'})
+            //      }
+
+            const options = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: golfMapper.LABEL_SORT, order: golfMapper.DEFAULT_ORDER };
+
+            Object.entries(req.params).map(([key, value]) => {
+                if (value !== 'undefined') {
+                    if (isNaN(Number(value))) {
+                        options[key] = value;
+                    } else {
+                        options[key] = Number(value);
+                    }
+                }
+            })
+            const galleries = await teamMapper.getAllTeamsNeedingPlayers(options);
+
+            console.log("gallkery")
+            console.log(galleries)
+            console.log(options);
+            if (typeof galleries === 'string') {
+                return res.status(500).json({ errors_string: galleries })
+            }
+            const paginationResults = golfMapper.prepareListResults(galleries, options);
+            console.log("gogo")
+
+            return res.status(200).json(paginationResults);
+
+        } catch (error) {
+            res.status(500).json({ error_main: error.toString() })
+        }
+
+    }
+
 
 
 
@@ -171,6 +297,8 @@ export class GolfController {
 
             const paginationResults = teamMapper.prepareListResults(team, options);
 
+            console.log("page")
+            console.log(paginationResults)
             return res.status(200).json(paginationResults);
 
         } catch (error) {
@@ -179,6 +307,36 @@ export class GolfController {
 
     }
 
+
+    /**
+     * Calling all galleries
+     * @param req
+     * @param res
+     * @param next
+     */
+    public static async apiUpdatePlayedById(req: any, res: any, next: any) {
+        try {
+            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
+            //        return res.status(500).json({error: 'Not Authorized to access the API'})
+            //      }
+
+            console.log(req.body)
+            console.log(req.params.id)
+            const team = await golfMapper.updatePlayerById(req.body, req.params.id);
+        console.log("rep")
+            console.log(team);
+
+            if (typeof team === 'string') {
+                return res.status(500).json({ errors_string: team })
+            }
+
+            return res.status(200).json(team);
+
+        } catch (error) {
+            res.status(500).json({ error_main: error.toString() })
+        }
+
+    }
 
     /**
      * Calling all galleries
@@ -205,7 +363,7 @@ export class GolfController {
             })
 
             console.log("options")
-              console.log(options);
+            console.log(options);
 
             const team = await golfMapper.getPlayersByTeamId(options);
 
@@ -223,67 +381,5 @@ export class GolfController {
 
     }
 
-    static async apiPostSendMail(req: any, res: any, next: any) {
 
-        let params = {
-            "contact" :  [
-                mailMapper.PARAMS_MESSAGE, mailMapper.PARAMS_EMAIL_TYPE, mailMapper.PARAMS_NAME, mailMapper.PARAMS_EMAIL
-            ],
-            "contact_us" :  [
-                mailMapper.PARAMS_MESSAGE, mailMapper.PARAMS_EMAIL_TYPE, mailMapper.PARAMS_NAME, mailMapper.PARAMS_SUBJECT, mailMapper.PARAMS_EMAILORPHONE
-            ],
-            "sponsor" :  [
-                mailMapper.PARAMS_EMAIL_TYPE, mailMapper.PARAMS_EMAIL
-            ],
-            "volunteer" :  [
-                mailMapper.PARAMS_EMAIL_TYPE, mailMapper.PARAMS_NAME, mailMapper.PARAMS_EMAILORPHONE
-            ],
-            "register" :  [
-                mailMapper.PARAMS_EMAIL_TYPE
-            ],
-        }
-
-        const missingParam = [];
-        let valid = true;
-        try {
-
-            const paramCheck:string[] = params[req.body[mailMapper.PARAMS_EMAIL_TYPE]]
-
-            Object.values(paramCheck).map(param   => {
-                console.log(param);
-                if (!req.body[param]) {
-                    valid = false;
-                    missingParam.push(param);
-                }
-            });
-
-            if (valid) {
-                await mailMapper.prepareEmail(req.body);
-                const retVal = await mailMapper.apiSendMail();
-
-                if (retVal['$metadata']['httpStatusCode'] === 200) {
-
-                    return res.status(200).json({
-                        success: true,
-                        message: `successfully got through with info ${inspect(retVal)}`
-                    });
-                } else {
-
-                    return res.status(500).json({
-                        success: true,
-                        message: `Email has not been sent ${inspect(retVal)}`
-                    });
-                }
-            } else {
-                return res.status(500).json({
-                    success: false,
-                    message: `Email has not been sent. Missing parameters: ${inspect(missingParam)}`
-                });
-            }
-        } catch (error) {
-
-            return res.status(500).json({result: "error", message: `Failed the try ${util.inspect(error)}`});
-        }
-
-    }
 }

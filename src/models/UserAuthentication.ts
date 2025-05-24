@@ -1,42 +1,16 @@
-"use strict";
+import { drizzle } from 'drizzle-orm/mysql2';
+import { mysqlTable, serial, varchar, int, boolean, DatetimeFsp, MySqlTimestamp, timestamp } from 'drizzle-orm/mysql-core';
+import mysql from 'mysql2/promise';
+import {DataTypes} from "../db";
 
-import { Gallery2 } from "./Gallery2";
-import { Tag2 } from "./Tag2";
-const {DataTypes, Model, sequelize} = require('../db');
-import {User} from "../models/User";
-import {use} from "chai";
-class UserAuthentication extends Model {
 
-    /**
-     *
-     * @param sequelize
-     * @param model
-     */
-    public static initialize(sequelize, model) {
-        const userAuthentication =  this.init({
-            UserId: {
-                type: DataTypes.STRING,
-            },
-            eventType: {
-                type: DataTypes.STRING,
-            },
-            token: {
-                type: DataTypes.STRING,
-            },
-            createdAt: {
-                type: DataTypes.DATE,
-            },
-            updatedAt: {
-                type: DataTypes.DATE,
-            }
-        }, {
-            modelName: 'UserAuthentication', sequelize: sequelize, tableName:"user_authentication",
-        });
+// Define your schema
+export const userAuthentication = mysqlTable('user_authentication', {
+    id: varchar('id', {length: 45}).primaryKey(),
+    UserId: varchar('UserId', {length: 255}).notNull(),
+    token: varchar('token', {length: 255}).notNull(),
+    eventType: varchar('eventType', {length: 255}).notNull(),
 
-        userAuthentication.User = userAuthentication.hasOne(model.user,  {sourceKey: "UserId", as: "user", foreignKey: 'id', onUpdate: 'cascade'})
-
-        return userAuthentication;
-    }
-}
-
-export {UserAuthentication}
+//    createdAt:timestamp().defaultNow(),
+    //  updatedAt: timestamp().defaultNow(),
+})

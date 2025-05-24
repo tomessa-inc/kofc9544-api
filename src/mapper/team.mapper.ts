@@ -1,12 +1,17 @@
-import { BaseMapper } from ".";
+import {BaseMapper, paramsOptions} from ".";
 import moment from "moment";
 import * as uuid from 'uuid';
-import {Player2} from "../models/Player2";
+import {player} from "../models/Player";
 import {GalleryTag2} from "../models/GalleryTag2";
 import {OptionsPlayer} from "../controllers/golf.controller";
-import {Team2} from "../models/Team2";
+
 
 import {team} from "../models/Team";
+import {image} from "../models/Image";
+import {gallery} from "../models/Gallery";
+import {sql, gt, lt, eq, SQL, count} from "drizzle-orm";
+import {galleryTag} from "../models/GalleryTag";
+import {MySqlSelectBase} from "drizzle-orm/mysql-core/query-builders/select";
 
 
 
@@ -19,14 +24,9 @@ export class TeamMapper extends BaseMapper {
         super();
         this.DATABASE_NAME = 'kofc_golf';
         this.initializeDrizzle()
-        //this.initializeSequelize()
-        //this.initializeTeam();
     }
 
 
-    private async initializeTeam() {
-        Team2.initialize(this.SEQUELIZE);
-    }
 
     public async createTeamRegistration(params: OptionsPlayer) {
         try {
@@ -46,22 +46,63 @@ export class TeamMapper extends BaseMapper {
             console.log("before")
             console.log(teamObject)
             console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
-            const sqlPrepared =  this.DRIZZLE.insert(team).values(teamObject);
+            const retval =  await this.DRIZZLE.insert(team).values(teamObject);
+            console.log("the team")
+            console.log(retval);
 
-            const retval = await this.getSQLData(sqlPrepared.toSQL())
+           // const retval = await this.getSQLData(sqlPrepared.toSQL())
 
             console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
 
-            return {success: true, data: {id: teamName.replace(/\s+/g, '-').toLowerCase(), affectedRows: retval.affectedRows}}
+            return {success: true, data: {id: teamName.replace(/\s+/g, '-').toLowerCase(), affectedRows: retval[0].affectedRows}}
         } catch (error) {
+            console.log(error);
             return {success: false, message: `Team name "${teamName}" already exists`};
         }
     }
 
-    public async getAllTeamsNeedingPlayers(params) {
-        /*
+    public async getAllTeamsNeedingPlayersLabelValue(params) {
+
         try {
-            const team = {
+          //  this.DRIZZLE.select().count().from(team).where(eq(team.id, ${team.id}));
+
+            console.log("before")
+            let teamsNeedingPlayersSQL = this.DRIZZLE.select({
+                value: sql<string>`${team.id}`.as("value"),
+                label: sql<string>`${team.name}`.as("label"),
+                countPlayers: sql<number> `count(${player.id})`.as("countPlayer"),
+/*
+                sql<bigint>`(SELECT count(player.id)
+                                    from ${player}
+                                    inner join team as subteam on player.teamId = subteam.id
+                                    where subteam.id = value
+                                    GROUP BY subteam.id
+                                    
+                                    )`.as('countPlayers') */
+            }).from(team);
+           // const test = teamsNeedingPlayersSQL.config.fields.countPlayers.fieldAlias;
+          //  console.log(test);
+          //  console.log("test")
+          //  console.log( teamsNeedingPlayersSQL.config.fields)
+            teamsNeedingPlayersSQL = teamsNeedingPlayersSQL.innerJoin(player, eq(team.id, player.TeamId)).having(lt(teamsNeedingPlayersSQL.config.fields.countPlayers, 4)).groupBy(team.id, team.name)
+
+
+
+
+        //    teamsNeedingPlayersSQL = teamsNeedingPlayersSQL.where(lt(teamsNeedingPlayersSQL.config.fields.countPlayers.fieldAlias, 3));
+            console.log(teamsNeedingPlayersSQL.toSQL())
+            /* SELECT count(*)
+
+                                         FROM ${player}
+                                         left join team on player.teamId = team.id)`, 3)); */
+            //return true;
+            return this.getSQLData(teamsNeedingPlayersSQL.toSQL());
+        } catch (error) {
+            return error.toString()
+        }
+    }
+
+       /*     const team = {
                 attributes: {
                     include: [
                         [
@@ -77,7 +118,7 @@ export class TeamMapper extends BaseMapper {
                     {
                         [Op.like]: `%${check.filterQuery}%`
                     }
-                }
+                } 8/
             }
             return await Team.findAll(team).then(data => {
                 return data;
@@ -86,13 +127,71 @@ export class TeamMapper extends BaseMapper {
             })
         } catch (error) {
             console.log(`Could not fetch gallery ${error}`)
-        } */
+        }
+    }
+*/
+
+
+    public async getAllTeamsNeedingPlayers(params) {
+
+        try {
+            //  this.DRIZZLE.select().count().from(team).where(eq(team.id, ${team.id}));
+
+            console.log("before")
+            let teamsNeedingPlayersSQL = this.DRIZZLE.select({
+                id: team.id,
+                name: team.name,
+                countPlayers: sql<number> `count(${player.id})`.as("countPlayers"),
+                /*
+                                sql<bigint>`(SELECT count(player.id)
+                                                    from ${player}
+                                                    inner join team as subteam on player.teamId = subteam.id
+                                                    where subteam.id = value
+                                                    GROUP BY subteam.id
+
+                                                    )`.as('countPlayers') */
+            }).from(team);
+            // const test = teamsNeedingPlayersSQL.config.fields.countPlayers.fieldAlias;
+            //  console.log(test);
+            //  console.log("test")
+            //  console.log( teamsNeedingPlayersSQL.config.fields)
+            teamsNeedingPlayersSQL = teamsNeedingPlayersSQL.innerJoin(player, eq(team.id, player.TeamId)).having(lt(teamsNeedingPlayersSQL.config.fields.countPlayers, 4)).groupBy(team.id, team.name)
+
+
+
+
+            //    teamsNeedingPlayersSQL = teamsNeedingPlayersSQL.where(lt(teamsNeedingPlayersSQL.config.fields.countPlayers.fieldAlias, 3));
+            console.log(teamsNeedingPlayersSQL.toSQL())
+            /* SELECT count(*)
+
+                                         FROM ${player}
+                                         left join team on player.teamId = team.id)`, 3)); */
+            //return true;
+            return this.getSQLData(teamsNeedingPlayersSQL.toSQL());
+        } catch (error) {
+            return error.toString()
+        }
     }
 
-
-    public async getAllTeams(params) {
+    public async getAllTeams(params: paramsOptions) {
         try {
-            const team = {
+            const offset = ((params.pageIndex - 1) * params.pageSize) ?? 1
+
+            const teamsSQL = this.DRIZZLE.select({
+                id: team.id,
+                name: team.name,
+                countPlayers: sql<string>`(SELECT count(player.id)
+                                    from player
+                                    inner join team as subteam on player.TeamId = subteam.id
+                                    where player.TeamId = team.id
+                                    GROUP BY subteam.id
+                                         )`.as('countPlayers')
+
+
+            }).from(team).offset(offset).limit(params.pageSize)
+
+            return this.getSQLData(teamsSQL.toSQL());
+/*            const team = {
                 attributes: {
                     include: [
                         [
@@ -107,15 +206,15 @@ export class TeamMapper extends BaseMapper {
                 return data;
             }).catch(err => {
                 return err;
-            })
+            }) */
         } catch (error) {
-            console.log(`Could not fetch gallery ${error}`)
+            return error.toString()
         }
     }
 
 
     public async getPlayersByTeamId(params) {
-        try {
+      /*  try {
             const team = {
                 attributes: {
                     include: [
@@ -134,7 +233,7 @@ export class TeamMapper extends BaseMapper {
             })
         } catch (error) {
             console.log(`Could not fetch gallery ${error}`)
-        }
+        }  */
     }
 
 
