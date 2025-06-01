@@ -61,6 +61,7 @@ export class GalleryController {
             //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
             //        return res.status(500).json({error: 'Not Authorized to access the API'})
             //      }
+            console.log("update")
             const options: paramsOptions = { id: "string" };
 
             if (req.params.id) {
@@ -97,16 +98,20 @@ export class GalleryController {
                 options.id = req.params.id;
             }
 
-            const gallery = await galleryMapper.getGalleryById(options);
-             
-            gallery.dataValues.tags = gallery.Tags.map((tag) => {
-                console.log({"label":tag.name, "value":tag.id})
-                return {"label":tag.name, "value":tag.id}
-            })
-
+            const gallery = (await galleryMapper.getGalleryById(options))[0];
+        console.log("the gall")
+            console.log(gallery);
             if (typeof gallery === 'string') {
                 return res.status(500).json({ errors_string: gallery })
             }
+
+            if (gallery.Tags === null) {
+                gallery.Tags = []
+            }
+            gallery.Tags = gallery.Tags.map((tag) => {
+                console.log({"label":tag.name, "value":tag.id})
+                return {"label":tag.name, "value":tag.id}
+            })
 
             return res.status(200).json(gallery);
 

@@ -8,8 +8,8 @@ import { TagController } from '../controllers/tag.controller';
 import {EventController} from "../controllers/event.controller";
 import {eventRouter} from "./event.routes";
 
-mediaRouter.get("/id/:id", GalleryController.apiGetGalleryById);
-mediaRouter.put("/id/:id", GalleryController.apiUpdateGalleryById);
+mediaRouter.post("/id/:id", GalleryController.apiGetGalleryById);
+mediaRouter.patch("/id/:id", GalleryController.apiUpdateGalleryById);
 
 
 mediaRouter.get("/id/:id/image/:pageIndex?/:pageSize?/:sort?/:order?", ImageController.apiGetAllImagesByGallery);

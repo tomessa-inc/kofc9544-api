@@ -3,6 +3,7 @@ import moment from "moment";
 import * as uuid from 'uuid';
 import {Tag2} from "../models/Tag2";
 import {GalleryTag2} from "../models/GalleryTag2";
+import {tag} from "../models/Tag";
 
 export class TagMapper extends BaseMapper {
     private _PARAMS_NAME: string = 'name';
@@ -13,6 +14,7 @@ export class TagMapper extends BaseMapper {
     constructor() {
         super();
         this.DATABASE_NAME = 'kofc_golf';
+        this.initializeDrizzle()
  //       this.initializeSequelize()
    //     this.initializeTag();
     }
@@ -25,6 +27,7 @@ export class TagMapper extends BaseMapper {
     public async createTag(params) { //: Promise<string[] | string> {
 
         try {
+
             const tag = {
                 id: params.id,
                 name: params.name,
@@ -88,11 +91,11 @@ export class TagMapper extends BaseMapper {
 
             }
 
-            return await Tag2.findAll(tagConfig).then(images => {
-                return this.processArray(images);
-            }).catch(err => {
-                return err;
-            })
+            const tagSQL = this.DRIZZLE.select().from(tag).offset(offset).limit(params.pageSize)
+
+            return this.getSQLData(tagSQL.toSQL())
+
+
         } catch (error) {
             console.log(error);
             return error.toString();

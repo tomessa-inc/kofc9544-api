@@ -282,6 +282,11 @@ export class BaseMapper {
         return token.compact();
     }
 
+    protected TakeUniqueOrThrow(values) {
+        if (values.lenght !== 1) throw new Error("Found non unique or inexistent value")
+        return values[0]!
+    }
+
     public checkAuthenication(tokenHeader = undefined) {
         if (!tokenHeader) {
             return undefined

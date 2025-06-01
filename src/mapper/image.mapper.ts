@@ -38,13 +38,14 @@ export class ImageMapper extends BaseMapper {
      */
     public async updateImageById(id, body) {
         try {
-            const image = await this.getImageById(id);
+            console.log(body)
+            const imageSQL = this.DRIZZLE.update(image).set({
+                "description":body.description,
+                "primaryImage":body.primaryImage
+            }).where(eq(image.id, id))
 
-            image.description = body.description;
-            image.primaryImage = body.primaryImage
-            image.save();
-
-            return image;
+            console.log(imageSQL.toSQL())
+            return await this.getSQLData(imageSQL.toSQL())
 
         } catch (error) {
             return error.toString();
@@ -326,7 +327,7 @@ export class ImageMapper extends BaseMapper {
 
             console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
 
-            const testing = this.processImageArray(await imagesByGallery)
+            const testing = this.processImageArray(imagesByGallery.toSQL())
          //   const test = this.getSQLData(imagesByGallery.toSQL(), true)
             console.log(4)
 
