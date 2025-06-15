@@ -53,6 +53,12 @@ Parameters:
         Description: Cache ID
         Default: $CacheId
 
+    RDSHost:
+        Type: String
+        Description: RDS Host URL
+        Default: $RDSHost
+
+
     DEBUG:
         Type: String
         Description: Cache ID
@@ -96,6 +102,7 @@ Resources:
                     NODE_ENV: !Ref NodeEnv
                     TOKEN_SECRET: !Ref TokenSecret
                     DEBUG: !Ref DEBUG
+                    RDS_HOST: !Ref RDSHost
             MemorySize: 2048
             Timeout: 900
             Events:
