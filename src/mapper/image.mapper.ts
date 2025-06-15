@@ -259,24 +259,7 @@ export class ImageMapper extends BaseMapper {
     }
     public async getAllPrimaryImages(options: paramsOptions) { //: Promise<string[] | string> {
         try {
-            let sqls = 'SELECT `Image`.`id`, `Image`.`key`, `Image`.`GalleryId`, `Image`.`name`, `Image`.`description`, `Image`.`primaryImage`, (SELECT CAST(CONCAT(\'[\',GROUP_CONCAT(JSON_OBJECT(\'TagId\', TagId)),\']\') as JSON) FROM gallery_tag where gallery_tag.GalleryId = `Image`.`GalleryId`) as TagsId, gallery.name, gallery_tag.GalleryId FROM `image` AS `Image` INNER JOIN gallery ON gallery.id = `Image`.`GalleryId` INNER JOIN gallery_tag ON gallery_tag.GalleryId = `Image`.`GalleryId` ';
 
-            if (options.logged) {
-                sqls = sqls.concat(`WHERE (\`Image\`.\`primaryImage\` = 1) AND (gallery.viewing  = 1 OR gallery.viewing = 0)`);
-            } else {
-                sqls = sqls.concat(`WHERE (\`Image\`.\`primaryImage\` = 1 AND gallery.viewing = 1)`);
-            }
-            sqls = sqls.concat(' GROUP BY `Image`.`GalleryId`');
-
-
-            //   console.log(this.SEQUELIZE);
-            //  console.log(sql);
-
-            //SELECT `Image`.`id`, `Image`.`key`, `Image`.`GalleryId`, `Image`.`name`, `Image`.`description`, `Image`.`primaryImage`, (SELECT CAST(CONCAT('[',GROUP_CONCAT(JSON_OBJECT('TagId', TagId)),']') as JSON) as tags FROM gallery_tag where gallery_tag.GalleryId = `Image`.`GalleryId`), `gallery_tag`.`TagId`, gallery.name, gallery_tag.GalleryId FROM `image` AS `Image` INNER JOIN gallery ON gallery.id = `Image`.`GalleryId` INNER JOIN gallery_tag ON gallery_tag.GalleryId = `Image`.`GalleryId`  WHERE `Image`.`primaryImage` = 1 GROUP BY `Image`.`GalleryId`;
-
-            //   SELECT CAST(CONCAT('[',GROUP_CONCAT(JSON_OBJECT('TagId', TagId)),']') as JSON) as tags FROM gallery_tag where GalleryId = 'model-workshop-april-2011';
-
-            // Define your schema
             console.log(2)
 
             console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
@@ -306,9 +289,7 @@ export class ImageMapper extends BaseMapper {
             } else {
                 imagesByGallery.where(and(eq(image.primaryImage, 1), eq(gallery.viewing, true)));
 
-                sqls = sqls.concat(`WHERE (\`Image\`.\`primaryImage\` = 1 AND gallery.viewing = 1)`);
             }
-            sqls = sqls.concat(' GROUP BY `Image`.`GalleryId`');
 
 
             /*
@@ -324,13 +305,16 @@ export class ImageMapper extends BaseMapper {
                                                                      gallery.name,
                                                                      gallery_tag.GalleryId`); */
             console.log(3)
-
+            console.log(imagesByGallery.toSQL());
             console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
 
-            const testing = this.processImageArray(imagesByGallery.toSQL())
+            const testing = this.getSQLData(imagesByGallery.toSQL(), true)
          //   const test = this.getSQLData(imagesByGallery.toSQL(), true)
             console.log(4)
+            console.log(testing)
+            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
 
+            console.log(10)
             console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
 
             return testing

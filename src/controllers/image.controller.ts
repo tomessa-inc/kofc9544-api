@@ -227,8 +227,9 @@ export class ImageController {
             if (req.params.logged) {
                 options.logged = req.params.logged;
             }
-
+            console.log("1a")
             const images = await imageMapper.getAllPrimaryImages(options);
+            console.log("4a")
 
             if (typeof images === 'string') {
                 return res.status(500).json({ errors_string: images })

@@ -121,7 +121,7 @@ export class GalleryMapper extends BaseMapper {
                 await this.getSQLData(updateGallery.toSQL())
             }
 
-
+            console.log("test")
             await this.deleteGalleryTagsByParams(options.id)
             console.log("about to insert")
             console.log(body.tags)
@@ -159,7 +159,7 @@ export class GalleryMapper extends BaseMapper {
 
     private async deleteGalleryTagsByParams(id) {
         try {
-            const destroyGallerySQL = this.DRIZZLE.destroy(galleryTag).where(eq(galleryTag.GalleryId, id))
+            const destroyGallerySQL = this.DRIZZLE.delete(galleryTag).where(eq(galleryTag.GalleryId, id))
 
             await this.getSQLData(destroyGallerySQL.toSQL())
 
@@ -185,7 +185,8 @@ export class GalleryMapper extends BaseMapper {
                 Tags: sql<string>`(SELECT JSON_ARRAYAGG(JSON_OBJECT('id', \`tag\`.\`id\`, 'name',\`tag\`.\`name\`))
                                     FROM gallery_tag
                                     INNER JOIN tag ON tag.id = gallery_tag.TagId
-                                    where gallery_tag.GalleryId = gallery.id)`.as('Tags')
+                                    where gallery_tag.GalleryId = gallery.id)`.as('Tags'),
+                viewing: gallery.viewing
 
 
             }).from(gallery).where(eq(gallery.id, options.id))
