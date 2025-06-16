@@ -35,7 +35,7 @@ phases:
  #   TOKEN_SECRET: $TOKEN_SECRET
       - export STAGE=stage
       - export NODE_ENV=$(echo "$DB_INFO" | jq -r '.NODE_ENV')
-      - export RDS_HOST=$(echo "$RDS_HOST" | jq -r '.RDS_HOST')
+      - export RDS_HOST=$(echo "$DB_INFO" | jq -r '.RDS_HOST')
       - echo $NODE_ENV
       - echo $RDS_HOST
 
