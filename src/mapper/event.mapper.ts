@@ -149,7 +149,7 @@ export class EventMapper extends BaseMapper {
 
     constructor() {
         super();
-        this.DATABASE_NAME = 'kofc_golf';
+        this.initializeDrizzle()
   //      this.initializeSequelize()
     //    this.initializeEvent();
     }

@@ -34,7 +34,6 @@ export class GolfMapper extends BaseMapper {
 
     constructor() {
         super();
-        this.DATABASE_NAME = 'kofc_golf';
 //        this.initializeSequelize()
         this.initializeDrizzle()
  //       this.initializePlayer();

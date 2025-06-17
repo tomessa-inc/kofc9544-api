@@ -22,7 +22,6 @@ export class TeamMapper extends BaseMapper {
 
     constructor() {
         super();
-        this.DATABASE_NAME = 'kofc_golf';
         this.initializeDrizzle()
     }
 

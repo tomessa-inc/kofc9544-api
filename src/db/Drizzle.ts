@@ -39,11 +39,11 @@ export class DrizzleAPI {
      * @param password
      * @param options
      */
-    constructor(database: string, username: string, password: string, host:string) {
-        this._database = database;
-        this._username = username;
-        this._password = password;
-        this._host = host;
+    constructor() {
+        this._database = '';
+        this._username = '';
+        this._password = '';
+        this._host = '';
     }
 
     /**

@@ -47,7 +47,6 @@ The Base Mapper. Functions which are in common with others mappers are placed he
 export class BaseMapper {
     private _QUERY;
     private _DEFAULT_ORDER: string = 'ASC';
-    private _DATABASE_NAME: string = 'kofc_golf';
     private _PARAM_FRONTCLOUD = 'https://images.kofc9544.ca'
     private _SEQUELIZE;
     private _DRIZZLE;
@@ -68,12 +67,9 @@ export class BaseMapper {
                                                     },
                                                 }`); */
         let options = {
-            host: process.env.DB_HOST,
+            host: '',
             dialect: "mysql",
             port:3306,
-            dialectOptions: {
-                connectTimeout:320000
-            },
             pool: {
                 /*
                  * Lambda functions process one request at a time but your code may issue multiple queries
@@ -108,7 +104,7 @@ export class BaseMapper {
             //  logging: console.log,
         }
 
-        const drizzleAPI = new DrizzleAPI(this._DATABASE_NAME,process.env.DB_USERNAME,process.env.DB_PASSWORD,process.env.DB_HOST);//.initialize();
+        const drizzleAPI = new DrizzleAPI();//.initialize();
         this._DRIZZLE = await drizzleAPI.initialize()
     }
 
@@ -165,7 +161,7 @@ export class BaseMapper {
         console.log(text2);
      //   const url = 'https://api-stage.db.tomessa.ca/kofc_golf';
         const url = process.env.RDS_HOST + "/kofc_golf";
-//        const url = 'http://localhost:8000/kofc_golf';
+    //    const url = 'http://localhost:8000/kofc_golf';
     console.log("g0g0g0g0")
         console.log(url);
 
@@ -327,9 +323,6 @@ export class BaseMapper {
         this._QUERY = value;
     }
 
-    set DATABASE_NAME(value: string) {
-        this._DATABASE_NAME = value;
-    }
 
     get SEQUELIZE() {
         return this._SEQUELIZE;
