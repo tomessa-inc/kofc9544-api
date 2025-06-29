@@ -159,14 +159,14 @@ export class BaseMapper {
         const text2 = `{"sql": "${sqlquery}"}`
         console.log(text);
         console.log(text2);
-     //   const url = 'https://api-stage.db.tomessa.ca/kofc_golf';
+    //    const url = 'https://api-stage.db.tomessa.ca/kofc_golf';
         const url = process.env.RDS_HOST + "/kofc_golf";
-    //    const url = 'http://localhost:8000/kofc_golf';
+      //  const url = 'http://localhost:8000/kofc_golf';
     console.log("g0g0g0g0")
         console.log(url);
 
         return await axios.post(url,
-            text
+            text,
         )
             .then( async (response) => {
                 if (processKeyImage) {
