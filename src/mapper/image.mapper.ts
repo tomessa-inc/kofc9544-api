@@ -259,9 +259,6 @@ export class ImageMapper extends BaseMapper {
     public async getAllPrimaryImages(options: paramsOptions) { //: Promise<string[] | string> {
         try {
 
-            console.log(2)
-
-            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
             const imagesByGallery = this.DRIZZLE.select({
                 id: image.id,
                 key: image.key,
@@ -303,20 +300,10 @@ export class ImageMapper extends BaseMapper {
                                                                       where gallery_tag.GalleryId = \`Image\`.\`GalleryId\`) as TagsId,
                                                                      gallery.name,
                                                                      gallery_tag.GalleryId`); */
-            console.log(3)
-            console.log(imagesByGallery.toSQL());
-            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
 
-            const testing = this.getSQLData(imagesByGallery.toSQL(), true)
-         //   const test = this.getSQLData(imagesByGallery.toSQL(), true)
-            console.log(4)
-            console.log(testing)
-            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
+            return  this.getSQLData(imagesByGallery.toSQL(), true)
+         //   consttest = this.getSQLData(imagesByGallery.toSQL(), true)
 
-            console.log(10)
-            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
-
-            return testing
 /*            const ff = JSON.stringify(imagesByGallery.toSQL())
             const sqlquery = ff.replace(/"/g, '\\\"').replace(/\\n/g, "")
 

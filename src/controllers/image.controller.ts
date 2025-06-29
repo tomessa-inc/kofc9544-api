@@ -218,8 +218,6 @@ export class ImageController {
    */
     public static async apiGetAllPrimaryImages(req: any, res: any, next: any) {
         try {
-            console.log(1)
-            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
             //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
             //        return res.status(500).json({error: 'Not Authorized to access the API'})
             //      }
@@ -227,18 +225,13 @@ export class ImageController {
             if (req.params.logged) {
                 options.logged = req.params.logged;
             }
-            console.log("1a")
             const images = await imageMapper.getAllPrimaryImages(options);
-            console.log("4a")
 
             if (typeof images === 'string') {
                 return res.status(500).json({ errors_string: images })
             }
 
             //   const paginationResults = imageMapper.prepareListResults(galleries, req.query);
-            console.log(5)
-
-            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
             return res.status(200).json({ "images": images });
 
         } catch (error) {
