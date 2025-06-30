@@ -198,6 +198,9 @@ export class ImageMapper extends BaseMapper {
         try {
             const offset = ((params.pageIndex - 1) * params.pageSize)
 
+            const imageSQL = this.DRIZZLE.select().from(image).offset(offset).limit(params.pageSize).where(eq(image.active, 1))
+
+
             const imagesConfig = {
                 offset: offset,
                 limit: params.pageSize,
@@ -206,11 +209,11 @@ export class ImageMapper extends BaseMapper {
                 },
             }
 
-            return await Image2.findAll(imagesConfig).then(images => {
-                return this.processArray(images);
-            }).catch(err => {
-                return err;
-            })
+
+
+            return await this.getSQLData(imageSQL.toSQL());
+//                return this.processArray(images);
+
         } catch (error) {
 
             return error.toString();
@@ -406,8 +409,6 @@ export class ImageMapper extends BaseMapper {
 
             const offset = ((options.pageIndex - 1) * options.pageSize)
 
-            console.log(2)
-            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
             const select =  this.DRIZZLE.select({
                 id: image.id,
                 key: image.key,
@@ -425,11 +426,9 @@ export class ImageMapper extends BaseMapper {
                 .where(and(eq(image.GalleryId, options.id),
                         eq(image.active, 1)
                     )).offset(offset).limit(options.pageSize)
-            console.log(3)
-            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
+
             const test = this.getSQLData(select.toSQL())
-            console.log(4)
-            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
+
             return test
 /*
             const ff = JSON.stringify(select.toSQL())
