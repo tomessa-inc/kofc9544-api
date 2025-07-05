@@ -4,14 +4,17 @@ import {BaseMapper, paramsOptions, resourceGroupTaggingApiMapper, cloudFrontMapp
 import moment from "moment";
 import {hasSubscribers} from "diagnostics_channel";
 import * as uuid from 'uuid';
-import {SequelizeApi} from "../db/Sequelize";
 import {trim} from "lodash";
 import {parse} from "dotenv";
 import process from "process";
-import {Calendar} from "../models/Calendar"
-import {Event} from  "../models/Event"
+import {Calendar2} from "../models/Calendar2"
+import {Event2} from "../models/Event2"
 import {Tag2} from "../models/Tag2";
 import {Image2} from "../models/Image2";
+import {calendar} from "../models/Calendar";
+import {event} from "../models/Event";
+import {eq, and, sql, count, lt, isNotNull} from 'drizzle-orm';
+
 
 interface DateTime {
     date: {
@@ -159,16 +162,6 @@ export class CalendarMapper extends BaseMapper {
     }
 
 
-    private async initializeCalendar() {
-        try {
-            const event = await Event.initialize(this.SEQUELIZE);
-            Calendar.initialize(this.SEQUELIZE, event);
-        } catch (error) {
-            console.log(error);
-
-        }
-    }
-
     private parseDate(stringData): DateTime {
         const dateTime: DateTime = {date: {year: 0, month: 0, day: 0}, time: {hour:0, minute:0}}
         const temp = stringData.split('T')
@@ -213,11 +206,30 @@ export class CalendarMapper extends BaseMapper {
             //  const offset = ((params.pageIndex - 1) * params.pageSize);
 
 
+            let eventsSQL = this.DRIZZLE.select({
+                id: calendar.id,
+                day: calendar.day,
+                month: calendar.month,
+                year: calendar.year,
+                createdAt: calendar.createdAt,
+                updatedAt: calendar.updatedAt,
+                EventId: calendar.EventId,
+                Event: sql<string>`(SELECT JSON_ARRAYAGG(JSON_OBJECT('id', \`event\`.\`id\`, 'text', \`event\`.\`text\`,
+                                                                     'description', \`event\`.\`description\`))
+                                    FROM event
+                                    WHERE event.id = calendar.EventId)`.as('Event')
 
-            const eventConfig = {
+
+            }).from(calendar)
+
+            eventsSQL.innerJoin(event, eq(event.id, calendar.EventId)).where(and(eq(calendar.month, month), eq(calendar.year, year)))
+
+            return await this.getSQLData(eventsSQL.toSQL())
+
+/*            const eventConfig = {
                 include: [{
                     attributes: { exclude: ['ImageId', 'GalleryTagTagId'] },
-                    association: Calendar.Event,
+                    association: Calendar2.Event,
                     required: true
                 },
                 ],
@@ -226,18 +238,21 @@ export class CalendarMapper extends BaseMapper {
                     year:year
                 }
             }
-            return await Calendar.findAll(eventConfig).then(galleries => {
+            return await Calendar2.findAll(eventConfig).then(galleries => {
                 return this.processArray(galleries);
             }).catch(err => {
                 console.log('the error');
                 console.log(err);
                 return err;
-            })
+            }) */
+
         } catch (error) {
 
             return error.toString();
         }
     }
+
+
 
     public async getAllCalendarsByMonth(month:number, year:number) { //: Promise<string[] | string> {
         try {
@@ -250,7 +265,7 @@ export class CalendarMapper extends BaseMapper {
                     year:year
                 }
             }
-            return await Calendar.findAll(CalendarConfig).then(galleries => {
+            return await Calendar2.findAll(CalendarConfig).then(galleries => {
                 return this.processArray(galleries);
             }).catch(err => {
                 console.log('the error');
@@ -282,6 +297,15 @@ export class CalendarMapper extends BaseMapper {
             const id = `${day}-${month+1}-${year}-${startHour}-${endHour}`;
             try {
                 console.log(data);
+
+                const calendarSQL = this.DRIZZLE.insert(calendar).values( {
+                    id: id,
+                    day: day,
+                    month: month + 1,
+                    year: year,
+                    EventId: data.eventId
+                });
+/*
                 const CalendarDefaults = {
                     id: id,
                     day: day,
@@ -289,7 +313,8 @@ export class CalendarMapper extends BaseMapper {
                     year: year,
                     EventId: data.eventId
                 }
-                await Calendar.findOrCreate({where: {id: id}, defaults: CalendarDefaults})
+                await Calendar2.findOrCreate({where: {id: id}, defaults: CalendarDefaults}) */
+
             } catch (error) {
                 console.log(error.toString())
             }

@@ -1,50 +1,18 @@
-const {DataTypes, Model} = require("sequelize");
-import {Calendar} from "./Calendar";
-//import {sequelize} from '../db/';
-import {S3Mapper} from "../mapper/s3.mapper";
+import { drizzle } from 'drizzle-orm/mysql2';
+import { mysqlTable, serial, varchar, int, date, boolean, DatetimeFsp, MySqlTimestamp, timestamp } from 'drizzle-orm/mysql-core';
+import mysql from 'mysql2/promise';
+import {DataTypes} from "../db";
 
-class Event extends Model {
-
-    private avatar:string;
-
-    public static initialize(sequelize) {
-        return this.init({
-            id: {
-                type: DataTypes.STRING,
-                primaryKey: true
-            },
-            hourStart: {
-                type: DataTypes.NUMBER
-            },
-            minuteStart: {
-                type: DataTypes.NUMBER
-            },
-            hourEnd: {
-                type: DataTypes.NUMBER
-            },
-            minuteEnd: {
-                type: DataTypes.NUMBER
-            },
-            text: {
-                type: DataTypes.STRING
-            },
-            description: {
-                type: DataTypes.TEXT
-            },
-            createdAt: {
-                type: DataTypes.DATE,
-            },
-            updatedAt: {
-                type: DataTypes.DATE,
-            },
-            viewing: {
-                type: DataTypes.BOOLEAN
-            },
-        }, {
-            modelName: 'Event', sequelize, tableName: "event"
-        });
-    }
-}
-
-export {Event}
-
+// Define your schema
+export const event = mysqlTable('event', {
+    id:  varchar('id', { length: 36 }).primaryKey(),
+    hourStart: int('hourStart').notNull(),
+    minuteStart: int('minuteStart').notNull(),
+    hourEnd: int('hourEnd').notNull(),
+    minuteEnd:int('minuteEnd').notNull(),
+    text: varchar('text', {length: 255}).notNull(),
+    description: varchar('description', {length: 255}).notNull(),
+    createdAt: date('createdAt'),
+    updatedAt: date('updatedAt'),
+    viewing: boolean('viewing'),
+})

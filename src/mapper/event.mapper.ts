@@ -8,7 +8,8 @@ import {SequelizeApi} from "../db/Sequelize";
 import {trim} from "lodash";
 import {parse} from "dotenv";
 import process from "process";
-import {Event} from "../models/Event"
+import {Event2} from "../models/Event2"
+import {event} from "../models/Event";
 
 interface DateTime {
     date: {
@@ -157,7 +158,7 @@ export class EventMapper extends BaseMapper {
 
     private async initializeEvent() {
         try {
-            Event.initialize(this.SEQUELIZE);
+            Event2.initialize(this.SEQUELIZE);
         } catch (error) {
             console.log(error);
 
@@ -217,7 +218,9 @@ export class EventMapper extends BaseMapper {
         let dayOfWeek = ''
         const ruleSet:Ruleset = {dayOfWeek: null, week: null, month:null, timeOfDay:null, year:0};
         const id = `${day}-${month+1}-${year}-${startHour}-${endHour}`;
-        const eventDefaults = {
+
+
+        const eventSQL = this.DRIZZLE.insert(event).values( {
             id: id,
             //   day: day,
             //   month: month + 1,
@@ -230,11 +233,12 @@ export class EventMapper extends BaseMapper {
             description: data.description,
             public: data.viewing
 
-        }
+        })
 
-        await Event.findOrCreate({where: {id: id}, defaults: eventDefaults})
+        return  await this.getSQLData(eventSQL.toSQL())
+//        await Event2.findOrCreate({where: {id: id}, defaults: eventDefaults})
 
-        return id;
+            //      return id;
     }
 
 
