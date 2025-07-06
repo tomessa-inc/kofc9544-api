@@ -214,8 +214,8 @@ export class CalendarMapper extends BaseMapper {
                 createdAt: calendar.createdAt,
                 updatedAt: calendar.updatedAt,
                 EventId: calendar.EventId,
-                Event: sql<string>`(SELECT JSON_ARRAYAGG(JSON_OBJECT('id', \`event\`.\`id\`, 'text', \`event\`.\`text\`,
-                                                                     'description', \`event\`.\`description\`))
+                Event: sql<string>`(SELECT JSON_OBJECT('id', \`event\`.\`id\`, 'text', \`event\`.\`text\`,
+                                                                     'description', \`event\`.\`description\`)
                                     FROM event
                                     WHERE event.id = calendar.EventId)`.as('Event')
 
