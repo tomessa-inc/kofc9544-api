@@ -15,11 +15,11 @@ export class UserAuthenticationController {
             const options: paramsOptions = { id: "string", email_type: "string", token: "string", firstName: "", email: "" };
 
             const userObj = await userMapper.getUserByEmail(req.body.email)
-            options.id = userObj.get('id')
-            options.firstName = userObj.get('firstName')
-            options.id = userObj.get('id')
-            options.email = userObj.get('email')
 
+            options.id = userObj.id
+            options.firstName = userObj.firstName
+            options.id = userObj.id
+            options.email = userObj.email
 
             await userAuthenticationMapper.deleteTokenEntry(options.id)
 
@@ -32,7 +32,7 @@ export class UserAuthenticationController {
             await mailMapper.prepareEmail(options)
             await mailMapper.apiSendMail()
 
-//            return res.status(200).json({"user":user, "token":userMapper.generateJWTToken()});
+            return res.status(200).json({"user":userObj, "token":userMapper.generateJWTToken()});
             //  } else {
             ///      console.log("Missing either Username and/or password");
             //    return res.status(500).json({ error: "Missing either Username and/or password" })
@@ -116,7 +116,7 @@ export class UserAuthenticationController {
 
             console.log("good stuff")
 
-            return res.status(200).json({"data":user.user, "token":userMapper.generateJWTToken()});
+            return res.status(200).json({"data":user, "token":userMapper.generateJWTToken()});
             //  } else {
             ///      console.log("Missing either Username and/or password");
             //    return res.status(500).json({ error: "Missing either Username and/or password" })

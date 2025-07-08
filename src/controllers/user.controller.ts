@@ -14,14 +14,11 @@ export class UserController {
         try {
             if (req.body[userMapper.PARAMS_USERNAME] && req.body[userMapper.PARAMS_PASSWORD]) {
                 const user = await userMapper.getUserBasedOnPassword(req.body);
-                console.log('userpostfin');
-                console.log(user);
+
                 if (typeof(user) !== "object") {
 
                     return res.status(500).json({ error: "Username and/or Password incorrect" })
                 }
-
-                console.log("good stuff")
 
                 return res.status(200).json({"user":user, "token":userMapper.generateJWTToken()});
             } else {

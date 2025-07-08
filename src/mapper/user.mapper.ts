@@ -129,6 +129,20 @@ export class UserMapper extends BaseMapper {
         try {
             console.log('get user');
 
+            const userSQL = this.DRIZZLE.select({
+                    id: user.id,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    email: user.email,
+                    access: sql<string>`(SELECT JSON_ARRAYAGG(JSON_OBJECT('id', access.id,'name', access.name, 'name', access.name))
+                                     from ${access}
+                                    inner join user_access on access.id = user_access.AccessId
+                                    where user_access.UserId = user.id)`.as('access')
+                }).from(user).where(eq(user.id, options.id))
+
+
+            return (await this.getSQLData(userSQL.toSQL()))[0]
+/*
             const userParams = {
                 include: [
                     {
@@ -150,7 +164,7 @@ export class UserMapper extends BaseMapper {
             }).catch(err => {
 
                 return err;
-            })
+            }) */
         } catch (error) {
             return error.toString();
         }
@@ -165,7 +179,7 @@ export class UserMapper extends BaseMapper {
 
             const userSQL = this.DRIZZLE.select(user).from(user).where(eq(user.email, email))
 
-            return this.getSQLData(userSQL.toSQL());
+            return (await this.getSQLData(userSQL.toSQL()))[0];
         } catch (error) {
             return error.toString();
         }

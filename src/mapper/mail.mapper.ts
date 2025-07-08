@@ -155,6 +155,9 @@ export class MailMapper {
                     default:
                         break;
                 }
+                console.log("the body")
+                console.log(body)
+                console.log("bond")
                 this._params.Destination.ToAddresses.push(body.email);
                 this._SUBJECT_CONTENT = EmailMessaging.FORGOTPASSWORD_SUBJECT;
                 this._HTML_CONTENT = format(EmailMessaging.FORGOTPASSWORD_CONTENT_HTML, `${host}/reset-password/${body.token}`)

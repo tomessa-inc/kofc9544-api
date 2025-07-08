@@ -12,6 +12,7 @@ import {use} from "chai";
 import {Access2} from "../models/Access2";
 import {Tag2} from "../models/Tag2";
 import {Gallery2} from "../models/Gallery2";
+import {access} from "../models/Access";
 export class AccessMapper extends BaseMapper {
     private _PARAMS_ID: string = 'id';
     private _PARAMS_EMAIL: string = 'email';
@@ -157,6 +158,8 @@ export class AccessMapper extends BaseMapper {
 
             const offset = ((check.pageIndex - 1) * check.pageSize) ?? 0
 
+
+
             const galleryConfig = {
                 include: [
                     {
@@ -175,11 +178,14 @@ export class AccessMapper extends BaseMapper {
                 limit: check.pageSize,
             };
 
-            return await Access2.findAll(params).then(users => {
+            const accessSQL = this.DRIZZLE.select().from(access).limit(check.pageSize).offset(offset)
+
+            return this.getSQLData(accessSQL.toSQL())
+          /*  return await Access2.findAll(params).then(users => {
                 return this.processArray(users);
             }).catch(error => {
                 return error.toString();
-            });
+            }); */
 
         } catch (error) {
             return error.toString() //["error" => error.toString()];

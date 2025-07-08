@@ -56,16 +56,16 @@ export class UserAuthenticationMapper extends BaseMapper {
                 id:user.id,
                 firstName: user.firstName,
                 lastName: user.lastName,
-                access: sql<string>`(SELECT *
-                                    from ${access}
-                                    inner join ${userAuthentication} on ${userAuthentication.UserId} = user.id)`.as('access')
+                access: sql<string>`(SELECT JSON_ARRAYAGG(JSON_OBJECT('id', access.id, 'name', access.name))
+                                     from ${access}
+                                    inner join user_access on access.id = user_access.AccessId
+                                     where user_access.UserId = user.id)`.as('access')
 
                 }
 
-
             ).from(userAuthentication).innerJoin(user, eq(user.id, userAuthentication.UserId)).where(eq(userAuthentication.token, params.token));
 
-            return this.getSQLData(tokenSQL.toSQL())
+            return (await this.getSQLData(tokenSQL.toSQL()))[0]
 
 /*
             const userParams = {
@@ -109,7 +109,7 @@ export class UserAuthenticationMapper extends BaseMapper {
      */
     async deleteTokenEntry(id:string) {
         try {
-            const deleteSQL = this.DRIZZLE.destroy(userAuthentication).where(eq(userAuthentication.UserId, id));
+            const deleteSQL = this.DRIZZLE.delete(userAuthentication).where(eq(userAuthentication.UserId, id));
 
             return this.getSQLData(deleteSQL.toSQL())
         } catch (error) {

@@ -167,7 +167,6 @@ export class AccessController {
             //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
             //        return res.status(500).json({error: 'Not Authorized to access the API'})
             //      }
-
             const options: paramsOptions = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: galleryMapper.DEFAULT_SORT, order: galleryMapper.DEFAULT_ORDER };
 
             Object.entries(req.params).map(([key, value]) => {
@@ -183,7 +182,8 @@ export class AccessController {
             const access = await accessMapper.getAllAccess(options);
 
 
-
+            console.log("access")
+            console.log(access)
 
             if (typeof access === 'string') {
                 return res.status(500).json({ errors_string: access })

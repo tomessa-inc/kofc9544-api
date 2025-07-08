@@ -6,7 +6,7 @@ import {DataTypes} from "../db";
 
 // Define your schema
 export const user = mysqlTable('user', {
-    id: int('id').primaryKey(),
+    id: varchar('id', {length: 255}).primaryKey(),
     firstName: varchar('firstName', {length: 255}).notNull(),
     lastName: varchar('lastName', {length: 255}).notNull(),
     email: varchar('email', {length: 255}).notNull(),
