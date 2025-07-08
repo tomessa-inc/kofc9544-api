@@ -151,10 +151,9 @@ export class MailMapper {
                     case "stage":
                         host = "https://member-stage.kofc9544.ca"
                         break;
-
-                    default:
-                        break;
                 }
+                console.log("the host")
+                console.log(host);
                 console.log("the body")
                 console.log(body)
                 console.log("bond")
