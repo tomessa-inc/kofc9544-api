@@ -188,7 +188,7 @@ export class MailMapper {
             case EmailMessaging.EMAIL_TYPE_REGISTER:
                 this._params.Destination.ToAddresses = [];
                 this._params.Destination.ToAddresses.push('tcruicksh@gmail.com');
-                this._params.Destination.ToAddresses.push('golfregistration@kofc9544.ca');
+                this._params.Destination.ToAddresses.push('registration@kofc9544.ca');
                 this._SUBJECT_CONTENT = EmailMessaging.REGISTER_SUBJECT;
                 this._HTML_CONTENT = EmailMessaging.REGISTER_CONTENT_HTML;
                 this._TEXT_CONTENT = EmailMessaging.REGISTER_CONTENT_TEXT;
