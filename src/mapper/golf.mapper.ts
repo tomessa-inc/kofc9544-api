@@ -11,6 +11,8 @@ import {Image2} from "../models/Image2";
 import {EmailMessaging} from "../models/EmailMessaging";
 import {team} from "../models/Team";
 import {eq, and, sql, count, lt, isNotNull} from 'drizzle-orm';
+import {test} from "mocha";
+import {gallery} from "../models/Gallery";
 
 
 export interface PlayerObject {
@@ -29,6 +31,7 @@ export class GolfMapper extends BaseMapper {
     private _PARAMS_NAME: string = 'name';
     private _DEFAULT_SORT: string = 'name';
     private _LABEL_SORT: string = 'label';
+    private _LABEL_VALUE: string = 'value';
 
 
 
@@ -62,7 +65,7 @@ export class GolfMapper extends BaseMapper {
                     phone: params.players[x].phone,
                     individual: params.individual,
                     TeamId: params.teamId ?? null,
-                    allergies: params.players[x].allergies
+                    allergies: params.players[x].allergies ?? null
 //                    createdAt: moment().format('YYYY-MM-DD'),
   //                  updatedAt: moment().format('YYYY-MM-DD'),
                 };
@@ -75,7 +78,12 @@ export class GolfMapper extends BaseMapper {
                 console.log("Player")
 
 
-                const retval = await this.DRIZZLE.insert(player).values(playerObject).$returningId();
+                const playerSQL = this.DRIZZLE.insert(player).values(playerObject).$returningId();
+
+
+                console.log(playerSQL.toSQL())
+                await this.getSQLData(playerSQL.toSQL())
+
                 console.log("test2")
                console.log(retval);
 
@@ -442,6 +450,11 @@ export class GolfMapper extends BaseMapper {
 
     get LABEL_SORT(): string {
         return this._LABEL_SORT;
+    }
+
+
+    get LABEL_VALUE(): string {
+        return this._LABEL_VALUE;
     }
 }
 
