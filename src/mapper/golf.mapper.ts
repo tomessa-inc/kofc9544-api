@@ -82,14 +82,13 @@ export class GolfMapper extends BaseMapper {
 
 
                 console.log(playerSQL.toSQL())
-                await this.getSQLData(playerSQL.toSQL())
+                const retval = await this.getSQLData(playerSQL.toSQL())
 
                 console.log("test2")
-               console.log(retval);
+
 
            //    retval = await this.getSQLData(test2.toSQL())
 
-                playerObject.id = retval[0].id
                 console.log("ttests")
                 console.log(playerObject);
                 console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
@@ -129,7 +128,6 @@ export class GolfMapper extends BaseMapper {
           //  test.email_type = EmailMessaging.EMAIL_TYPE_SEND_ID
 
 
-            return retval
         } catch (error) {
             console.log("the error here")
             console.log(error);
