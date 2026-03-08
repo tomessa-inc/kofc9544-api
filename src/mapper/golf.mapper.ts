@@ -83,7 +83,7 @@ export class GolfMapper extends BaseMapper {
 
                 console.log(playerSQL.toSQL())
                 const retval = await this.getSQLData(playerSQL.toSQL())
-
+                playerObject.id = retval.id
                 console.log("test2")
 
 
@@ -168,11 +168,7 @@ export class GolfMapper extends BaseMapper {
             console.log("eoot")
             console.log(playerSQL.toSQL())
 
-            const too = this.getSQLData(playerSQL.toSQL())
-
-            console.log('too')
-            console.log(too);
-            return true;
+            return await this.getSQLData(playerSQL.toSQL())
             /*
                         const offset = ((options.pageIndex - 1) * options.pageSize)
                         const players = {
