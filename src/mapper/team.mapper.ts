@@ -187,6 +187,7 @@ export class TeamMapper extends BaseMapper {
             const teamsSQL = this.DRIZZLE.select({
                 id: team.id,
                 name: team.name,
+                captain: team.captain,
                 countPlayers: sql<string>`(SELECT count(player.id)
                                     from player
                                     inner join team as subteam on player.TeamId = subteam.id

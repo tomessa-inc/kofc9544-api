@@ -71,34 +71,27 @@ export class GolfMapper extends BaseMapper {
                 };
     //            console.log("playe")
       //          console.log(playerObject);
+                /*
                 console.log("before player")
                 console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
                 console.log("playerObject")
                 console.log(playerObject)
                 console.log("Player")
-
+*/
 
                 const playerSQL = this.DRIZZLE.insert(player).values(playerObject).$returningId();
 
 
                 console.log(playerSQL.toSQL())
                 const retval = await this.getSQLData(playerSQL.toSQL())
-                playerObject.id = retval.id
-                console.log("test2")
+                console.log('the reval')
+                playerObject.id = retval.insertId
 
 
-           //    retval = await this.getSQLData(test2.toSQL())
-
-                console.log("ttests")
-                console.log(playerObject);
-                console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
-        //        console.log("test2")
-         //       console.log(test2.toJSON())
                 const test =  await mailMapper.setupEmail({email_type:EmailMessaging.EMAIL_TYPE_SEND_ID, data: playerObject})
                 console.log("test")
                 console.log(test)
             }
-            console.log("after for loop")
             /*
             const test = params.players.map( async (player) => {
 
@@ -129,8 +122,6 @@ export class GolfMapper extends BaseMapper {
 
 
         } catch (error) {
-            console.log("the error here")
-            console.log(error);
             return error
         } finally {
             // close any opened connections during the invocation
@@ -143,7 +134,7 @@ export class GolfMapper extends BaseMapper {
 
     /**
      *
-     * @param player
+     * @param playerObject
      * @param id
      * @returns
      */
