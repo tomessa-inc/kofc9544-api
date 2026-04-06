@@ -1,122 +1,90 @@
-import {galleryMapper, tagMapper, paramsOptions, eventMapper,} from "../mapper/";
+import { defineEventHandler, readBody, getRouterParams, setResponseStatus } from "h3";
+import { galleryMapper, paramsOptions } from "../mapper/";
+import { useResponseError, useResponseSuccess } from "../utils/response";
+
+function parseParams(params: Record<string, string>, defaults: Record<string, any>) {
+    const options = { ...defaults };
+    Object.entries(params).forEach(([key, value]) => {
+        if (value !== "undefined") {
+            options[key] = isNaN(Number(value)) ? value : Number(value);
+        }
+    });
+    return options;
+}
 
 export class GalleryController {
 
-
-    /**
-     * Calling all galleries
-     * @param req
-     * @param res
-     * @param next
-     */
-    public static async apiGetAllGalleries(req: any, res: any, next: any) {
+    public static apiGetAllGalleries = defineEventHandler(async (event) => {
         try {
-            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
-            //        return res.status(500).json({error: 'Not Authorized to access the API'})
-            //      }
-
-            const options: paramsOptions = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: galleryMapper.DEFAULT_SORT, order: galleryMapper.DEFAULT_ORDER };
-                
-            Object.entries(req.params).map(([key, value]) => {
-                if (value !== 'undefined') {
-                    if (isNaN(Number(value))) {
-                        options[key] = value;
-                    } else {
-                        options[key] = Number(value);
-                    }
-                }
-            })
+            const params = getRouterParams(event);
+            const options: paramsOptions = parseParams(params, {
+                pageIndex: 1, pageSize: 10, filterQuery: "",
+                sort: galleryMapper.DEFAULT_SORT, order: galleryMapper.DEFAULT_ORDER,
+            });
 
             const galleries = await galleryMapper.getAllGalleries(options);
 
-            if (typeof galleries === 'string') {
-                return res.status(500).json({ errors_string: galleries })
+            if (typeof galleries === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", galleries);
             }
-            const paginationResults = galleryMapper.prepareListResults(galleries, options);
 
-            console.log("the galleies")
-            console.log(paginationResults);
-            return res.status(200).json(paginationResults);
-
+            return galleryMapper.prepareListResults(galleries, options);
         } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
         }
+    });
 
-    }
-
-    public static async apiPublishGallery(req: any, res: any, next: any) {
-        await galleryMapper.publishGallery();
-
-        return res.status(200).json({result:"success"});
-    }
-
-    /**
-   * Updating gallery based on ID
-   * @param req
-   * @param res
-   * @param next
-   */
-    public static async apiUpdateGalleryById(req: any, res: any, next: any) {
+    public static apiPublishGallery = defineEventHandler(async (event) => {
         try {
-            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
-            //        return res.status(500).json({error: 'Not Authorized to access the API'})
-            //      }
-            console.log("update")
-            const options: paramsOptions = { id: "string" };
-
-            if (req.params.id) {
-                options.id = req.params.id;
-            }
-
-            const gallery = await galleryMapper.updateGallery(options, req.body);
-
-            if (typeof gallery === 'string') {
-                return res.status(500).json({ errors_string: gallery })
-            }
-
-            return res.status(200).json(gallery);
-
+            await galleryMapper.publishGallery();
+            return useResponseSuccess({ result: "success" });
         } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
         }
-    }
+    });
 
-    /**
-   * Retreiving gallery based on id
-   * @param req
-   * @param res
-   * @param next
-   */
-    public static async apiGetGalleryById(req: any, res: any, next: any) {
+    public static apiUpdateGalleryById = defineEventHandler(async (event) => {
         try {
-            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
-            //        return res.status(500).json({error: 'Not Authorized to access the API'})
-            //      }
-            const options: paramsOptions = { id: "string" };
+            const { id } = getRouterParams(event);
+            const body = await readBody(event);
 
-            if (req.params.id) {
-                options.id = req.params.id;
+            const gallery = await galleryMapper.updateGallery({ id }, body);
+
+            if (typeof gallery === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", gallery);
             }
 
-            const gallery = (await galleryMapper.getGalleryById(options))[0];
-        console.log("the gall")
-            console.log(gallery);
-            if (typeof gallery === 'string') {
-                return res.status(500).json({ errors_string: gallery })
-            }
-
-            if (gallery.Tags === null) {
-                gallery.Tags = []
-            }
-            gallery.Tags = gallery.Tags.map((tag) => {
-                console.log({"label":tag.name, "value":tag.id})
-                return {"label":tag.name, "value":tag.id}
-            })
-
-            return res.status(200).json(gallery);
-
+            return useResponseSuccess(gallery);
         } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
         }
-    }
+    });
+
+    public static apiGetGalleryById = defineEventHandler(async (event) => {
+        try {
+            const { id } = getRouterParams(event);
+
+            const gallery = (await galleryMapper.getGalleryById({ id }))[0];
+
+            if (typeof gallery === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", gallery);
+            }
+
+            gallery.Tags = (gallery.Tags ?? []).map((tag) => ({
+                label: tag.name,
+                value: tag.id,
+            }));
+
+            return useResponseSuccess(gallery);
+        } catch (error) {
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
+        }
+    });
 }

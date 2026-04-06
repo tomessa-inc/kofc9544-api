@@ -1,5 +1,5 @@
 import {MailMapper} from "./mapper/mail.mapper";
-import {MailController} from "./controllers/mail.controller";
+import {MailControllerBak} from "./controllers/mail.controller.ts.bak";
 
 async function Run() {
     const test = {
@@ -14,7 +14,7 @@ async function Run() {
     body['body'] = test;
 
    // const mail = await new MailController();
-    const retval = await MailController.apiPostSendMail(body, null, null);
+    const retval = await MailControllerBak.apiPostSendMail(body, null, null);
     console.log(retval);
 //                params = `{"${PARAMS_ID}":"${req.body[PARAMS_ID]}","${PARAMS_GAME}":"${req.body[PARAMS_GAME]}"}`;
 // const gameObject = await MailMapper.apiSendMail(id, game);

@@ -13,6 +13,7 @@ import {team} from "../models/Team";
 import {eq, and, sql, count, lt, isNotNull} from 'drizzle-orm';
 import {test} from "mocha";
 import {gallery} from "../models/Gallery";
+import {calendar} from "../models/Calendar";
 
 
 export interface PlayerObject {
@@ -21,8 +22,11 @@ export interface PlayerObject {
     email: string,
     phone: string
     individual: boolean
-    TeamId: string,
+    teamId: string,
     allergies: string
+    payment: number,
+    member: string,
+    total?:number,
 //                    createdAt: moment().format('YYYY-MM-DD'),
     //                  updatedAt: moment().format('YYYY-MM-DD'),
 }
@@ -32,6 +36,7 @@ export class GolfMapper extends BaseMapper {
     private _DEFAULT_SORT: string = 'name';
     private _LABEL_SORT: string = 'label';
     private _LABEL_VALUE: string = 'value';
+    declare protected _OBJECT_RETRIEVED: PlayerObject
 
 
 
@@ -64,8 +69,11 @@ export class GolfMapper extends BaseMapper {
                     email: params.players[x].email,
                     phone: params.players[x].phone,
                     individual: params.individual,
-                    TeamId: params.teamId ?? null,
-                    allergies: params.players[x].allergies ?? null
+                    teamId: params.teamId ?? null,
+                    allergies: params.players[x].allergies ?? null,
+                    payment: params.payment ?? null,
+                    member:params.member ?? null
+
 //                    createdAt: moment().format('YYYY-MM-DD'),
   //                  updatedAt: moment().format('YYYY-MM-DD'),
                 };
@@ -198,14 +206,17 @@ export class GolfMapper extends BaseMapper {
      */
     public async getPlayersByTeamId(options: paramsOptions) {
         try {
+            console.log("sql")
             const playerSQL = this.DRIZZLE.select({
                 id: player.id,
                 name: player.name,
                 email: player.email,
-                phone: player.phone
+                phone: player.phone,
+                TeamId: player.TeamId,
+                total: sql<string>`(SELECT count('id') from ${player} where ${player.TeamId} = 'portage')`.as('total')
             }).from(player).innerJoin(team, eq(player.TeamId, team.id)).where(eq(team.id, options.id))
 
-            return this.getSQLData(playerSQL.toSQL())
+            return await this.getSQLData(playerSQL.toSQL())
 /*
             const offset = ((options.pageIndex - 1) * options.pageSize)
             const players = {
@@ -238,7 +249,7 @@ export class GolfMapper extends BaseMapper {
     }
 
 
-    public async getAllPlayers(params: paramsOptions) { //: Promise<string[] | string> {
+    public async getAllPlayers(params: paramsOptions): Promise<PlayerObject[] | string>  { //: Promise<string[] | string> {
         try {
             console.log(params);
 
@@ -246,7 +257,19 @@ export class GolfMapper extends BaseMapper {
 
             console.log("offset")
             console.log(offset);
-            const playerSQL = this.DRIZZLE.select().from(player).offset(offset).limit(params.pageSize)
+            const playerSQL = this.DRIZZLE.select({
+                id:  player.id,
+                name: player.name,
+                email: player.email,
+                phone: player.phone,
+                TeamId: player.TeamId,
+                individual: player.individual,
+                allergies: player.allergies,
+                payment: player.payment,
+                member: player.member,
+                total: sql<string>`(SELECT count('id') from player)`.as('total')
+            }).from(player).offset(offset).limit(params.pageSize)
+
 
             return this.getSQLData(playerSQL.toSQL());
         } catch (error) {
@@ -440,6 +463,10 @@ export class GolfMapper extends BaseMapper {
 
     get LABEL_VALUE(): string {
         return this._LABEL_VALUE;
+    }
+
+    get OBJECT_RETRIEVED(): PlayerObject {
+        return this._OBJECT_RETRIEVED;
     }
 }
 

@@ -1,14 +1,13 @@
-import expressRouter from 'express';
-
-const userRouter = expressRouter.Router();
 import {UserController} from "../controllers/user.controller";
-//import {UserAvatarController} from "../controllers/user.avatar.controller";
+import { createRouter, defineEventHandler } from "h3";
 
-userRouter.post("/sign-in", UserController.apiPostSignIn);
-userRouter.post("/sign-in", UserController.apiPostSignIn);
-userRouter.post("/sign-up", UserController.apiPostSignUp);
-userRouter.get("/", UserController.getAllUsers);
-userRouter.post("/", UserController.patchUpdateUser);
-//userRouter.post("/avatar", UserAvatarController.apiUploadAvatar);
+const authRouter = createRouter();
 
-export {userRouter};
+authRouter.get("/codes", defineEventHandler(UserController.apiGetCodes));
+authRouter.post("/login", defineEventHandler(UserController.apiPostSignIn));
+authRouter.post("/logout", defineEventHandler(UserController.apiPostSignOut));
+authRouter.post("/sign-up", defineEventHandler(UserController.apiPostSignUp));
+authRouter.get("/", defineEventHandler(UserController.getAllUsers));
+authRouter.post("/", defineEventHandler(UserController.patchUpdateUser));
+
+export {authRouter};

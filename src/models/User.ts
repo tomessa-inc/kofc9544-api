@@ -10,8 +10,9 @@ export const user = mysqlTable('user', {
     firstName: varchar('firstName', {length: 255}).notNull(),
     lastName: varchar('lastName', {length: 255}).notNull(),
     email: varchar('email', {length: 255}).notNull(),
-    userName: varchar('userName', {length: 255}).notNull(),
+    username: varchar('userName', {length: 255}).notNull(),
     password: varchar('password', {length: 255}).notNull(),
+    token: varchar('token', {length: 255}).notNull(),
 
 //    createdAt:timestamp().defaultNow(),
     //  updatedAt: timestamp().defaultNow(),

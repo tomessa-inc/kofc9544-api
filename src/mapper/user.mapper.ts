@@ -16,12 +16,16 @@ import {sql, gt, lt, eq, SQL, like, and, or} from "drizzle-orm";
 import {access} from "../models/Access";
 import {userAuthentication} from "../models/UserAuthentication";
 import {userAccess} from "../models/UserAccess";
+import { Request } from 'express';
+import {player} from "../models/Player";
+import {H3Event} from "h3";
+
 
 export class UserMapper extends BaseMapper {
     private _PARAMS_ID: string = 'id';
     private _PARAMS_EMAIL: string = 'email';
     private _PARAMS_PASSWORD: string = 'password';
-    private _PARAMS_USERNAME: string = 'userName';
+    private _PARAMS_USERNAME: string = 'username';
     private _PARAMS_USER: string = 'user';
     private _LIST_NAME: string = 'users';
     private _DEFAULT_SORT: string = 'firstName';
@@ -69,7 +73,7 @@ export class UserMapper extends BaseMapper {
           //  console.log('the params');
           //  console.log(params);
             console.log(userDefaults);
-            return await User2.findOrCreate({ where: { userName: params.userName },  defaults: userDefaults })
+            return await User2.findOrCreate({ where: { userName: params.username },  defaults: userDefaults })
             //const result = await User.findOrCreate(user, defaults: userDefaults
             .then(data => {
 
@@ -84,39 +88,105 @@ export class UserMapper extends BaseMapper {
         }
     }
 
+    async updateUserToken(users, token) {
+        try {
+            console.log("hee")
+            const userSQL = this.DRIZZLE.update(user).set({
+                token: token
+            }).where(eq(user.id, users.id));
+            console.log("the update")
+            console.log(userSQL.toSQL())
+            await this.getSQLData(userSQL.toSQL())
+
+            return await true;
+
+        } catch(error) {
+            console.log(error.toString())
+            return error.toString;
+        }
+    }
+
+    async getAuthToken (event:  H3Event) {
+
+        const authHeader = event.headers.get('authorization');
+
+        if (!authHeader) return null;
+
+        if (!authHeader.startsWith('Bearer ')) return null;
+
+        return authHeader.substring(7); // remove "Bearer "
+    }
+
+
+    /**
+     *
+     * @param token
+     */
+    async getUserByToken(token) {
+        try {
+            // get config vars
+            dotenv.config();
+            console.log("here2")
+            const userSQL = this.DRIZZLE.select({
+                id: user.id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                realName: sql<string>`concat(${user.firstName}, ' ', ${user.lastName})`.as ('realName'),
+                email: user.email,
+                //   username: user.email,
+                roles: sql<string>`(SELECT JSON_ARRAYAGG(access.id)
+                                     from ${access}
+                                    inner join user_access on access.id = user_access.AccessId
+                                    where user_access.UserId = user.id)`.as('roles'),
+            //    homePath: "/user"
+            }).from(user).where(eq(user.token, token));
+            console.log("arrivied ader here")
+         //   userSQL.where(eq(user.token, token));
+            //     console.log(userSQL.toSQL())
+            ///console.log(params.userName);
+            ///    userSQL.where(or(eq(user.userName, params.userName), eq(user.id, params.userName)));
+            console.log(userSQL.toSQL())
+            console.log("right before")
+            //  or(eq(user.userName, params.userName)), eq(user.id), params.userName)));
+
+            return this.getSQLData(userSQL.toSQL())
+        } catch (error) {
+            return error.toString();
+        }
+    }
 
 
     /**
      *
      * @param params
      */
-    async getUserBasedOnPassword(params) {
+    async getUserBasedOnPassword(params)  {
         try {
             // get config vars
             dotenv.config();
-
+            console.log("here")
             const userSQL = this.DRIZZLE.select({
                 id: user.id,
                 firstName: user.firstName,
                 lastName: user.lastName,
                 email: user.email,
-                access: sql<string>`(SELECT JSON_ARRAYAGG(JSON_OBJECT('id', access.id,'name', access.name, 'name', access.name))
-                                     from ${access}
-                                    inner join user_access on access.id = user_access.AccessId
-                                    where user_access.UserId = user.id)`.as('access')
+                roles: sql<string>`(SELECT JSON_ARRAYAGG(access.id)
+                                    from ${access}
+                                             inner join user_access on access.id = user_access.AccessId
+                                    where user_access.UserId = user.id)`.as('roles')
             }).from(user)
 
-             userSQL.where(and(eq(user.password, params.password), or(eq(user.email, params.userName), eq(user.id, params.userName))));
-       //     console.log(userSQL.toSQL())
+            userSQL.where(and(eq(user.password, params.password), or(eq(user.email, params.username), eq(user.id, params.userName)))).limit(1);
+            //     console.log(userSQL.toSQL())
             ///console.log(params.userName);
-        ///    userSQL.where(or(eq(user.userName, params.userName), eq(user.id, params.userName)));
+            ///    userSQL.where(or(eq(user.userName, params.userName), eq(user.id, params.userName)));
             console.log(userSQL.toSQL())
 
-          //  or(eq(user.userName, params.userName)), eq(user.id), params.userName)));
+            //  or(eq(user.userName, params.userName)), eq(user.id), params.userName)));
 
             return this.getSQLData(userSQL.toSQL())
         } catch (error) {
-           return error.toString();
+            return error.toString();
         }
     }
 
@@ -190,7 +260,13 @@ export class UserMapper extends BaseMapper {
 
         try {
             const offset = ((check.pageIndex - 1) * check.pageSize);
-            const userSQL = this.DRIZZLE.select(user).from(user)
+            const userSQL = this.DRIZZLE.select({
+                id: user.id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                total: sql<string>`(SELECT count('id') from ${user})`.as('total')
+            }).from(user)
 
 
             if (check.filterQuery) {

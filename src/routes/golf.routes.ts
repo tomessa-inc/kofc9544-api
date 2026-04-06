@@ -1,19 +1,15 @@
-import expressRouter from 'express';
+import { createRouter, defineEventHandler } from "h3";
+import { GolfController } from "../controllers/golf.controller";
 
-const golfRouter = expressRouter.Router();
-import {GolfController} from "../controllers/golf.controller";
+const golfRouter = createRouter();
 
+golfRouter.put("/player/:id",                                                                                    defineEventHandler(GolfController.apiUpdatePlayedById));
+golfRouter.post("/register",                                                                                     defineEventHandler(GolfController.apiRegisterTournament));
+golfRouter.post("/page-index/:pageIndex/page-size/:pageSize?/:sort?/:order?",                                   defineEventHandler(GolfController.apiGetAllPlayers));
+golfRouter.post("/teams-missing-players/page-index/:pageIndex/page-size/:pageSize?/:sort?/:order?",             defineEventHandler(GolfController.apiGetTeamsMissingPlayers));
+golfRouter.post("/teams-missing-players-label-value/page-index/:pageIndex/page-size/:pageSize?/:sort?/:order?", defineEventHandler(GolfController.getAllTeamsNeedingPlayersLabelValue));
+golfRouter.post("/players-missing-teams-label-value/page-index/:pageIndex/page-size/:pageSize?/:sort?/:order?", defineEventHandler(GolfController.getAllPlayersNeedingTeamsLabelValue));
+golfRouter.post("/team/page-index/:pageIndex/page-size/:pageSize?/:sort?/:order?",                              defineEventHandler(GolfController.apiGetAllTeams));
+golfRouter.post("/team/id/:id/page-index/:pageIndex/page-size/:pageSize?/:sort?/:order?",                       defineEventHandler(GolfController.apiGetPlayersByTeamId));
 
-golfRouter.put("/player/id/:id", GolfController.apiUpdatePlayedById);
-golfRouter.post("/register", GolfController.apiRegisterTournament);
-golfRouter.post("/page-index/:pageIndex/page-size/:pageSize?/:sort?/:order?", GolfController.apiGetAllPlayers);
-//golfRouter.post("/missing-players/page-index/:pageIndex/page-size/:pageSize?/:sort?/:order?", GolfController.apiGetAllPlayersWithoutTeams);
-golfRouter.post("/teams-missing-players/page-index/:pageIndex/page-size/:pageSize?/:sort?/:order?", GolfController.apiGetTeamsMissingPlayers);
-golfRouter.post("/teams-missing-players-label-value/page-index/:pageIndex/page-size/:pageSize?/:sort?/:order?", GolfController.getAllTeamsNeedingPlayersLabelValue);
-golfRouter.post("/players-missing-teams-label-value/page-index/:pageIndex/page-size/:pageSize?/:sort?/:order?", GolfController.getAllPlayersNeedingTeamsLabelValue);
-
-golfRouter.post("/team/page-index/:pageIndex/page-size/:pageSize?/:sort?/:order?", GolfController.apiGetAllTeams);
-golfRouter.post("/team/id/:id/page-index/:pageIndex/page-size/:pageSize?/:sort?/:order?", GolfController.apiGetPlayersByTeamId);
-
-
-export {golfRouter}
+export { golfRouter };

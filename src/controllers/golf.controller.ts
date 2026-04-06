@@ -1,385 +1,218 @@
-import {mailMapper, golfMapper, teamMapper} from "../mapper/";
-import {MailController} from "./mail.controller";
-import {inspect} from "util";
-import {EmailMessaging} from "../models/EmailMessaging";
-import moment from "moment/moment";
-//import {golfMapper} from "../mapper/golf.mapper";
-//import {teamMapper} from "../mapper/team.mapper";
-
-const util = require('util');
+import { defineEventHandler, readBody, getRouterParams, setResponseStatus } from "h3";
+import { mailMapper, golfMapper, teamMapper } from "../mapper/";
+import { EmailMessaging } from "../models/EmailMessaging";
+import { useResponseError, useResponseSuccess } from "../utils/response";
+import moment from "moment";
 
 export interface OptionsPlayer {
-    team_name?: string,
-    players:
-        {
-            "player": string,
-            "email": string,
-            "phone": string,
-            allergies?: string,
-        }[],
-    body?: string,
-    teamId?: string,
-    individual?:boolean,
-    "email_type": string
+    team_name?: string;
+    players: {
+        player: string;
+        email: string;
+        phone: string;
+        allergies?: string;
+    }[];
+    body?: string;
+    teamId?: string;
+    individual?: boolean;
+    email_type: string;
+    payment?: number;
+    member?: string;
+}
+
+// Helper to parse route params into options object
+function parseParams(params: Record<string, string>, defaults: Record<string, any>) {
+    const options = { ...defaults };
+    Object.entries(params).forEach(([key, value]) => {
+        if (value !== "undefined") {
+            options[key] = isNaN(Number(value)) ? value : Number(value);
+        }
+    });
+    return options;
 }
 
 export class GolfController {
 
-    static async apiRegisterTournament(req: any, res: any, next: any) {
-        let team;
-        const optionsPlayer: OptionsPlayer  = req.body
-        optionsPlayer.individual = true;
-
-        if (optionsPlayer.players.length >= 2) {
-           team =  await teamMapper.createTeamRegistration(optionsPlayer);
-
-           console.log("first team")
-            console.log(team);
-           if (!team.success) {
-               return res.status(200).json({ success: team.success, msg: team.message })
-           }
-
-           console.log("team results")
-            console.log(team);
-           if (team.data.affectedRows === 1) {
-                console.log("good")
-               optionsPlayer.teamId = team.data.id;
-               optionsPlayer.individual = false;
-           } else {
-               console.log("bad")
-               return res.status(500).json({ error_main:"Team name already exists" })
-           }
-        }
-        console.log("next")
-        await golfMapper.createPlayerRegistration(optionsPlayer);
-
-        await mailMapper.setupEmail({email_type:EmailMessaging.EMAIL_TYPE_REGISTER, data: req.body})
-        console.log("right before end")
-        console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
-        return res.status(200).json({ success: true, msg: "Registration successful" })
-    }
-
-    /**
-     * Calling all galleries
-     * @param req
-     * @param res
-     * @param next
-     *//*
-    public static async apiGetAllPlayersWithoutTeams(req: any, res: any, next: any) {
+    public static apiRegisterTournament = defineEventHandler(async (event) => {
         try {
-            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
-            //        return res.status(500).json({error: 'Not Authorized to access the API'})
-            //      }
+            const body = await readBody(event);
+            const optionsPlayer: OptionsPlayer = { ...body, individual: true };
 
-            const options = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: golfMapper.DEFAULT_SORT, order: golfMapper.DEFAULT_ORDER };
+            if (optionsPlayer.players.length >= 2) {
+                const team = await teamMapper.createTeamRegistration(optionsPlayer);
 
-            Object.entries(req.params).map(([key, value]) => {
-                if (value !== 'undefined') {
-                    if (isNaN(Number(value))) {
-                        options[key] = value;
-                    } else {
-                        options[key] = Number(value);
-                    }
+                if (!team.success) {
+                    setResponseStatus(event, 400);
+                    return useResponseError("BadRequestException", team.message);
                 }
-            })
 
-                 const galleries = await golfMapper.getAllPlayersWithoutTeams(options);
-
-            if (typeof galleries === 'string') {
-                return res.status(500).json({ errors_string: galleries })
+                if (team.data.affectedRows === 1) {
+                    optionsPlayer.teamId = team.data.id;
+                    optionsPlayer.individual = false;
+                } else {
+                    setResponseStatus(event, 500);
+                    return useResponseError("InternalServerError", "Team name already exists");
+                }
             }
-            const paginationResults = golfMapper.prepareListResults(galleries, options);
 
-            return res.status(200).json(paginationResults);
+            await golfMapper.createPlayerRegistration(optionsPlayer);
+            await mailMapper.setupEmail({ email_type: EmailMessaging.EMAIL_TYPE_REGISTER, data: body });
 
+            return useResponseSuccess({ message: "Registration successful" });
         } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
         }
+    });
 
-    } */
-
-
-    /**
-     * Calling all galleries
-     * @param req
-     * @param res
-     * @param next
-     */
-    public static async getAllTeamsNeedingPlayersLabelValue(req: any, res: any, next: any) {
+    public static getAllTeamsNeedingPlayersLabelValue = defineEventHandler(async (event) => {
         try {
-            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
-            //        return res.status(500).json({error: 'Not Authorized to access the API'})
-            //      }
+            const params = getRouterParams(event);
+            const options = parseParams(params, {
+                pageIndex: 1, pageSize: 10, filterQuery: "",
+                sort: golfMapper.LABEL_SORT, order: golfMapper.DEFAULT_ORDER,
+            });
 
-            const options = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: golfMapper.LABEL_SORT, order: golfMapper.DEFAULT_ORDER };
-
-            Object.entries(req.params).map(([key, value]) => {
-                if (value !== 'undefined') {
-                    if (isNaN(Number(value))) {
-                        options[key] = value;
-                    } else {
-                        options[key] = Number(value);
-                    }
-                }
-            })
             const teams = await teamMapper.getAllTeamsNeedingPlayersLabelValue(options);
 
-            console.log("gallkery")
-            console.log(teams)
-            console.log(options);
-            if (typeof teams === 'string') {
-                return res.status(500).json({ errors_string: teams })
+            if (typeof teams === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", teams);
             }
 
-            return res.status(200).json(teams);
-
+            return golfMapper.prepareListResults(teams, options);
         } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
         }
+    });
 
-    }
-
-    /**
-     * Calling all galleries
-     * @param req
-     * @param res
-     * @param next
-     */
-    public static async getAllPlayersNeedingTeamsLabelValue(req: any, res: any, next: any) {
+    public static getAllPlayersNeedingTeamsLabelValue = defineEventHandler(async (event) => {
         try {
-            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
-            //        return res.status(500).json({error: 'Not Authorized to access the API'})
-            //      }
+            const params = getRouterParams(event);
+            const options = parseParams(params, {
+                pageIndex: 1, pageSize: 10, filterQuery: "",
+                sort: golfMapper.LABEL_SORT, order: golfMapper.DEFAULT_ORDER,
+            });
 
-            const options = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: golfMapper.LABEL_SORT, order: golfMapper.DEFAULT_ORDER };
-
-            Object.entries(req.params).map(([key, value]) => {
-                if (value !== 'undefined') {
-                    if (isNaN(Number(value))) {
-                        options[key] = value;
-                    } else {
-                        options[key] = Number(value);
-                    }
-                }
-            })
             const teams = await golfMapper.getAllPlayersNeedingTeamsLabelValue(options);
 
-            console.log("gallkery")
-            console.log(teams)
-            console.log(options);
-            if (typeof teams === 'string') {
-                return res.status(500).json({ errors_string: teams })
+            if (typeof teams === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", teams);
             }
 
-            return res.status(200).json(teams);
-
+            return teams;
         } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
         }
+    });
 
-    }
-
-
-
-    /**
-     * Calling all galleries
-     * @param req
-     * @param res
-     * @param next
-     */
-    public static async apiGetTeamsMissingPlayers(req: any, res: any, next: any) {
+    public static apiGetTeamsMissingPlayers = defineEventHandler(async (event) => {
         try {
-            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
-            //        return res.status(500).json({error: 'Not Authorized to access the API'})
-            //      }
+            const params = getRouterParams(event);
+            const options = parseParams(params, {
+                pageIndex: 1, pageSize: 10, filterQuery: "",
+                sort: golfMapper.DEFAULT_SORT, order: golfMapper.DEFAULT_ORDER,
+            });
 
-            const options = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: golfMapper.LABEL_SORT, order: golfMapper.DEFAULT_ORDER };
-
-            Object.entries(req.params).map(([key, value]) => {
-                if (value !== 'undefined') {
-                    if (isNaN(Number(value))) {
-                        options[key] = value;
-                    } else {
-                        options[key] = Number(value);
-                    }
-                }
-            })
             const galleries = await teamMapper.getAllTeamsNeedingPlayers(options);
 
-            console.log("gallkery")
-            console.log(galleries)
-            console.log(options);
-            if (typeof galleries === 'string') {
-                return res.status(500).json({ errors_string: galleries })
+            if (typeof galleries === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", galleries);
             }
-            const paginationResults = golfMapper.prepareListResults(galleries, options);
-            console.log("gogo")
 
-            return res.status(200).json(paginationResults);
-
+            return golfMapper.prepareListResults(galleries, options);
         } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
         }
+    });
 
-    }
-
-
-
-
-    /**
-     * Calling all galleries
-     * @param req
-     * @param res
-     * @param next
-     */
-    public static async apiGetAllPlayers(req: any, res: any, next: any) {
+    public static apiGetAllPlayers = defineEventHandler(async (event) => {
         try {
-            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
-            //        return res.status(500).json({error: 'Not Authorized to access the API'})
-            //      }
+            const params = getRouterParams(event);
+            const options = parseParams(params, {
+                pageIndex: 1, pageSize: 10, filterQuery: "",
+                sort: golfMapper.DEFAULT_SORT, order: golfMapper.DEFAULT_ORDER,
+            });
 
-            const options = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: golfMapper.DEFAULT_SORT, order: golfMapper.DEFAULT_ORDER };
+            const players = await golfMapper.getAllPlayers(options);
 
-            Object.entries(req.params).map(([key, value]) => {
-                if (value !== 'undefined') {
-                    if (isNaN(Number(value))) {
-                        options[key] = value;
-                    } else {
-                        options[key] = Number(value);
-                    }
-                }
-            })
-
-            const galleries = await golfMapper.getAllPlayers(options);
-
-            if (typeof galleries === 'string') {
-                // return res.status(500).json({ errors_string: galleries })
+            if (typeof players === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", players);
             }
-            const paginationResults = golfMapper.prepareListResults(galleries, options);
 
-            return res.status(200).json(paginationResults);
-
+            return golfMapper.prepareListResults(players, options);
         } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
         }
+    });
 
-    }
-
-    /**
-     * Calling all galleries
-     * @param req
-     * @param res
-     * @param next
-     */
-    public static async apiGetAllTeams(req: any, res: any, next: any) {
+    public static apiGetAllTeams = defineEventHandler(async (event) => {
         try {
-            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
-            //        return res.status(500).json({error: 'Not Authorized to access the API'})
-            //      }
+            const params = getRouterParams(event);
+            const options = parseParams(params, {
+                pageIndex: 1, pageSize: 10, filterQuery: "",
+                sort: golfMapper.DEFAULT_SORT, order: golfMapper.DEFAULT_ORDER,
+            });
 
-            const options = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: golfMapper.DEFAULT_SORT, order: golfMapper.DEFAULT_ORDER };
+            const teams = await teamMapper.getAllTeams(options);
 
-            Object.entries(req.params).map(([key, value]) => {
-                if (value !== 'undefined') {
-                    if (isNaN(Number(value))) {
-                        options[key] = value;
-                    } else {
-                        options[key] = Number(value);
-                    }
-                }
-            })
-
-            const team = await teamMapper.getAllTeams(options);
-
-            if (typeof team === 'string') {
-                return res.status(500).json({ errors_string: team })
+            if (typeof teams === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", teams);
             }
 
-            const paginationResults = teamMapper.prepareListResults(team, options);
-
-            console.log("page")
-            console.log(paginationResults)
-            return res.status(200).json(paginationResults);
-
+            return teamMapper.prepareListResults(teams, options);
         } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
         }
+    });
 
-    }
-
-
-    /**
-     * Calling all galleries
-     * @param req
-     * @param res
-     * @param next
-     */
-    public static async apiUpdatePlayedById(req: any, res: any, next: any) {
+    public static apiUpdatePlayedById = defineEventHandler(async (event) => {
         try {
-            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
-            //        return res.status(500).json({error: 'Not Authorized to access the API'})
-            //      }
+            const { id } = getRouterParams(event);
+            const body = await readBody(event);
 
-            console.log(req.body)
-            console.log(req.params.id)
-            const team = await golfMapper.updatePlayerById(req.body, req.params.id);
-        console.log("rep")
-            console.log(team);
+            const result = await golfMapper.updatePlayerById(body, id);
 
-            if (typeof team === 'string') {
-                return res.status(500).json({ errors_string: team })
+            if (typeof result === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", result);
             }
 
-            return res.status(200).json(team);
-
+            return useResponseSuccess(result);
         } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
         }
+    });
 
-    }
-
-    /**
-     * Calling all galleries
-     * @param req
-     * @param res
-     * @param next
-     */
-    public static async apiGetPlayersByTeamId(req: any, res: any, next: any) {
+    public static apiGetPlayersByTeamId = defineEventHandler(async (event) => {
         try {
-            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
-            //        return res.status(500).json({error: 'Not Authorized to access the API'})
-            //      }
+            const params = getRouterParams(event);
+            const options = parseParams(params, {
+                id: null, pageIndex: 1, pageSize: 10, filterQuery: "",
+                sort: golfMapper.DEFAULT_SORT, order: golfMapper.DEFAULT_ORDER,
+            });
 
-            const options = { id: null, pageIndex: 1, pageSize: 10, filterQuery: "", sort: golfMapper.DEFAULT_SORT, order: golfMapper.DEFAULT_ORDER };
+            const players = await golfMapper.getPlayersByTeamId(options);
 
-            Object.entries(req.params).map(([key, value]) => {
-                if (value !== 'undefined') {
-                    if (isNaN(Number(value))) {
-                        options[key] = value;
-                    } else {
-                        options[key] = Number(value);
-                    }
-                }
-            })
-
-            console.log("options")
-            console.log(options);
-
-            const team = await golfMapper.getPlayersByTeamId(options);
-
-            if (typeof team === 'string') {
-                return res.status(500).json({ errors_string: team })
+            if (typeof players === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", players);
             }
 
-            const paginationResults = teamMapper.prepareListResults(team, options);
-
-            return res.status(200).json(paginationResults);
-
+            return teamMapper.prepareListResults(players, options);
         } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
         }
-
-    }
-
-
+    });
 }

@@ -1,24 +1,18 @@
-import {mailMapper} from "../mapper/";
-
-import {inspect} from "util";
-
-const util = require('util');
+import { defineEventHandler, readBody, setResponseStatus } from "h3";
+import { mailMapper } from "../mapper/";
+import { useResponseError, useResponseSuccess } from "../utils/response";
 
 export class MailController {
-    static async apiPostSendMail(req: any, res: any, next: any) {
+
+    public static apiPostSendMail = defineEventHandler(async (event) => {
         try {
+            const body = await readBody(event);
+            const result = await mailMapper.setupEmail({ email_type: body.email_type, data: body });
 
-            const retval = await mailMapper.setupEmail({email_type: req.body.email_type, data: req.body})
-
-            return res.status(200).json({success: true, msg: retval})
-        } catch (err) {
-            return res.status(500).json({success:false, message: `Registration not successful, ${err.toString()}`});
+            return useResponseSuccess({ message: result });
+        } catch (error) {
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
         }
-                /*
-                    return res.status(200).json({
-                        success: true,
-                        message: `successfully got through with info ${inspect(retVal)}`
-                    });
-                } else { */
-    }
+    });
 }

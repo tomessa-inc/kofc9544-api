@@ -9,6 +9,9 @@ import {DrizzleAPI} from "../db/Drizzle";
 import * as console from "node:console";
 import {size} from "lodash-es";
 import axios from "axios";
+import {PlayerObject} from "./golf.mapper";
+import {response} from "express";
+import jwt from 'jsonwebtoken';
 
 //import {Sequelize} from "sequelize";
 
@@ -24,6 +27,7 @@ export interface bodyOptions {
     
 
 }
+
 
 export interface paramsOptions {
     id?: string
@@ -41,6 +45,10 @@ export interface paramsOptions {
     token?: string
 }
 
+export interface BaseObject {
+}
+
+
 /*
 The Base Mapper. Functions which are in common with others mappers are placed here to avoid duplication of code
  */
@@ -50,6 +58,7 @@ export class BaseMapper {
     private _PARAM_FRONTCLOUD = 'https://images.kofc9544.ca'
     private _SEQUELIZE;
     private _DRIZZLE;
+    protected _OBJECT_RETRIEVED!: BaseObject;
 
     /**
      * Initalizing the Sequelize instance with the configuration data taken from file
@@ -185,21 +194,25 @@ export class BaseMapper {
     }
 
 
+    public prepareResults(list = this._OBJECT_RETRIEVED) {
+        return JSON.parse(`{ "code": 0, "error": null,"message": "ok", "data":${JSON.stringify(list)}}`);
+       // return this.generatePagination(list, body)
+    }
+
+
     /**
      * Preparing the paginated results
      * @param list
      * @param body
      */
-    public prepareListResults(list, body: paramsOptions) {
+    public prepareListResults(list = this._OBJECT_RETRIEVED, body: paramsOptions) {
         return this.generatePagination(list, body)
     }
 
     /**
      * Generation of pagination for various retrieval of lists
-     * @param list: string[]
-     * @param query: Query
-     */
-    public generatePagination(list:string[], body: paramsOptions) : PaginationResults {
+    */
+    public generatePagination(list = this._OBJECT_RETRIEVED, body: paramsOptions) : PaginationResults {
         let listClone;
         listClone = list;
 
@@ -265,7 +278,17 @@ export class BaseMapper {
             };
         }
 
-        return JSON.parse(`{"data":${JSON.stringify(list)}, "total":"${listLength}","pageSize":"${size}", "pageIndex":"${page}", "lastage":"${lastPage}"}`);
+        return JSON.parse(`{ "code": 0, "error": null,"message": "ok", "data": {"items":${JSON.stringify(list)}, "total": ${list[0].total}}, "total":"${list[0].total}","pageSize":"${size}", "pageIndex":"${page}", "lastpage":"${lastPage}"}`);
+    }
+
+    public generateAccessToken(user) {
+        return jwt.sign(user, 'sdsdfsdfsf', { expiresIn: '7d' });
+    }
+
+    public generateRefreshToken(user) {
+        return jwt.sign(user, 'sdsdfsdfsf', {
+            expiresIn: '30d',
+        });
     }
 
     public generateJWTToken() {
@@ -329,6 +352,10 @@ export class BaseMapper {
 
     get DRIZZLE() {
         return this._DRIZZLE;
+    }
+
+    get OBJECT_RETRIEVED(): BaseObject {
+        return this._OBJECT_RETRIEVED;
     }
 }
 

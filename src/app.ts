@@ -1,73 +1,47 @@
-import cors from "cors";
-import express, { Request, Response } from "express";
-import path from "path";
-import compression from "compression";
-import { getCurrentInvoke } from "@vendia/serverless-express";
-const ejs = require("ejs").__express;
-const app = express();
-const router = express.Router();
-import {mailRouter, mediaRouter, userRouter, eventRouter, accessRouter, golfRouter} from './routes';
-import {NextFunction} from "express";
+import {
+  createApp,
+  createRouter,
+  defineEventHandler,
+  handleCors,
+  setHeader,
+  useBase
+} from "h3";
+import {
+  mailRouter,
+  mediaRouter,
+  userRouter,
+  eventRouter,
+  accessRouter,
+  golfRouter,
+  authRouter
+} from "./routes";
 
+const app = createApp();
+const router = createRouter();
 
-const fileUpload = require('express-fileupload');
-import bodyparser from 'body-parser';
-/*
-const bufferToJSONMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  if (req.body instanceof Buffer) {
-    try {
-      req.body = JSON.parse(req.body.toString());
-      console.log('here it is')
-      console.log(req.body);
-      return req.body
-    } catch (err) {
-      return res.status(400).json({ error: 'Invalid JSON data' });
-    }
-  }
+// ✅ Bug 1 fixed: CORS middleware registered BEFORE the router
+app.use(defineEventHandler((event) => {
+  const isPreflight = handleCors(event, {
+    origin: "*",
+    methods: "*",
+    allowHeaders: "*",
+  });
 
-  next();
-};
+  // ✅ Bug 2 fixed: return early on OPTIONS preflight requests
+  if (isPreflight) return;
 
-console.log('hello')
-console.log(bufferToJSONMiddleware) */
-app.use(express.static("/tmp"));
-app.use(bodyparser.urlencoded({extended: true}));
-app.use(bodyparser.json({limit: '50mb', type: 'application/*+json'}));
-app.use(express.json({type: "application/json"}))
-app.use(cors());
-app.use(compression());
-//app.use(bufferToJSONMiddleware)
+  setHeader(event, "Content-Type", "application/json");
+}));
 
-app.use(async (req, res, next) => {
-  res.header("Access.ts-Control-Allow-Origin", "*")
-  res.header("Access.ts-Control-Allow-Headers", "*")
-  res.header('Access.ts-Control-Allow-Methods', '*');
-  res.header( "content-type", "application/json")
-  check(req, res, next)
+app.use(router);
 
-  next()
-});
+// Mount sub-routers
+router.use("/mail/**",   useBase("/mail",   mailRouter.handler));
+router.use("/media/**",  useBase("/media",  mediaRouter.handler));
+router.use("/user/**",   useBase("/user",   userRouter.handler));
+router.use("/auth/**",   useBase("/auth",   authRouter.handler));
+router.use("/event/**",  useBase("/event",  eventRouter.handler));
+router.use("/access/**", useBase("/access", accessRouter.handler));
+router.use("/golf/**",   useBase("/golf",   golfRouter.handler));
 
-app.use("/mail", mailRouter);
-app.use("/media", mediaRouter);
-app.use("/user", userRouter);
-app.use("/event", eventRouter);
-app.use("/access", accessRouter);
-app.use("/golf", golfRouter);
-
-
-app.use("/", express);
 export { app };
-
-const check = (req, res, next) => {
-  if (req.body instanceof Buffer) {
-    try {
-      req.body = JSON.parse(req.body.toString());
-
-      return req
-
-    } catch (err) {
-      return res.status(400).json({error: 'Invalid JSON data'});
-    }
-  }
-}

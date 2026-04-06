@@ -120,7 +120,7 @@ export class MailMapper {
      */
     async prepareEmail(body) {
         this._params = emailParams;
-        this._params.Source = 'KOFC Site Admin <test@kofc9544.ca>';
+        this._params.Source = 'KOFC Golf Registrations <golfregistrations@kofc9544.ca>';
         this._params.ReplyToAddresses = [];
         this._params.Template = 'DefaultEmailTemplate';
         this._PARAMS_CONTENT = '';

@@ -1,236 +1,188 @@
-import {accessMapper, galleryMapper, imageMapper, mailMapper, paramsOptions, userMapper} from "../mapper/";
-import {EmailMessaging} from "../models/EmailMessaging";
+import { defineEventHandler, setResponseStatus, readBody, getRouterParams } from "h3";
+import { userMapper, accessMapper, paramsOptions } from "../mapper/";
+import { forbiddenResponse, useResponseError, useResponseSuccess } from "../utils/response";
+import { clearRefreshTokenCookie, setRefreshTokenCookie } from "../utils/cookie-utils";
 
 export class UserController {
 
-
-    /**
-     * Function that determins if your username and password are correct
-     * @param req
-     * @param res
-     * @param next
-     */
-    public static async apiPostSignIn(req: any, res: any, next: any) {
+    public static apiPostSignIn = defineEventHandler(async (event) => {
         try {
-            if (req.body[userMapper.PARAMS_USERNAME] && req.body[userMapper.PARAMS_PASSWORD]) {
-                const user = await userMapper.getUserBasedOnPassword(req.body);
+            const body = await readBody(event);
 
-                if (typeof(user) !== "object") {
+            if (body[userMapper.PARAMS_USERNAME] && body[userMapper.PARAMS_PASSWORD]) {
+                const user = (await userMapper.getUserBasedOnPassword(body))[0];
 
-                    return res.status(500).json({ error: "Username and/or Password incorrect" })
+                if (typeof user !== "object") {
+                    setResponseStatus(event, 400);
+                    return useResponseError("BadRequestException", "Username and/or Password incorrect");
                 }
 
-                return res.status(200).json({"user":user, "token":userMapper.generateJWTToken()});
-            } else {
-                console.log("Missing either Username and/or password");
-                return res.status(500).json({ error: "Missing either Username and/or password" })
-            }
-        } catch (error) {
-            return res.status(500).json({ error: error.toString() })
-        }
+                const accessToken = await userMapper.generateAccessToken(user);
+                const refreshToken = await userMapper.generateRefreshToken(user);
 
-    }
+                setRefreshTokenCookie(event, refreshToken);
 
-    /**
-     * Function that determins if your username and password are correct
-     * @param req
-     * @param res
-     * @param next
-     */
-    public static async apiPostSignOut(req: any, res: any, next: any) {
+                await userMapper.updateUserToken(user, accessToken);
+                const result = userMapper.prepareResults(user);
+                result.data.accessToken = accessToken;
 
-        return res.status(200).json({"sign-out":true});
-    }
+
+
+                setRefreshTokenCookie(event, refreshToken);
 /*
+                return useResponseSuccess({
+                    ...findUser,
+                    accessToken,
+                }); */
 
-    server.post(`${apiPrefix}/sign-in`, (schema, { requestBody }) => {
-        const { userName, password } = JSON.parse(requestBody)
-        const user = schema.db.signInUserData.findBy({
-            accountUserName: userName,
-            password,
-        })
-        console.log('user', user)
-        if (user) {
-            const { avatar, userName, email, authority } = user
-            return {
-                user: { avatar, userName, email, authority },
-                token: 'wVYrxaeNa9OxdnULvde1Au5m5w63',
-            }
-        }
-        return new Response(
-            401,
-            { some: 'header' },
-            { message: 'Invalid email or password!' }
-        )
-    })
-*/
+                return useResponseSuccess({ user, accessToken });
 
-
-    /**
-     * Sign up to Service functionality
-     * @param req
-     * @param res
-     * @param next
-     */
-    public static async apiPostSignUp(req: any, res: any, next: any) {
-        try {
-            if (req.body[userMapper.PARAMS_EMAIL] && req.body[userMapper.PARAMS_PASSWORD] && req.body[userMapper.PARAMS_USERNAME]) {
-                console.log('hre');
-
-                const user = await userMapper.apiSignUp(req.body);
-                console.log('there');
-                console.log(user);
-                if (!user) {
-                    return res.status(500).json({ error: "Username already exists" })
-                }
-
-                return res.status(200).json({ result: "success", message: "User has been created" });
+            } else {
+                clearRefreshTokenCookie(event);
+                return forbiddenResponse(event, "Username or password is incorrect.");
             }
         } catch (error) {
-
-            return res.status(500).json({ error: error.toString() })
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
         }
-    }
+    });
 
-    public static async patchUpdateUser(req: any, res: any, next: any) {
+    public static apiUserInfo = defineEventHandler(async (event) => {
         try {
-            if (req.body[userMapper.PARAMS_ID] && req.body[userMapper.PARAMS_USER]) {
-                const userUpdate = true; //await userMapper.apiUpdateUser(req.body);
+            const token = await userMapper.getAuthToken(event);
+            const user = (await userMapper.getUserByToken(token))[0];
+
+            return useResponseSuccess(user);
+        } catch (error) {
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
+        }
+    });
+
+    public static apiPostSignOut = defineEventHandler(async (event) => {
+        return useResponseSuccess("");
+    });
+
+    public static apiGetCodes = defineEventHandler(async (event) => {
+        return useResponseSuccess(["AC_100010", "AC_100020", "AC_100030"]);
+    });
+
+    public static apiPostSignUp = defineEventHandler(async (event) => {
+        try {
+            const body = await readBody(event);
+
+            if (body[userMapper.PARAMS_EMAIL] && body[userMapper.PARAMS_PASSWORD] && body[userMapper.PARAMS_USERNAME]) {
+                const user = await userMapper.apiSignUp(body);
+
+                if (!user) {
+                    setResponseStatus(event, 400);
+                    return useResponseError("BadRequestException", "Username already exists");
+                }
+
+                return useResponseSuccess({ message: "User has been created" });
+            }
+
+            setResponseStatus(event, 400);
+            return useResponseError("BadRequestException", "Missing required fields");
+        } catch (error) {
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
+        }
+    });
+
+    public static patchUpdateUser = defineEventHandler(async (event) => {
+        try {
+            const body = await readBody(event);
+
+            if (body[userMapper.PARAMS_ID] && body[userMapper.PARAMS_USER]) {
+                const userUpdate = await userMapper.apiUpdateUser(body, body[userMapper.PARAMS_ID]);
 
                 if (!userUpdate) {
-
-                    return res.status(500).json({ result: "error", message: "User has not been successfully updated" })
+                    setResponseStatus(event, 500);
+                    return useResponseError("InternalServerError", "User has not been successfully updated");
                 }
 
-                return res.status(200).json({ result: "success", message: "User has been successfully updated" });
+                return useResponseSuccess({ message: "User has been successfully updated" });
             }
 
-            return res.status(500).json({ result: "error", message: "Missing parameters to access this function" })
-
+            setResponseStatus(event, 500);
+            return useResponseError("BadRequestException", "Missing parameters to access this function");
         } catch (error) {
-            return res.status(500).json({ result: "error", message: error.toString() })
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
         }
-    }
+    });
 
-    /**
-     * Get All Users
-     * @param req
-     * @param res
-     * @param next
-     */
-    public static async getAllUsers(req: any, res: any, next: any) {
+    public static getAllUsers = defineEventHandler(async (event) => {
         try {
-            //         if (!userMapper.checkAuthenication(req.headers.authorization)) {
-            //           return res.status(500).json({error: 'Not Authorized to access the API'})
-            //     }
-            console.log('get all users')
+            const params = getRouterParams(event);
+            const options: paramsOptions = {
+                pageIndex: 1,
+                pageSize: 10,
+                filterQuery: "",
+                sort: userMapper.DEFAULT_SORT,
+                order: userMapper.DEFAULT_ORDER,
+            };
 
-            const options: paramsOptions = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: userMapper.DEFAULT_SORT, order: userMapper.DEFAULT_ORDER };
-
-            Object.entries(req.params).map(([key, value]) => {
-                if (value !== 'undefined') {
-                    if (isNaN(Number(value))) {
-                        options[key] = value;
-                    } else {
-                        options[key] = Number(value);
-                    }
+            Object.entries(params).forEach(([key, value]) => {
+                if (value !== "undefined") {
+                    options[key] = isNaN(Number(value)) ? value : Number(value);
                 }
-            })
+            });
 
             const users = await userMapper.getAllUsers(options);
 
-            if (typeof users === 'string') {
-                return res.status(500).json({ error: users })
+            if (typeof users === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", users);
             }
 
-            const paginationResults = userMapper.prepareListResults(users, req.query);
-
-            return res.status(200).json(paginationResults)
+            return userMapper.prepareListResults(users, options);
         } catch (error) {
-
-            return res.status(500).json({ error: error.toString() })
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
         }
+    });
 
-    }
-
-    /**
-     * Get All Users
-     * @param req
-     * @param res
-     * @param next
-     */
-    public static async getUserById(req: any, res: any, next: any) {
+    public static getUserById = defineEventHandler(async (event) => {
         try {
-            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
-            //        return res.status(500).json({error: 'Not Authorized to access the API'})
-            //      }
-            const options: paramsOptions = { id: "string" };
-
-            if (req.params.id) {
-                options.id = req.params.id;
-            }
+            const params = getRouterParams(event);
+            const options: paramsOptions = { id: params.id };
 
             const user = await userMapper.getUserById(options);
-            console.log('got user333')
-            console.log(user);
 
-            console.log('helo')
-            if (typeof user === 'string') {
-                return res.status(500).json({ errors_string: user })
+            if (typeof user === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", user);
             }
-/*
-            const access = user.dataValues.Accesses.map((tag) => {
-                console.log('helllo tag')
-                console.log({"label":tag.name, "value":tag.id})
-                return {"label":tag.name, "value":tag.id}
-            })
-*/
-            ///console.log('arrived')
-          //  console.log(user)
-        //    console.log({"data": user});
-            return res.status(200).json(user);
 
+            return user;
         } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
         }
-    }
+    });
 
-    /**
-     * Calling all galleries
-     * @param req
-     * @param res
-     * @param next
-     */
-    public static async apiUpdateUser(req: any, res: any, next: any) {
+    public static apiUpdateUser = defineEventHandler(async (event) => {
         try {
-            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
-            //        return res.status(500).json({error: 'Not Authorized to access the API'})
-            //      }
-
-            let id;
-            if (req.params.id) {
-                id = req.params.id
-            }
+            const params = getRouterParams(event);
+            const body = await readBody(event);
+            const { id } = params;
 
             await accessMapper.apiDeleteAccess(id);
+            await Promise.all(body.access.map((access) => accessMapper.apiAddAccess(id, access)));
 
-            req.body.access.map(async (access) => {
-                await accessMapper.apiAddAccess(id, access);
-            });
+            const result = await userMapper.apiUpdateUser(id, body);
 
-            const images = await userMapper.apiUpdateUser(id, req.body);
-
-
-
-            if (typeof images === 'string') {
-                return res.status(500).json({ errors_string: images })
+            if (typeof result === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", result);
             }
 
-            return res.status(200).json(images);
-
+            return result;
         } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
         }
-
-    }
+    });
 }

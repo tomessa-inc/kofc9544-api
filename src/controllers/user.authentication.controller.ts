@@ -1,131 +1,82 @@
-import {accessMapper, galleryMapper, imageMapper, mailMapper, paramsOptions, userMapper} from "../mapper/";
-import {EmailMessaging} from "../models/EmailMessaging";
-import {userAuthenticationMapper} from "../mapper/user.authentication.mapper";
+import { defineEventHandler, readBody, getRouterParams, setResponseStatus } from "h3";
+import { paramsOptions, userMapper, mailMapper } from "../mapper/";
+import { EmailMessaging } from "../models/EmailMessaging";
+import { userAuthenticationMapper } from "../mapper/user.authentication.mapper";
+import { useResponseError, useResponseSuccess } from "../utils/response";
 
 export class UserAuthenticationController {
 
-    /**
-     * Function that determins if your username and password are correct
-     * @param req
-     * @param res
-     * @param next
-     */
-    public static async apiForgotPasswordNoId(req: any, res: any, next: any) {
+    public static apiForgotPasswordNoId = defineEventHandler(async (event) => {
         try {
-            const options: paramsOptions = { id: "string", email_type: "string", token: "string", firstName: "", email: "" };
+            const body = await readBody(event);
+            const userObj = await userMapper.getUserByEmail(body.email);
 
-            const userObj = await userMapper.getUserByEmail(req.body.email)
+            const options: paramsOptions = {
+                id: userObj.id,
+                firstName: userObj.firstName,
+                email: userObj.email,
+                email_type: EmailMessaging.EMAIL_TYPE_FORGOTPASSWORD,
+                token: await userMapper.encrypt(userObj.id),
+            };
 
-            options.id = userObj.id
-            options.firstName = userObj.firstName
-            options.id = userObj.id
-            options.email = userObj.email
+            await userAuthenticationMapper.deleteTokenEntry(options.id);
+            await userAuthenticationMapper.createTokenEntry(options.id, options.token);
+            await mailMapper.prepareEmail(options);
+            await mailMapper.apiSendMail();
 
-            await userAuthenticationMapper.deleteTokenEntry(options.id)
-
-            const encryptedToken  = await userMapper.encrypt(options.id)
-
-            options.email_type = EmailMessaging.EMAIL_TYPE_FORGOTPASSWORD
-            options.token = encryptedToken
-
-            await userAuthenticationMapper.createTokenEntry(options.id, encryptedToken)
-            await mailMapper.prepareEmail(options)
-            await mailMapper.apiSendMail()
-
-            return res.status(200).json({"user":userObj, "token":userMapper.generateJWTToken()});
-            //  } else {
-            ///      console.log("Missing either Username and/or password");
-            //    return res.status(500).json({ error: "Missing either Username and/or password" })
-            // }
+            return useResponseSuccess({ user: userObj, token: await userMapper.generateJWTToken() });
         } catch (error) {
-            return res.status(500).json({ error: error.toString() })
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
         }
+    });
 
-    }
-    /**
-     * Function that determins if your username and password are correct
-     * @param req
-     * @param res
-     * @param next
-     */
-    public static async apiForgotPassword(req: any, res: any, next: any) {
+    public static apiForgotPassword = defineEventHandler(async (event) => {
         try {
-            //    if (req.body[userMapper.PARAMS_USERNAME] && req.body[userMapper.PARAMS_PASSWORD]) {
+            const { id } = getRouterParams(event);
+            const body = await readBody(event);
 
-            const options: paramsOptions = { id: "string", email_type: "string", token: "string"};
+            const encryptedToken = await userMapper.encrypt(id);
+            const options: paramsOptions = {
+                id,
+                email_type: EmailMessaging.EMAIL_TYPE_FORGOTPASSWORD,
+                token: encryptedToken,
+            };
 
+            await userAuthenticationMapper.createTokenEntry(id, encryptedToken);
+            await mailMapper.prepareEmail(options);
+            await mailMapper.apiSendMail();
 
+            const user = await userMapper.getUserBasedOnPassword(body);
 
-
-            const encryptedToken  = await userMapper.encrypt(req.params.id)
-
-            if (req.params.id) {
-                options.id = req.params.id;
-                options.email_type = EmailMessaging.EMAIL_TYPE_FORGOTPASSWORD,
-                    options.token = encryptedToken
-            }
-            await userAuthenticationMapper.createTokenEntry(options.id, encryptedToken)
-            await mailMapper.prepareEmail(options)
-            await mailMapper.apiSendMail()
-
-            const user = await userMapper.getUserBasedOnPassword(req.body);
-            console.log('user');
-            console.log(user);
-            if (typeof(user) !== "object") {
-
-                return res.status(500).json({ error: "Username and/or Password incorrect" })
+            if (typeof user !== "object") {
+                setResponseStatus(event, 400);
+                return useResponseError("BadRequestException", "Username and/or Password incorrect");
             }
 
-            console.log("good stuff")
-
-            return res.status(200).json({"user":user, "token":userMapper.generateJWTToken()});
-            //  } else {
-            ///      console.log("Missing either Username and/or password");
-            //    return res.status(500).json({ error: "Missing either Username and/or password" })
-            // }
+            return useResponseSuccess({ user, token: await userMapper.generateJWTToken() });
         } catch (error) {
-            return res.status(500).json({ error: error.toString() })
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
         }
+    });
 
-    }
-
-    public static async apiResetPasswordToken(req: any, res: any, next: any) {
+    public static apiResetPasswordToken = defineEventHandler(async (event) => {
         try {
-            //    if (req.body[userMapper.PARAMS_USERNAME] && req.body[userMapper.PARAMS_PASSWORD]) {
-
-            const options: paramsOptions = { token: "string"};
-
-            if (req.params.token) {
-                options.token = req.params.token;
-            }
-
-
-
-            //  await userMapper.createTokenEntry(options.id, options.token)
-            //  await mailMapper.prepareEmail(options)
-            //  await mailMapper.apiSendMail()
+            const { token } = getRouterParams(event);
+            const options: paramsOptions = { token };
 
             const user = await userAuthenticationMapper.getUserBasedOnToken(options);
-            console.log('user');
-            console.log(user);
-            if (typeof(user) !== "object") {
 
-                return res.status(500).json({ error: "Username and/or Password incorrect" })
+            if (typeof user !== "object") {
+                setResponseStatus(event, 400);
+                return useResponseError("BadRequestException", "Invalid or expired token");
             }
 
-
-            console.log("good stuff")
-
-            return res.status(200).json({"data":user, "token":userMapper.generateJWTToken()});
-            //  } else {
-            ///      console.log("Missing either Username and/or password");
-            //    return res.status(500).json({ error: "Missing either Username and/or password" })
-            // }
+            return useResponseSuccess({ data: user, token: await userMapper.generateJWTToken() });
         } catch (error) {
-            return res.status(500).json({ error: error.toString() })
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
         }
-
-    }
-
-
+    });
 }

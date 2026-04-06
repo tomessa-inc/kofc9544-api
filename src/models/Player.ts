@@ -12,6 +12,7 @@ export const player = mysqlTable('player', {
     phone: varchar('phone', {length: 255}).notNull(),
     individual: varchar('individual', {length: 255}),
     TeamId: varchar('TeamId', {length: 255}),
+    member: varchar('member', {length: 100}).notNull(),
     allergies: varchar('allergies', {length: 255}),
     payment: boolean('payment')
 //    createdAt:timestamp().defaultNow(),

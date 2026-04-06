@@ -1,12 +1,11 @@
-import expressRouter from 'express';
+import { createRouter, defineEventHandler } from "h3";
+import { EventController } from "../controllers/event.controller";
 
-const eventRouter = expressRouter.Router();
-import {EventController} from "../controllers/event.controller";
+const eventRouter = createRouter();
 
-eventRouter.post("/", EventController.apiCreateEvent);
-eventRouter.get("/month/:month/year/:year", EventController.apiGetEventsMonthByDay);
+eventRouter.post("/",              defineEventHandler(EventController.apiCreateEvent));
+eventRouter.get("/month/:month/year/:year", defineEventHandler(EventController.apiGetEventsMonthByDay));
+eventRouter.post("/month",         defineEventHandler(EventController.apiGetEventsMonthByDay));
+eventRouter.post("/publish",       defineEventHandler(EventController.apiPublishEvents));
 
-eventRouter.post("/month", EventController.apiGetEventsMonthByDay);
-eventRouter.post("/publish", EventController.apiPublishEvents);
-
-export {eventRouter }
+export { eventRouter };

@@ -1,290 +1,186 @@
+import {defineEventHandler, readBody, getRouterParams, setResponseStatus, H3Event} from "h3";
 import { imageMapper, paramsOptions } from "../mapper";
-import {mediaRouter} from "../routes";
-import moment from "moment/moment";
+import { useResponseError, useResponseSuccess } from "../utils/response";
+
+const parsers = {
+    boolean: (v: string) => v === "true",
+    number:  (v: string) => Number(v),
+    string:  (v: string) => isNaN(Number(v)) ? v : Number(v),
+};
+
+function parseParams(params: Record<string, string>, defaults: Record<string, any>) {
+    return Object.entries(params).reduce((options, [key, value]) => {
+        if (value !== "undefined") {
+            const type = typeof defaults[key] as keyof typeof parsers;
+            options[key] = (parsers[type] ?? parsers.string)(value);
+        }
+        return options;
+    }, { ...defaults });
+}
+
+function getParams(event: H3Event, defaults: Record<string, any>) {
+    return parseParams(getRouterParams(event), defaults);
+}
 
 export class ImageController {
-    /**
-       * Calling all galleries
-       * @param req
-       * @param res
-       * @param next
-       */
 
-
-    public static async apiUpdateOrderImage(req: any, res: any, next: any) {
+    public static apiUpdateOrderImage = defineEventHandler(async (event) => {
         try {
+            const { id, galleryId, order } = getParams(event, {
+                id: "",
+                galleryId: "",
+                order: 0,
+            });
 
+            const result = await imageMapper.updateOrder(galleryId, id, order);
 
-            let id
-            let galleryId
-            let order;
-
-            if (req.params.id) {
-                id = req.params.id
+            if (typeof result === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", result);
             }
 
-
-            if (req.params.galleryId) {
-                galleryId = req.params.galleryId
-            }
-
-
-            if (req.params.order) {
-                order = req.params.order
-            }
-
-            //mediaRouter.post("/id/:id/update/current/:currentNumber/new/:newNumber", ImageController.apiUpdateOrderImage);
-
-            const images = await imageMapper.updateOrder(galleryId, id, order);
-
-/*
-            for (let number = 0;number < images.length; number++) {
-                await imageMapper.reNum(images[number].id, number);
-
-            }
-//            console.log(images);
-
-
-            if (typeof images === 'string') {
-                return res.status(500).json({ errors_string: images })
-            }
-
-            //            const paginationResults = galleryMapper.prepareListResults(images, req.query);
-*/
-            return res.status(200).json(images);
-
+            return useResponseSuccess(result);
         } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
         }
+    });
 
-    }
-
-    public static async apiImagesOrder(req: any, res: any, next: any) {
+    public static apiImagesOrder = defineEventHandler(async (event) => {
         try {
-            let id;
-            if (req.params.id) {
-                id = req.params.id
-            }
-
+            const { id } = getRouterParams(event);
             const images = await imageMapper.reOrder(id);
-            for (let number = 0;number < images.length; number++) {
-                await imageMapper.reNum(images[number].id, number);
 
-            }
-//            console.log(images);
-
-
-            if (typeof images === 'string') {
-                return res.status(500).json({ errors_string: images })
+            if (typeof images === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", images);
             }
 
-            //            const paginationResults = galleryMapper.prepareListResults(images, req.query);
+            for (let i = 0; i < images.length; i++) {
+                await imageMapper.reNum(images[i].id, i);
+            }
 
-            return res.status(200).json(images);
-
+            return useResponseSuccess(images);
         } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
         }
+    });
 
-    }
-
-    public static async apiDeleteImage(req: any, res: any, next: any) {
+    public static apiDeleteImage = defineEventHandler(async (event) => {
         try {
-            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
-            //        return res.status(500).json({error: 'Not Authorized to access the API'})
-            //      }  
-            let id;
-            if (req.params.id) {
-                id = req.params.id
+            const { id } = getRouterParams(event);
+            const result = await imageMapper.deleteImageById(id);
+
+            if (typeof result === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", result);
             }
 
-            const images = await imageMapper.deleteImageById(id);
-
-            
-            if (typeof images === 'string') {
-                return res.status(500).json({ errors_string: images })
-            }
-
-            //            const paginationResults = galleryMapper.prepareListResults(images, req.query);
-
-            return res.status(200).json(images);
-
+            return useResponseSuccess(result);
         } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
         }
-    }
-    public static async apiGetImage(req: any, res: any, next: any) {
-        try {
-            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
-            //        return res.status(500).json({error: 'Not Authorized to access the API'})
-            //      }  
-            let id;
-            if (req.params.id) {
-                id = req.params.id
-            }
+    });
 
+    public static apiGetImage = defineEventHandler(async (event) => {
+        try {
+            const { id } = getRouterParams(event);
             const images = await imageMapper.getImageById(id);
 
-            if (typeof images === 'string') {
-                return res.status(500).json({ errors_string: images })
+            if (typeof images === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", images);
             }
 
-            //            const paginationResults = galleryMapper.prepareListResults(images, req.query);
-
-            return res.status(200).json(images[0]);
-
+            return useResponseSuccess(images[0]);
         } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
         }
-    }
+    });
 
-    /**
-       * Calling all galleries
-       * @param req
-       * @param res
-       * @param next
-       */
-    public static async apiUpdateImage(req: any, res: any, next: any) {
+    public static apiUpdateImage = defineEventHandler(async (event) => {
         try {
-            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
-            //        return res.status(500).json({error: 'Not Authorized to access the API'})
-            //      }  
+            const { id } = getRouterParams(event);
+            const body = await readBody(event);
+            const result = await imageMapper.updateImageById(id, body);
 
-            let id;
-            if (req.params.id) {
-                id = req.params.id
+            if (typeof result === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", result);
             }
 
-            const images = await imageMapper.updateImageById(id, req.body);
-
-            if (typeof images === 'string') {
-                return res.status(500).json({ errors_string: images })
-            }
-
-            return res.status(200).json(images);
-
+            return useResponseSuccess(result);
         } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
         }
+    });
 
-    }
-
-    /**
-     * Calling all galleries
-     * @param req
-     * @param res
-     * @param next
-     */
-    public static async apiGetAllImages(req: any, res: any, next: any) {
+    public static apiGetAllImages = defineEventHandler(async (event) => {
         try {
-            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
-            //        return res.status(500).json({error: 'Not Authorized to access the API'})
-            //      }  
-
-            const options: paramsOptions = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: imageMapper.DEFAULT_SORT, order: imageMapper.DEFAULT_ORDER };
-                
-            Object.entries(req.params).map(([key, value]) => {
-                if (value !== 'undefined') {
-                    if (isNaN(Number(value))) {
-                        options[key] = value;
-                    } else {
-                        options[key] = Number(value);
-                    }
-                }
-            })
+            const options: paramsOptions = parseParams(getRouterParams(event), {
+                pageIndex: 1, pageSize: 10, filterQuery: "",
+                sort: imageMapper.DEFAULT_SORT, order: imageMapper.DEFAULT_ORDER,
+            });
 
             const images = await imageMapper.getAllImages(options);
 
-            if (typeof images === 'string') {
-                return res.status(500).json({ errors_string: images })
+            if (typeof images === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", images);
             }
 
             options.listLength = await imageMapper.getListLength();
-            const paginationResults = imageMapper.prepareListResults(images, options);
 
-            return res.status(200).json(paginationResults);
-
+            return imageMapper.prepareListResults(images, options);
         } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
         }
+    });
 
-    }
-
-    /**
-   * Calling all galleries
-   * @param req
-   * @param res
-   * @param next
-   */
-    public static async apiGetAllPrimaryImages(req: any, res: any, next: any) {
+    public static apiGetAllPrimaryImages = defineEventHandler(async (event) => {
         try {
-            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
-            //        return res.status(500).json({error: 'Not Authorized to access the API'})
-            //      }
-            const options: paramsOptions = { logged: false };
-            if (req.params.logged) {
-                options.logged = req.params.logged;
-            }
+            const options: paramsOptions = parseParams(getRouterParams(event), {
+                logged: false,
+            });
+
             const images = await imageMapper.getAllPrimaryImages(options);
 
-            if (typeof images === 'string') {
-                return res.status(500).json({ errors_string: images })
+            if (typeof images === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", images);
             }
 
-            //   const paginationResults = imageMapper.prepareListResults(galleries, req.query);
-            return res.status(200).json({ "images": images });
-
+            return useResponseSuccess({ images });
         } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
         }
+    });
 
-    }
-
-    /**
-  * Calling all galleries
-  * @param req
-  * @param res
-  * @param next
-  */
-    public static async apiGetAllImagesByGallery(req: any, res: any, next: any) {
+    public static apiGetAllImagesByGallery = defineEventHandler(async (event) => {
         try {
-            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
-            //        return res.status(500).json({error: 'Not Authorized to access the API'})
-            //      }
-            const options: paramsOptions = { id: "string", pageIndex: 1, pageSize: 20, filterQuery: "" };
-
-
-            if (req.params.id) {
-                options.id = req.params.id;
-            }
-
-            if (req.params.pageIndex) {
-                options.pageIndex = Number(req.params.pageIndex);
-            }
-
-            if (req.params.pageSize) {
-                options.pageSize = Number(req.params.pageSize);
-            }
-
-            if (req.params.filterQuery) {
-                options.filterQuery = req.params.filterQuery;
-            }
+            const options: paramsOptions = parseParams(getRouterParams(event), {
+                id: "", pageIndex: 1, pageSize: 20, filterQuery: "",
+            });
 
             const images = await imageMapper.getImagesByGallery(options);
 
-            if (typeof images === 'string') {
-                return res.status(500).json({ errors_string: images })
+            if (typeof images === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", images);
             }
 
             options.listLength = await imageMapper.getListLength(options);
 
-            const paginationResults = imageMapper.prepareListResults(images, options);
-       //     const paginationResults = imageMapper.prepareListResults(galleries, req.query);
-            return res.status(200).json(paginationResults);
-
+            return imageMapper.prepareListResults(images, options);
         } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
         }
-    }
-
+    });
 }

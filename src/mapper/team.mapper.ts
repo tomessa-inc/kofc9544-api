@@ -13,6 +13,20 @@ import {sql, gt, lt, eq, SQL, count} from "drizzle-orm";
 import {galleryTag} from "../models/GalleryTag";
 import {MySqlSelectBase} from "drizzle-orm/mysql-core/query-builders/select";
 
+export interface TeamObject {
+    id?:number,
+    name:string,
+    email: string,
+    phone: string
+    individual: boolean
+    teamId: string,
+    allergies: string
+    payment: number,
+    member: string,
+    total?:number,
+//                    createdAt: moment().format('YYYY-MM-DD'),
+    //                  updatedAt: moment().format('YYYY-MM-DD'),
+}
 
 
 export class TeamMapper extends BaseMapper {
@@ -73,11 +87,11 @@ export class TeamMapper extends BaseMapper {
         try {
           //  this.DRIZZLE.select().count().from(team).where(eq(team.id, ${team.id}));
 
-            console.log("before")
             let teamsNeedingPlayersSQL = this.DRIZZLE.select({
                 value: sql<string>`${team.id}`.as("value"),
                 label: sql<string>`${team.name}`.as("label"),
                 countPlayers: sql<number> `count(${player.id})`.as("countPlayer"),
+                total: sql<string>`(SELECT count('id') from team)`.as('total')
 /*
                 sql<bigint>`(SELECT count(player.id)
                                     from ${player}
@@ -193,7 +207,8 @@ export class TeamMapper extends BaseMapper {
                                     inner join team as subteam on player.TeamId = subteam.id
                                     where player.TeamId = team.id
                                     GROUP BY subteam.id
-                                         )`.as('countPlayers')
+                                         )`.as('countPlayers'),
+                total: sql<string>`(SELECT count('id') from team)`.as('total')
 
 
             }).from(team).offset(offset).limit(params.pageSize)
