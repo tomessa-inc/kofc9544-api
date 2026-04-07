@@ -147,6 +147,12 @@ Resources:
                         Path: /golf/register
                         Method: ANY
 
+                GolfPlayerList:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
+                        Method: ANY
                 Mail:
                     Type: Api
                     Properties:
