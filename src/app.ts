@@ -28,8 +28,6 @@ const allowedOrigins = [
 
 // ✅ Bug 1 fixed: CORS middleware registered BEFORE the router
 app.use(defineEventHandler((event) => {
-  const origin = getRequestHeader(event, "origin") ?? "";
-
   const isPreflight = handleCors(event, {
     origin: (origin) => allowedOrigins.includes(origin),
     methods: "*",
