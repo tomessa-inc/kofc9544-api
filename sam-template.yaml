@@ -132,6 +132,13 @@ Resources:
                         Path: /user/codes
                         Method: ANY
 
+                UserInfo:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /user/info
+                        Method: ANY
+
 
                 GolfRegister:
                     Type: Api
