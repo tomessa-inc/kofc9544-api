@@ -1,7 +1,7 @@
 import {
   createApp,
   createRouter,
-  defineEventHandler,
+  defineEventHandler, getRequestHeader,
   handleCors,
   setHeader,
   useBase
@@ -19,12 +19,22 @@ import {
 const app = createApp();
 const router = createRouter();
 
+const allowedOrigins = [
+  "https://member-stage.kofc9544.ca",
+  "https://member.kofc9544.ca",
+  "http://localhost:9000",
+];
+
+
 // ✅ Bug 1 fixed: CORS middleware registered BEFORE the router
 app.use(defineEventHandler((event) => {
+  const origin = getRequestHeader(event, "origin") ?? "";
+
   const isPreflight = handleCors(event, {
-    origin: "*",
+    origin: allowedOrigins.includes(origin) ? origin : false,
     methods: "*",
     allowHeaders: "*",
+    credentials: true,
   });
 
   // ✅ Bug 2 fixed: return early on OPTIONS preflight requests
