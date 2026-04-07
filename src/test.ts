@@ -1,5 +1,5 @@
 import {teamMapper} from "./mapper";
-import {OptionsPlayer} from "./controllers/golf.controller.ts.bak";
+import {OptionsPlayer} from "./controllers/golf.controller";
 
 
 const optionsPlayer: OptionsPlayer  = {
