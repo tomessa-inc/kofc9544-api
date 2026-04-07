@@ -22,7 +22,7 @@ const router = createRouter();
 const allowedOrigins = [
   "https://member-stage.kofc9544.ca",
   "https://member.kofc9544.ca",
-  "http://localhost:9000",
+  "http://localhost:5555",
 ];
 
 
@@ -31,7 +31,7 @@ app.use(defineEventHandler((event) => {
   const origin = getRequestHeader(event, "origin") ?? "";
 
   const isPreflight = handleCors(event, {
-    origin: allowedOrigins.includes(origin) ? origin : false,
+    origin: (origin) => allowedOrigins.includes(origin),
     methods: "*",
     allowHeaders: "*",
     credentials: true,
