@@ -106,6 +106,33 @@ Resources:
             MemorySize: 2048
             Timeout: 900
             Events:
+                AuthLogin:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /auth/login
+                        Method: ANY
+                AuthLogout:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /auth/logout
+                        Method: ANY
+                AuthCodes:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /auth/codes
+                        Method: ANY
+
+                UserCodes:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /user/codes
+                        Method: ANY
+
+
                 GolfRegister:
                     Type: Api
                     Properties:
@@ -129,7 +156,7 @@ Resources:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
-                        Path: /user/sign-in
+                        Path: /user/login
                         Method: ANY
                 UserSignUp:
                     Type: Api
