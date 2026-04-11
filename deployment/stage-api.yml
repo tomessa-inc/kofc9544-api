@@ -43,5 +43,7 @@ phases:
       - echo $RDS_DB
 
     #  - echo "$DB_INFO" | jq -r '.DB_HOST'
+      - npm run deploy-stage-dry
       - npm run deploy-stage
+      -
 

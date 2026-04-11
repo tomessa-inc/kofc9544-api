@@ -58,10 +58,10 @@ Parameters:
         Description: RDS Host URL
         Default: $RDSHost
 
-    RDSDb:
+    RDSDBName:
         Type: String
         Description: RDS Database
-        Default: $RDSDB
+        Default: $RDSDBName
 
     DEBUG:
         Type: String
@@ -107,7 +107,7 @@ Resources:
                     TOKEN_SECRET: !Ref TokenSecret
                     DEBUG: !Ref DEBUG
                     RDS_HOST: !Ref RDSHost
-                    RDS_DB: !Ref RDSDb
+                    RDS_DB: !Ref RDSDBName
             MemorySize: 2048
             Timeout: 900
             Events:
