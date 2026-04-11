@@ -39,7 +39,7 @@ phases:
       - export RDS_HOST=$(echo "$DB_INFO" | jq -r '.RDS_HOST')
       - echo $NODE_ENV
       - echo $RDS_HOST
-      - export $RDS_DB=kofc_stage
+      - export RDS_DB=kofc_stage
       - echo $RDS_DB
 
     #  - echo "$DB_INFO" | jq -r '.DB_HOST'
