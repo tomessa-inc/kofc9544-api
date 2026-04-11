@@ -63,8 +63,6 @@ Parameters:
         Description: RDS Host URL
         Default: $RDSDB
 
-
-
     DEBUG:
         Type: String
         Description: Cache ID

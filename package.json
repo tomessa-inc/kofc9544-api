@@ -36,7 +36,7 @@
         "setup-production": "npm install && (cross-var aws s3api get-bucket-location --bucket $npm_package_config_s3BucketNameProduction --region $npm_package_config_region || npm run create-bucketProduction) && npm run package-deploy-production",
         "deploy-stage": "npm run environment && npm run build && npm run package-deploy-stage",
         "deploy-production": "npm run environment && npm run build && npm run package-deploy-production",
-        "environment": "cross-env DB_USERNAME=$DB_USERNAME DB_PASSWORD=$DB_PASSWORD DB_HOST=$DB_HOST NODE_ENV=$NODE_ENV  DB_NAME=$DB_NAME  TOKEN_SECRET=$TOKEN_SECRET STAGE=$STAGE",
+        "environment": "cross-env DB_USERNAME=$DB_USERNAME DB_PASSWORD=$DB_PASSWORD DB_HOST=$DB_HOST RDS_DB=$RDS_DB NODE_ENV=$NODE_ENV  DB_NAME=$DB_NAME  TOKEN_SECRET=$TOKEN_SECRET STAGE=$STAGE",
         "start": "cross-env DEBUG=sequelize:sql* ts-node src/app.local",
         "test": "find ./dist/test -name '*.js' | xargs nyc --nyc-path ./.nycrc mocha -R spec",
         "test:watch": "npm test -- -- -w"
