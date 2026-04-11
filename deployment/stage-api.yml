@@ -40,6 +40,7 @@ phases:
       - export RDS_DB=$(echo "$DB_INFO" | jq -r '.RDS_DB')
       - echo $NODE_ENV
       - echo $RDS_HOST
+      - echo $RDS_DB
 
     #  - echo "$DB_INFO" | jq -r '.DB_HOST'
       - npm run deploy-stage
