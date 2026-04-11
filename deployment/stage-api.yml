@@ -41,7 +41,7 @@ phases:
       - echo $NODE_ENV
       - echo $RDS_HOST
       - echo $RDS_DB
-      - echo ${RDS_DB:0:10}
+      - bash -c 'echo ${RDS_DB:0:10}'
 
     #  - echo "$DB_INFO" | jq -r '.DB_HOST'
       - npm run deploy-stage
