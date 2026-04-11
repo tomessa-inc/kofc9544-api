@@ -37,7 +37,7 @@
         "setup-stage": "npm install && (cross-var aws s3api get-bucket-location --bucket $npm_package_config_s3BucketNameStage --region $npm_package_config_region || npm run create-bucketStage) && npm run package-deploy-stage",
         "setup-production": "npm install && (cross-var aws s3api get-bucket-location --bucket $npm_package_config_s3BucketNameProduction --region $npm_package_config_region || npm run create-bucketProduction) && npm run package-deploy-production",
         "deploy-stage": "npm run environment && npm run build && npm run package-deploy-stage",
-        "deploy-stage-run": "npm run environment && npm run build && npm run package-deploy-stage-run",
+        "deploy-stage-dry": "npm run environment && npm run build && npm run package-deploy-stage-run",
         "deploy-production": "npm run environment && npm run build && npm run package-deploy-production",
         "environment": "cross-env DB_USERNAME=$DB_USERNAME DB_PASSWORD=$DB_PASSWORD DB_HOST=$DB_HOST RDS_DB=$RDS_DB NODE_ENV=$NODE_ENV  DB_NAME=$DB_NAME  TOKEN_SECRET=$TOKEN_SECRET STAGE=$STAGE",
         "start": "cross-env DEBUG=sequelize:sql* ts-node src/app.local",
