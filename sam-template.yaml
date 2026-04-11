@@ -107,7 +107,7 @@ Resources:
                     TOKEN_SECRET: !Ref TokenSecret
                     DEBUG: !Ref DEBUG
                     RDS_HOST: !Ref RDSHost
-                    RDS_DB: !Ref RDSDb
+                    RDS_DB: "kofc_stage"
             MemorySize: 2048
             Timeout: 900
             Events:
