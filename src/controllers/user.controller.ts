@@ -51,7 +51,8 @@ export class UserController {
         try {
             const token = await userMapper.getAuthToken(event);
             const user = (await userMapper.getUserByToken(token))[0];
-
+            console.log("the user")
+            console.log(user);
             return useResponseSuccess(user);
         } catch (error) {
             setResponseStatus(event, 500);

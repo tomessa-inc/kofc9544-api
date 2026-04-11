@@ -27,6 +27,7 @@ phases:
       - echo $DB_USERNAME
       - export DB_HOST=$(echo "$DB_INFO" | jq -r '.DB_HOST')
       - echo $DB_HOST
+
       - export DB_PASSWORD=$(echo "$DB_INFO" | jq -r '.DB_PASSWORD')
       - echo $DB_PASSWORD
       - export DB_NAME=$(echo "$DB_INFO" | jq -r '.DB_NAME')
@@ -36,6 +37,7 @@ phases:
       - export STAGE=stage
       - export NODE_ENV=$(echo "$DB_INFO" | jq -r '.NODE_ENV')
       - export RDS_HOST=$(echo "$DB_INFO" | jq -r '.RDS_HOST')
+      - export RDS_DB=$(echo "$DB_INFO" | jq -r '.RDS_DB')
       - echo $NODE_ENV
       - echo $RDS_HOST
 

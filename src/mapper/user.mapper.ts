@@ -149,7 +149,9 @@ export class UserMapper extends BaseMapper {
             console.log("right before")
             //  or(eq(user.userName, params.userName)), eq(user.id), params.userName)));
 
-            return this.getSQLData(userSQL.toSQL())
+            console.log("the results")
+            console.log(await this.getSQLData(userSQL.toSQL()));
+            return await this.getSQLData(userSQL.toSQL())
         } catch (error) {
             return error.toString();
         }
