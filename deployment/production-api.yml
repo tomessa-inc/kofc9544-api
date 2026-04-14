@@ -28,6 +28,9 @@ phases:
       - export NODE_ENV=$(echo "$DB_INFO" | jq -r '.NODE_ENV')
       - export RDS_HOST=$(echo "$DB_INFO" | jq -r '.RDS_HOST')
       - export RDS_DB=$(echo "$DB_INFO" | jq -r '.RDS_DB')
+      - export RDS_DB=kofc_stage
+      - echo $RDS_DB
+
 
 
       - npm run deploy-production
