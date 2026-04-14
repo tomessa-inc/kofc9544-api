@@ -130,6 +130,7 @@ Resources:
                         Path: /auth/codes
                         Method: ANY
 
+
                 UserCodes:
                     Type: Api
                     Properties:
@@ -143,7 +144,6 @@ Resources:
                         RestApiId: !Ref ExpressApi
                         Path: /user/info
                         Method: ANY
-
 
                 GolfRegister:
                     Type: Api
@@ -219,7 +219,7 @@ Resources:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
-                        Path: /user/resst-password
+                        Path: /user/reset-password
                         Method: ANY
 
                 UserForgotPasswordToken:
