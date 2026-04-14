@@ -234,12 +234,6 @@ Resources:
                         RestApiId: !Ref ExpressApi
                         Path: /user/reset-password
                         Method: ANY
-                UserWithId:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /user/id/{id}
-                        Method: ANY
                 UserResetPasswordToken:
                     Type: Api
                     Properties:
