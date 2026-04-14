@@ -3,6 +3,7 @@ import { paramsOptions, userMapper, mailMapper } from "../mapper/";
 import { EmailMessaging } from "../models/EmailMessaging";
 import { userAuthenticationMapper } from "../mapper/user.authentication.mapper";
 import { useResponseError, useResponseSuccess } from "../utils/response";
+import {setRefreshTokenCookie} from "../utils/cookie-utils";
 
 export class UserAuthenticationController {
 
@@ -33,27 +34,55 @@ export class UserAuthenticationController {
 
     public static apiForgotPassword = defineEventHandler(async (event) => {
         try {
-            const { id } = getRouterParams(event);
+          //  const { id } = getRouterParams(event);
             const body = await readBody(event);
 
-            const encryptedToken = await userMapper.encrypt(id);
+            console.log("forgot")
+
+
+            const user = await userMapper.getUserWithEmail({email: body.email});
+            console.log("the user 3")
+            console.log(user)
+
+            const accessToken = await userMapper.generateAccessToken(user);
+        //    const refreshToken = await userMapper.generateRefreshToken(user);
+
+          //  setRefreshTokenCookie(event, refreshToken);
+            console.log("the user 5")
+            console.log(user)
+            await userMapper.insertUserToken(user, accessToken);
+
+         //   await userMapper.updateUserToken(user, accessToken);
             const options: paramsOptions = {
-                id,
+                email: body.email,
                 email_type: EmailMessaging.EMAIL_TYPE_FORGOTPASSWORD,
-                token: encryptedToken,
+                firstName: user.firstName,
+                token: accessToken
             };
 
-            await userAuthenticationMapper.createTokenEntry(id, encryptedToken);
             await mailMapper.prepareEmail(options);
             await mailMapper.apiSendMail();
 
-            const user = await userMapper.getUserBasedOnPassword(body);
+
+/*
+
+         //   const user = await userMapper.getUserBasedOnPassword(body);
+       //     const encryptedToken = await userMapper.encrypt(id);
+          /*  const options: paramsOptions = {
+                email,
+                email_type: EmailMessaging.EMAIL_TYPE_FORGOTPASSWORD,
+            //    token: encryptedToken,
+            }; *
+
+            await userAuthenticationMapper.createTokenEntry(id, encryptedToken);
+
+        //    const user = await userMapper.getUserBasedOnPassword(body);
 
             if (typeof user !== "object") {
                 setResponseStatus(event, 400);
                 return useResponseError("BadRequestException", "Username and/or Password incorrect");
             }
-
+*/
             return useResponseSuccess({ user, token: await userMapper.generateJWTToken() });
         } catch (error) {
             setResponseStatus(event, 500);
@@ -67,7 +96,8 @@ export class UserAuthenticationController {
             const options: paramsOptions = { token };
 
             const user = await userAuthenticationMapper.getUserBasedOnToken(options);
-
+            console.log("hello")
+            console.log(user)
             if (typeof user !== "object") {
                 setResponseStatus(event, 400);
                 return useResponseError("BadRequestException", "Invalid or expired token");

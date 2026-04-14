@@ -46,6 +46,7 @@ export class UserAuthenticationMapper extends BaseMapper {
     }
 
 
+
     /**
      *
      * @param params
@@ -56,10 +57,10 @@ export class UserAuthenticationMapper extends BaseMapper {
                 id:user.id,
                 firstName: user.firstName,
                 lastName: user.lastName,
-                access: sql<string>`(SELECT JSON_ARRAYAGG(JSON_OBJECT('id', access.id, 'name', access.name))
+                roles: sql<string>`(SELECT JSON_ARRAYAGG(JSON_OBJECT('id', access.id, 'name', access.name))
                                      from ${access}
                                     inner join user_access on access.id = user_access.AccessId
-                                     where user_access.UserId = user.id)`.as('access')
+                                     where user_access.UserId = user.id)`.as('roles')
 
                 }
 

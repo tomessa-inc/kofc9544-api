@@ -8,9 +8,10 @@ const userRouter = createRouter();
 userRouter.get("/info",                                                                                    defineEventHandler(UserController.apiUserInfo));
 
 // Password
-userRouter.post("/forgot-password",                                                                        defineEventHandler(UserAuthenticationController.apiForgotPasswordNoId));
-userRouter.post("/forgot-password/:id",                                                                    defineEventHandler(UserAuthenticationController.apiForgotPassword));
-userRouter.post("/reset-password-token/:token",                                                            defineEventHandler(UserAuthenticationController.apiResetPasswordToken));
+//userRouter.post("/forgot-password",                                                                        defineEventHandler(UserAuthenticationController.apiForgotPasswordNoId));
+userRouter.post("/forgot-password",                                                                    defineEventHandler(UserAuthenticationController.apiForgotPassword));
+//userRouter.post("/info/:token",                                                            defineEventHandler(UserController.apiUserInfo));
+userRouter.post("/reset-password",                                                            defineEventHandler(UserController.apiResetPassword));
 
 // Auth
 userRouter.post("/sign-in",                                                                                defineEventHandler(UserController.apiPostSignIn));

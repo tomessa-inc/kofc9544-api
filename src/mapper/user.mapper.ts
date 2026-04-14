@@ -19,6 +19,9 @@ import {userAccess} from "../models/UserAccess";
 import { Request } from 'express';
 import {player} from "../models/Player";
 import {H3Event} from "h3";
+import {gallery} from "../models/Gallery";
+import {image} from "../models/Image";
+import {galleryTag} from "../models/GalleryTag";
 
 
 export class UserMapper extends BaseMapper {
@@ -88,12 +91,68 @@ export class UserMapper extends BaseMapper {
         }
     }
 
-    async updateUserToken(users, token) {
+    async updateUserToken(users, token, type= "LOGGED") {
         try {
             console.log("hee")
-            const userSQL = this.DRIZZLE.update(user).set({
-                token: token
-            }).where(eq(user.id, users.id));
+            const userSQL = this.DRIZZLE.update(userAuthentication).set({
+                token: token,
+                eventType: type
+            }).where(eq(userAuthentication.UserId, users.id));
+            console.log("the update")
+            console.log(userSQL.toSQL())
+            await this.getSQLData(userSQL.toSQL())
+
+            return await true;
+
+        } catch(error) {
+            console.log(error.toString())
+            return error.toString;
+        }
+    }
+
+
+    async insertUserToken(user, token, type= "RESET_PASSWORD") {
+        try {
+            console.log("hee")
+            const userSQL = this.DRIZZLE.insert(userAuthentication).values({
+                UserId:user.id,
+                token: token,
+                eventType: type
+            })
+            console.log("the update")
+            console.log(userSQL.toSQL())
+            await this.getSQLData(userSQL.toSQL())
+
+            return await true;
+
+        } catch(error) {
+            console.log(error.toString())
+            return error.toString;
+        }
+    }
+
+
+    async cleanResetPasswordToken(users, type= "PASSWORD_RESET") {
+        try {
+            const userSQL = this.DRIZZLE.delete(userAuthentication)
+                .where(and(eq(userAuthentication.UserId, users.id),eq(userAuthentication.eventType, type)));
+            console.log("the update")
+            console.log(userSQL.toSQL())
+            await this.getSQLData(userSQL.toSQL())
+
+            return await true;
+
+        } catch(error) {
+            console.log(error.toString())
+            return error.toString;
+        }
+    }
+
+
+    async cleanResetPasswordTokenOnly(token) {
+        try {
+            const userSQL = this.DRIZZLE.delete(userAuthentication)
+                .where(eq(userAuthentication.token, token));
             console.log("the update")
             console.log(userSQL.toSQL())
             await this.getSQLData(userSQL.toSQL())
@@ -122,7 +181,7 @@ export class UserMapper extends BaseMapper {
      *
      * @param token
      */
-    async getUserByToken(token) {
+    async getUserByToken(token, type= "LOGGED")  {
         try {
             // get config vars
             dotenv.config();
@@ -139,7 +198,10 @@ export class UserMapper extends BaseMapper {
                                     inner join user_access on access.id = user_access.AccessId
                                     where user_access.UserId = user.id)`.as('roles'),
             //    homePath: "/user"
-            }).from(user).where(eq(user.token, token));
+            }).from(user)
+                .innerJoin(userAuthentication, eq(user.id, userAuthentication.UserId)).where(and(eq(userAuthentication.token, token), (eq(userAuthentication.eventType, type))));
+
+             //   .where(eq(user.token, token));
             console.log("arrivied ader here")
          //   userSQL.where(eq(user.token, token));
             //     console.log(userSQL.toSQL())
@@ -157,6 +219,102 @@ export class UserMapper extends BaseMapper {
         }
     }
 
+    /**
+     *
+     * @param token
+     */
+    async getUserByTokenReset(token, type= "LOGGED") {
+        try {
+            // get config vars
+            dotenv.config();
+            console.log("here2")
+            const userSQL = this.DRIZZLE.select({
+                id: user.id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                realName: sql<string>`concat(${user.firstName}, ' ', ${user.lastName})`.as ('realName'),
+                email: user.email,
+                //   username: user.email,
+                roles: sql<string>`(SELECT JSON_ARRAYAGG(access.id)
+                                     from ${access}
+                                    inner join user_access on access.id = user_access.AccessId
+                                    where user_access.UserId = user.id)`.as('roles'),
+                //    homePath: "/user"
+            }).from(user)
+                .innerJoin(userAuthentication, eq(user.id, userAuthentication.UserId)).where(and(eq(userAuthentication.token, token), (eq(userAuthentication.eventType, type))));
+
+            //   .where(eq(user.token, token));
+            console.log("arrivied ader here")
+            //   userSQL.where(eq(user.token, token));
+            //     console.log(userSQL.toSQL())
+            ///console.log(params.userName);
+            ///    userSQL.where(or(eq(user.userName, params.userName), eq(user.id, params.userName)));
+            console.log(userSQL.toSQL())
+            console.log("right before")
+            //  or(eq(user.userName, params.userName)), eq(user.id), params.userName)));
+
+            console.log("the results")
+            console.log(await this.getSQLData(userSQL.toSQL()));
+            return await this.getSQLData(userSQL.toSQL())
+        } catch (error) {
+            return error.toString();
+        }
+    }
+
+    /**
+     *
+     * @param params
+     */
+    async getUserWithEmail(params) {
+        try {
+            const userSQL = this.DRIZZLE.select({
+                id: user.id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                roles: sql<string>`(SELECT JSON_ARRAYAGG(access.id)
+                                    from ${access}
+                                             inner join user_access on access.id = user_access.AccessId
+                                    where user_access.UserId = user.id)`.as('roles')
+            }).from(user)
+
+            userSQL.where(eq(user.email, params.email))
+
+            return (await this.getSQLData(userSQL.toSQL()))[0]
+
+            /*
+                        const userParams = {
+                            include: [
+                                {
+                                    Model: User2,
+                                    association: UserAuthentication2.User,
+                                    required: true,
+                                    include: [
+                                        {
+                                            Model: Access2,
+                                            association: User2.Access,
+                                            required: false,
+                                            as: 'Access'
+                                        },
+                                    ],
+                                },
+                            ],
+                            where: {token: params.token},
+                            attributes: {exclude: ['ImageId', 'GalleryTagTagId']},
+                        }
+
+                        console.log(userParams);
+                        return await UserAuthentication2.findAll(userParams).then(data => {
+                            console.log(data)
+                            return data[0];
+            //                data[0].accessToken = this.generateJWTToken();
+                        }).catch(data => {
+                            return data;
+                        }); */
+        } catch (error) {
+            console.log(`Could not fetch users ${error}`)
+        }
+    }
 
     /**
      *

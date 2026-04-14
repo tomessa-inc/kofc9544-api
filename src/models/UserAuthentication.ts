@@ -6,7 +6,6 @@ import {DataTypes} from "../db";
 
 // Define your schema
 export const userAuthentication = mysqlTable('user_authentication', {
-    id: varchar('id', {length: 45}).primaryKey(),
     UserId: varchar('UserId', {length: 255}).notNull(),
     token: varchar('token', {length: 255}).notNull(),
     eventType: varchar('eventType', {length: 255}).notNull(),

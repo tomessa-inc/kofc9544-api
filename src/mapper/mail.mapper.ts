@@ -120,7 +120,7 @@ export class MailMapper {
      */
     async prepareEmail(body) {
         this._params = emailParams;
-        this._params.Source = 'KOFC Golf Registrations <golfregistrations@kofc9544.ca>';
+        this._params.Source = 'KOFC Golf Registrations <registrations@kofc9544.ca>';
         this._params.ReplyToAddresses = [];
         this._params.Template = 'DefaultEmailTemplate';
         this._PARAMS_CONTENT = '';
@@ -146,10 +146,13 @@ export class MailMapper {
                 let host = "https://member.kofc9544.ca"
                 switch(process.env.STAGE) {
                     case "dev":
-                        host = "http://localhost:5173"
+                        host = "http://localhost:5555"
                         break;
                     case "stage":
                         host = "https://member-stage.kofc9544.ca"
+                        break;
+                    case "production":
+                        host = "https://member.kofc9544.ca"
                         break;
                 }
                 console.log("the host")
@@ -157,9 +160,10 @@ export class MailMapper {
                 console.log("the body")
                 console.log(body)
                 console.log("bond")
+                this._params.Source = 'KOFC <test@kofc9544.ca>';
                 this._params.Destination.ToAddresses.push(body.email);
                 this._SUBJECT_CONTENT = EmailMessaging.FORGOTPASSWORD_SUBJECT;
-                this._HTML_CONTENT = format(EmailMessaging.FORGOTPASSWORD_CONTENT_HTML, `${host}/reset-password/${body.token}`)
+                this._HTML_CONTENT = format(EmailMessaging.FORGOTPASSWORD_CONTENT_HTML, `${host}/auth/reset/${body.token}`)
                 this._TEXT_CONTENT = EmailMessaging.FORGOTPASSWORD_CONTENT_TEXT;
                 this._TO_PERSON = body.firstName;
                 this._EMAIL_LOGO = imageService.loadImage100x100("kofc-logo100x100.png")

@@ -2,6 +2,7 @@ import { defineEventHandler, setResponseStatus, readBody, getRouterParams } from
 import { userMapper, accessMapper, paramsOptions } from "../mapper/";
 import { forbiddenResponse, useResponseError, useResponseSuccess } from "../utils/response";
 import { clearRefreshTokenCookie, setRefreshTokenCookie } from "../utils/cookie-utils";
+import {user as userModel} from "../models/User"
 
 export class UserController {
 
@@ -12,6 +13,8 @@ export class UserController {
             if (body[userMapper.PARAMS_USERNAME] && body[userMapper.PARAMS_PASSWORD]) {
                 const user = (await userMapper.getUserBasedOnPassword(body))[0];
 
+                console.log("the user")
+                console.log(user);
                 if (typeof user !== "object") {
                     setResponseStatus(event, 400);
                     return useResponseError("BadRequestException", "Username and/or Password incorrect");
@@ -21,8 +24,13 @@ export class UserController {
                 const refreshToken = await userMapper.generateRefreshToken(user);
 
                 setRefreshTokenCookie(event, refreshToken);
+                console.log("about to update")
+                await userMapper.cleanResetPasswordToken(user);
+                await userMapper.cleanResetPasswordToken(user, "LOGGED");
+                await userMapper.insertUserToken(user, accessToken, "LOGGED");
+                console.log("about to clean")
+                await userMapper.cleanResetPasswordToken(user);
 
-                await userMapper.updateUserToken(user, accessToken);
                 const result = userMapper.prepareResults(user);
                 result.data.accessToken = accessToken;
 
@@ -48,10 +56,73 @@ export class UserController {
     });
 
     public static apiUserInfo = defineEventHandler(async (event) => {
+        let user: typeof userModel[];
+        let userInfo
         try {
             const token = await userMapper.getAuthToken(event);
-            const user = (await userMapper.getUserByToken(token))[0];
+            console.log("the token")
+            console.log(token);
+          /*  if (token == null) {
+                console.log("not found")
+                const resetTokenParam = getRouterParams(event);
+                const {resetToken} = resetTokenParam
+                user = (await userMapper.getUserByToken(resetToken))[0];
+                const accessToken = await userMapper.generateAccessToken(user);
+                const refreshToken = await userMapper.generateRefreshToken(user);
+
+                setRefreshTokenCookie(event, refreshToken);
+                console.log("about to update")
+
+                await userMapper.updateUserToken(user, accessToken);
+
+            } else { */
+                user = await userMapper.getUserByToken(token);
+                if (user.length > 0) {
+                    userInfo = user[0]
+                    await userMapper.cleanResetPasswordToken(user);
+                    console.log("the user 1")
+                    console.log(userInfo);
+                    return useResponseSuccess(userInfo);
+                } else {
+                    await userMapper.cleanResetPasswordTokenOnly(token);
+                    return useResponseSuccess("");
+
+               //     return setResponseStatus(event, 200);
+
+                }
+//                console.log("the ussser")
+
+  //              console.log(user);
+          //  }
+
+        } catch (error) {
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
+        }
+    });
+
+
+    public static apiResetPassword = defineEventHandler(async (event) => {
+        let user;
+        try {
+            const token = await userMapper.getAuthToken(event);
+            console.log("the token")
+            console.log(token);
+            user = (await userMapper.getUserByTokenReset(token, "RESET_PASSWORD"))[0];
             console.log("the user")
+            console.log(user);
+            const accessToken = await userMapper.generateAccessToken(user);
+            const refreshToken = await userMapper.generateRefreshToken(user);
+
+            setRefreshTokenCookie(event, refreshToken);
+            console.log("about to update")
+
+            await userMapper.cleanResetPasswordToken(user);
+            await userMapper.cleanResetPasswordToken(user, "LOGGED");
+            await userMapper.insertUserToken(user, accessToken, "LOGGED");
+
+       //     await userMapper.cleanResetPasswordToken(user);
+            console.log("the user reset")
             console.log(user);
             return useResponseSuccess(user);
         } catch (error) {
