@@ -124,7 +124,7 @@ export class UserController {
        //     await userMapper.cleanResetPasswordToken(user);
             console.log("the user reset")
             console.log(user);
-            return useResponseSuccess(user);
+            return useResponseSuccess({...user, accessToken});
         } catch (error) {
             setResponseStatus(event, 500);
             return useResponseError("InternalServerError", error.toString());
@@ -241,9 +241,10 @@ export class UserController {
             const body = await readBody(event);
             const { id } = params;
 
-            await accessMapper.apiDeleteAccess(id);
-            await Promise.all(body.access.map((access) => accessMapper.apiAddAccess(id, access)));
+          //  await accessMapper.apiDeleteAccess(id);
+            //await Promise.all(body.access.map((access) => accessMapper.apiAddAccess(id, access)));
 
+            console.log(body)
             const result = await userMapper.apiUpdateUser(id, body);
 
             if (typeof result === "string") {

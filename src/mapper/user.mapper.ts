@@ -22,6 +22,7 @@ import {H3Event} from "h3";
 import {gallery} from "../models/Gallery";
 import {image} from "../models/Image";
 import {galleryTag} from "../models/GalleryTag";
+import {PlayerObject} from "./golf.mapper";
 
 
 export class UserMapper extends BaseMapper {
@@ -43,17 +44,35 @@ export class UserMapper extends BaseMapper {
     public async apiUpdateUser(params, body) {
         try {
             //const userUpdate = params['user'];
-            const id = params['id'];
+            const id = params
 
            // const teams = userUpdate['teams'];
-    
-            const userUpdateResult = await User2.update(body, {where: {id: id}}).then(data => {
-                return true;
-            }).catch(data => {
-                return false;
-            });
+            console.log("params")
+            console.log(params);
+            const userObject  = {
+                firstName: body.firstName,
+                lastName: body.lastName,
+                email: body.email,
+                phone: body.phone,
+                password: body.password,
 
-            return userUpdateResult;
+//                    createdAt: moment().format('YYYY-MM-DD'),
+                //                  updatedAt: moment().format('YYYY-MM-DD'),
+            };
+            console.log(userObject)
+            //            console.log("playe")
+            //          console.log(playerObject);
+            /*
+            console.log("before player")
+            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
+            console.log("playerObject")
+            console.log(playerObject)
+            console.log("Player")
+*/
+
+            const userSQL = this.DRIZZLE.update(user).set(userObject).where(eq(user.id, id))
+
+            return await this.getSQLData(userSQL.toSQL())
 
         } catch (error) {
             console.log('catch');
@@ -425,6 +444,7 @@ export class UserMapper extends BaseMapper {
                 firstName: user.firstName,
                 lastName: user.lastName,
                 email: user.email,
+                password: user.password,
                 total: sql<string>`(SELECT count('id') from ${user})`.as('total')
             }).from(user)
 
