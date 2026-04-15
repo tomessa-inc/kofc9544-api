@@ -163,7 +163,7 @@ export class MailMapper {
                 this._params.Source = 'KOFC <test@kofc9544.ca>';
                 this._params.Destination.ToAddresses.push(body.email);
                 this._SUBJECT_CONTENT = EmailMessaging.FORGOTPASSWORD_SUBJECT;
-                this._HTML_CONTENT = format(EmailMessaging.FORGOTPASSWORD_CONTENT_HTML, `${host}/auth/reset/${body.token}`)
+                this._HTML_CONTENT = format(EmailMessaging.FORGOTPASSWORD_CONTENT_HTML, `${host}/#/auth/reset/${body.token}`)
                 this._TEXT_CONTENT = EmailMessaging.FORGOTPASSWORD_CONTENT_TEXT;
                 this._TO_PERSON = body.firstName;
                 this._EMAIL_LOGO = imageService.loadImage100x100("kofc-logo100x100.png")
