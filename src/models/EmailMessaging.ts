@@ -38,7 +38,7 @@ export class EmailMessaging
 
     static REGISTERCONTACTSENDER_SUBJECT = 'Registration confirmed! - Knights of Columbus Golf Tournament';
     static REGISTERCONTACTSENDER_CONTENT_TEXT = `Your registration has been received. Please send payment ($175/person) via e-transter to golfregistration@kofc9544.ca.<br><br>     OR by mail to 152 Springcreek Crescent, Kanata Ontario K2M 2M1 with cheque payable to Knights of Columbus 9544 Charity Golf Tournament\\n`;
-    static REGISTERCONTACTSENDER_CONTENT_HTML = "<p>Your registration has been received. Please send your payment of $175 via e-transter to <a href=\\\"mailto:golfregistration@kofc9544.ca\\\">golfregistration@kofc9544.ca</a> with your <strong>ID #%s</strong> in the notes.<br><br>If paying by cheque, make the cheque payable to <strong>Knights of Columbus 9544 Charity Golf Tournament</strong> and mail it to Holy Redeemer Parish at 44 Rothesay Dr, Kanata, ON K2L 2X1,  with your ID (above) written on the cheque.</p><p>Thank you for your support!</p>";
+    static REGISTERCONTACTSENDER_CONTENT_HTML = "<p>Your registration has been received. Please send your payment of $175 via e-transter to <a href=\\\"mailto:registration@kofc9544.ca\\\">golfregistration@kofc9544.ca</a> with your <strong>ID #%s</strong> in the notes.<br><br>If paying by cheque, make the cheque payable to <strong>Knights of Columbus 9544 Charity Golf Tournament</strong> and mail it to Holy Redeemer Parish at 44 Rothesay Dr, Kanata, ON K2L 2X1,  with your ID (above) written on the cheque.</p><p>Thank you for your support!</p>";
 
     static VOLUNTEER_SUBJECT = 'Email From Volunteer Form';
     static VOLUNTEER_CONTENT_TEXT = `You have received a message from the Volunteer Form:\\n`;

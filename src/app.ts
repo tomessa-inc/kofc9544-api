@@ -23,6 +23,7 @@ const allowedOrigins = [
   "https://member-stage.kofc9544.ca",
   "https://member.kofc9544.ca",
   "http://localhost:5555",
+  "http://localhost:4200",
 ];
 
 console.log("hello")
