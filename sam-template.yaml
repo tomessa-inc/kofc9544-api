@@ -179,6 +179,13 @@ Resources:
                         RestApiId: !Ref ExpressApi
                         Path: /golf/team/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
                         Method: ANY
+
+                GolfPlayersByTeam:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/team/id/{id}/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
+                        Method: ANY
                 Mail:
                     Type: Api
                     Properties:
