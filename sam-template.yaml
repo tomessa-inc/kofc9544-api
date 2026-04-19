@@ -268,7 +268,7 @@ Resources:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
-                        Path: /media/image/{imagesByGalleryId}/{pageIndex}/{pageSize}/{sort}/{order}
+                        Path: /media/image/id/{imagesByGalleryId}/{pageIndex}/{pageSize}/{sort}/{order}
                         Method: ANY
                 MediaImagesPrimary:
                     Type: Api
