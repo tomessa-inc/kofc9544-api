@@ -12,7 +12,7 @@ mediaRouter.post("/page-index/:pageIndex/page-size/:pageSize/:sort/:order",     
 mediaRouter.post("/publish",                                                             defineEventHandler(GalleryController.apiPublishGallery));
 
 // Image
-mediaRouter.get("/image/id/:imagesByGalleryId/:pageIndex/:pageSize/:sort/:order",                  defineEventHandler(ImageController.apiGetAllImagesByGallery));
+mediaRouter.get("/image/gallery/:imagesByGalleryId/:pageIndex/:pageSize/:sort/:order",                  defineEventHandler(ImageController.apiGetAllImagesByGallery));
 //mediaRouter.post("/image/id/:id/reorder",                                                      defineEventHandler(ImageController.apiImagesOrder));
 mediaRouter.post("/id/:galleryId/update/:id/order/:order",                              defineEventHandler(ImageController.apiUpdateOrderImage));
 mediaRouter.get("/primary/logged/:logged",                                               defineEventHandler(ImageController.apiGetAllPrimaryImages));
