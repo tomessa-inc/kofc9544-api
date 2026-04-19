@@ -165,7 +165,13 @@ export class ImageController {
     public static apiGetAllImagesByGallery = defineEventHandler(async (event) => {
         try {
             const options: paramsOptions = parseParams(getRouterParams(event), {
-                id: "", pageIndex: 1, pageSize: 20, filterQuery: "",
+                imagesByGalleryId: "",
+                pageIndex: 1,
+                pageSize: 20,
+                filterQuery: "",
+                listLength:0,
+                sort: "name",   // ✅ add default
+                order: "asc",   // ✅ add default
             });
 
             const images = await imageMapper.getImagesByGallery(options);

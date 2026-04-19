@@ -17,7 +17,7 @@ import {
 } from "./routes";
 
 const app = createApp();
-const router = createRouter();
+//const router = createRouter();
 
 const allowedOrigins = [
   "https://member-stage.kofc9544.ca",
@@ -43,15 +43,25 @@ app.use(defineEventHandler((event) => {
   setHeader(event, "Content-Type", "application/json");
 }));
 
-app.use(router);
+//app.use(router);
+/*
+const mediaRouter = createRouter();
+mediaRouter.get("/id/:id/image/:pageIndex?/:pageSize?/:sort?/:order?", defineEventHandler((event) => {
+  console.log("HIT on original mediaRouter");
+  return "hit";
+}));
+app.use("/media", mediaRouter.handler);
+*/
+//export { app };
 
 // Mount sub-routers
-router.use("/mail/**",   useBase("/mail",   mailRouter.handler));
-router.use("/media/**",  useBase("/media",  mediaRouter.handler));
-router.use("/user/**",   useBase("/user",   userRouter.handler));
-router.use("/auth/**",   useBase("/auth",   authRouter.handler));
-router.use("/event/**",  useBase("/event",  eventRouter.handler));
-router.use("/access/**", useBase("/access", accessRouter.handler));
-router.use("/golf/**",   useBase("/golf",   golfRouter.handler));
+app.use("/mail", mailRouter.handler);
+app.use("/user", userRouter.handler);
+
+app.use("/media", mediaRouter.handler); //mediaRouter.handler);
+app.use("/auth",  authRouter.handler)
+app.use("/event",  eventRouter.handler)
+app.use("/access", accessRouter.handler)
+app.use("/golf",   golfRouter.handler)
 
 export { app };

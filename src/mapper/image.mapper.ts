@@ -14,6 +14,7 @@ const https = require('https');
 import {galleryTag} from "../models/GalleryTag";
 import axios from "axios";
 import moment from "moment/moment";
+import {player} from "../models/Player";
 
 
 export class ImageMapper extends BaseMapper {
@@ -231,7 +232,7 @@ export class ImageMapper extends BaseMapper {
                 count:count()}).from(image);
 
             if (options) {
-                imagesCount. where(and(eq(image.active, 1), eq(image.GalleryId, options['id'])));
+                imagesCount. where(and(eq(image.active, 1), eq(image.GalleryId, options['imagesByGalleryId'])));
             } else {
                 imagesCount. where(eq(image.active, 1))
             }
@@ -419,11 +420,12 @@ export class ImageMapper extends BaseMapper {
                 primaryImage: image.primaryImage,
                 orientation: image.orientation,
                 order: image.order,
+                total: sql<string>`(SELECT count('id') from ${image} where ${image.GalleryId} = ${options.imagesByGalleryId})`.as('total'),
                 gallery: sql<string>`(SELECT JSON_OBJECT('id', ${gallery.id}, 'name', ${gallery.name})
                                     FROM ${gallery}
                                     where ${gallery.id} = ${image.GalleryId})`.as('gallery'),
             }).from(image)
-                .where(and(eq(image.GalleryId, options.id),
+                .where(and(eq(image.GalleryId, options.imagesByGalleryId),
                         eq(image.active, 1)
                     )).offset(offset).limit(options.pageSize)
 

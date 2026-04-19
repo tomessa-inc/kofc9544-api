@@ -31,6 +31,7 @@ export interface bodyOptions {
 
 export interface paramsOptions {
     id?: string
+    imagesByGalleryId?: string
     pageIndex?:number
     email?:string
     pageSize?:number
@@ -277,7 +278,7 @@ export class BaseMapper {
                 endIndex  : end - 1
             };
         }
-
+        console.log(`{ "code": 0, "error": null,"message": "ok", "data": {"items":${JSON.stringify(list)}, "total": ${list[0].total}}, "total":"${list[0].total}","pageSize":"${size}", "pageIndex":"${page}", "lastpage":"${lastPage}"}`)
         return JSON.parse(`{ "code": 0, "error": null,"message": "ok", "data": {"items":${JSON.stringify(list)}, "total": ${list[0].total}}, "total":"${list[0].total}","pageSize":"${size}", "pageIndex":"${page}", "lastpage":"${lastPage}"}`);
     }
 
