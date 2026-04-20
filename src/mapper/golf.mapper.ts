@@ -22,7 +22,7 @@ export interface PlayerObject {
     email: string,
     phone: string
     individual: boolean
-    teamId: string,
+    TeamId: string,
     allergies: string
     payment: number,
     member: string,
@@ -61,7 +61,7 @@ export class GolfMapper extends BaseMapper {
     public async createPlayerRegistration(params: OptionsPlayer) {
         let retval;
 //        console.log("the registration")
-  //      console.log(params)
+        console.log(params)
         try {
             for (let x=0; x< params.players.length; x++) {
                 const playerObject :PlayerObject  = {
@@ -69,7 +69,7 @@ export class GolfMapper extends BaseMapper {
                     email: params.players[x].email,
                     phone: params.players[x].phone,
                     individual: params.individual,
-                    teamId: params.teamId ?? null,
+                    TeamId: params.TeamId ?? null,
                     allergies: params.players[x].allergies ?? null,
                     payment: params.payment ?? null,
                     member:params.member ?? null
@@ -156,13 +156,16 @@ export class GolfMapper extends BaseMapper {
                 name: playerObject.name,
                 email: playerObject.email,
                 phone: playerObject.phone,
-                TeamId: playerObject.TeamId
+                TeamId: playerObject.TeamId,
+                allergies: playerObject.allergies
+
             })
             const playerSQL = this.DRIZZLE.update(player).set({
                 name: playerObject.name,
                 email: playerObject.email,
                 phone: playerObject.phone,
-                TeamId: playerObject.TeamId
+                TeamId: playerObject.TeamId,
+                allergies: playerObject.allergies
             }).where(eq(player.id, id))
             console.log("eoot")
             console.log(playerSQL.toSQL())

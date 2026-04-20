@@ -159,6 +159,12 @@ Resources:
                         Path: /golf/player/{id}
                         Method: ANY
 
+                GolfPLayerNew:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/player-new
+                        Method: ANY
 
                 GolfPlayerList:
                     Type: Api

@@ -13,7 +13,7 @@ export interface OptionsPlayer {
         allergies?: string;
     }[];
     body?: string;
-    teamId?: string;
+    TeamId?: string;
     individual?: boolean;
     email_type: string;
     payment?: number;
@@ -42,12 +42,13 @@ export class GolfController {
                 const team = await teamMapper.createTeamRegistration(optionsPlayer);
 
                 if (!team.success) {
-                    setResponseStatus(event, 400);
-                    return useResponseError("BadRequestException", team.message);
+                    setResponseStatus(event, 409);
+                    return useResponseError("Conflict", team.message );
+                  //  return useResponseError("BadRequestException", team.message);
                 }
 
                 if (team.data.affectedRows === 1) {
-                    optionsPlayer.teamId = team.data.id;
+                    optionsPlayer.TeamId = team.data.id;
                     optionsPlayer.individual = false;
                 } else {
                     setResponseStatus(event, 500);
@@ -194,6 +195,42 @@ export class GolfController {
         }
     });
 
+
+    public static apiCreatePlayer = defineEventHandler(async (event) => {
+        try {
+            const body = await readBody(event);
+            console.log("the body")
+            console.log(body);
+            const bodyArray: OptionsPlayer = {
+                TeamId: body.TeamId,
+                players: [{
+                    player: body.name,
+                   email: body.email,
+                   phone: body.phone,
+                    allergies: body.allergies,
+                }],
+                individual: false,
+                email_type:"register"
+            }
+            console.log("defiend")
+            console.log(bodyArray)
+//            bodyArray.push(body);
+
+            const result = await golfMapper.createPlayerRegistration(bodyArray);
+
+            if (typeof result === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", result);
+            }
+
+            return useResponseSuccess(result);
+        } catch (error) {
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
+        }
+    });
+
+
     public static apiGetPlayersByTeamId = defineEventHandler(async (event) => {
         try {
             const params = getRouterParams(event);
@@ -215,4 +252,78 @@ export class GolfController {
             return useResponseError("InternalServerError", error.toString());
         }
     });
+
+
+
+    public static apiCreateTeam = defineEventHandler(async (event) => {
+        try {
+            const body = await readBody(event);
+
+            console.log("the body")
+            console.log(body);
+            const bodyArray: OptionsPlayer = {
+                TeamId: body.TeamId,
+                players: [{
+                    player: body.name,
+                    email: body.email,
+                    phone: body.phone,
+                    allergies: body.allergies,
+                }],
+                individual: false,
+                email_type:"register"
+            }
+            console.log("defiend")
+            console.log(bodyArray)
+//            bodyArray.push(body);
+/*
+       //     const result = await teamMapper.createTeamRegistration()
+
+            if (typeof result === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", result);
+            }
+*/
+            return useResponseSuccess(event);
+        } catch (error) {
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
+        }
+    });
+
+
+
+    public static apiUpdateTeamById = defineEventHandler(async (event) => {
+        try {
+            const body = await readBody(event);
+            console.log("the body")
+            console.log(body);
+            const bodyArray: OptionsPlayer = {
+                TeamId: body.TeamId,
+                players: [{
+                    player: body.name,
+                    email: body.email,
+                    phone: body.phone,
+                    allergies: body.allergies,
+                }],
+                individual: false,
+                email_type:"register"
+            }
+            console.log("defiend")
+            console.log(bodyArray)
+//            bodyArray.push(body);
+
+            const result = await golfMapper.createPlayerRegistration(bodyArray);
+
+            if (typeof result === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", result);
+            }
+
+            return useResponseSuccess(result);
+        } catch (error) {
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
+        }
+    });
+
 }
