@@ -283,11 +283,11 @@ export class BaseMapper {
     }
 
     public generateAccessToken(user) {
-        return jwt.sign(user, 'sdsdfsdfsf', { expiresIn: '7d' });
+        return jwt.sign({id: user.id}, 'sdsdfsdfsf', { expiresIn: '7d' });
     }
 
     public generateRefreshToken(user) {
-        return jwt.sign(user, 'sdsdfsdfsf', {
+        return jwt.sign({id: user.id}, 'sdsdfsdfsf', {
             expiresIn: '30d',
         });
     }
