@@ -5,7 +5,7 @@ import { UserAuthenticationController } from "../controllers/user.authentication
 const userRouter = createRouter();
 
 // Info
-userRouter.get("/info",                                                                                    defineEventHandler(UserController.apiUserInfo));
+userRouter.post("/info",                                                                                    defineEventHandler(UserController.apiUserInfo));
 
 // Password
 //userRouter.post("/forgot-password",                                                                        defineEventHandler(UserAuthenticationController.apiForgotPasswordNoId));
