@@ -2,6 +2,7 @@ import { createRouter, defineEventHandler } from "h3";
 import { GolfController } from "../controllers/golf.controller";
 
 const golfRouter = createRouter();
+golfRouter.put("/player-update/:id",                                                                           defineEventHandler(GolfController.apiUpdatePlayedById));
 golfRouter.put("/team/:id",                                                                                    defineEventHandler(GolfController.apiUpdateTeamById));
 golfRouter.put("/team-new",                                                                                    defineEventHandler(GolfController.apiCreateTeam));
 golfRouter.post("/player-new",                                                                                    defineEventHandler(GolfController.apiCreatePlayer));
