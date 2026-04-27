@@ -12,6 +12,8 @@ import axios from "axios";
 import {PlayerObject} from "./golf.mapper";
 import {response} from "express";
 import jwt from 'jsonwebtoken';
+import {isTypedArray} from "node:util/types";
+import {isArray} from "node:util";
 
 //import {Sequelize} from "sequelize";
 
@@ -49,7 +51,7 @@ export interface paramsOptions {
 export interface BaseObject {
 }
 
-
+export type BaseObjectList = BaseObject[];
 /*
 The Base Mapper. Functions which are in common with others mappers are placed here to avoid duplication of code
  */
@@ -214,6 +216,7 @@ export class BaseMapper {
      * Generation of pagination for various retrieval of lists
     */
     public generatePagination(list = this._OBJECT_RETRIEVED, body: paramsOptions) : PaginationResults {
+        let total;
         let listClone;
         listClone = list;
 
@@ -278,8 +281,18 @@ export class BaseMapper {
                 endIndex  : end - 1
             };
         }
-        console.log(`{ "code": 0, "error": null,"message": "ok", "data": {"items":${JSON.stringify(list)}, "total": ${list[0].total}}, "total":"${list[0].total}","pageSize":"${size}", "pageIndex":"${page}", "lastpage":"${lastPage}"}`)
-        return JSON.parse(`{ "code": 0, "error": null,"message": "ok", "data": {"items":${JSON.stringify(list)}, "total": ${list[0].total}}, "total":"${list[0].total}","pageSize":"${size}", "pageIndex":"${page}", "lastpage":"${lastPage}"}`);
+
+        if (Array.isArray(list)) {
+            if (list.length == 0) {
+                total = 0
+            } else {
+                total = list[0].total
+            }
+
+
+        }
+        console.log(`{ "code": 0, "error": null,"message": "ok", "data": {"items":${JSON.stringify(list)}, "total": ${total}}, "total":"${total}","pageSize":"${size}", "pageIndex":"${page}", "lastpage":"${lastPage}"}`)
+        return JSON.parse(`{ "code": 0, "error": null,"message": "ok", "data": {"items":${JSON.stringify(list)}, "total": ${total}}, "total":"${total}","pageSize":"${size}", "pageIndex":"${page}", "lastpage":"${lastPage}"}`);
     }
 
     public generateAccessToken(user) {

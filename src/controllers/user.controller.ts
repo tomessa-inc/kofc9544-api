@@ -21,6 +21,8 @@ export class UserController {
                 }
 
                 const accessToken = await userMapper.generateAccessToken(user);
+                console.log("the access token")
+                console.log(accessToken)
                 const refreshToken = await userMapper.generateRefreshToken(user);
 
                 setRefreshTokenCookie(event, refreshToken);

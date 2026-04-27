@@ -1,5 +1,5 @@
 import { defineEventHandler, readBody, getRouterParams, setResponseStatus } from "h3";
-import { mailMapper, golfMapper, teamMapper } from "../mapper/";
+import {mailMapper, golfMapper, teamMapper, holeMapper} from "../mapper/";
 import { EmailMessaging } from "../models/EmailMessaging";
 import { useResponseError, useResponseSuccess } from "../utils/response";
 import moment from "moment";
@@ -66,6 +66,28 @@ export class GolfController {
         }
     });
 
+    public static getAllHolesNeedingTeamsLabelValue = defineEventHandler(async (event) => {
+        try {
+            const params = getRouterParams(event);
+            const options = parseParams(params, {
+                pageIndex: 1, pageSize: 10, filterQuery: "",
+                sort: golfMapper.VALUE_SORT, order: golfMapper.DEFAULT_ORDER,
+            });
+
+            const teams = await holeMapper.getAllHolesNeedingTeamsLabelValue(options);
+
+            if (typeof teams === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", teams);
+            }
+
+            return golfMapper.prepareListResults(teams, options);
+        } catch (error) {
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
+        }
+    });
+
     public static getAllTeamsNeedingPlayersLabelValue = defineEventHandler(async (event) => {
         try {
             const params = getRouterParams(event);
@@ -126,6 +148,34 @@ export class GolfController {
             }
 
             return golfMapper.prepareListResults(galleries, options);
+        } catch (error) {
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
+        }
+    });
+
+    public static apiGetAllHoles = defineEventHandler(async (event) => {
+        try {
+            const params = getRouterParams(event);
+            console.log("the params")
+            console.log(params)
+            const options = parseParams(params, {
+                pageIndex: 1, pageSize: 10, filterQuery: "",
+                sort: golfMapper.DEFAULT_SORT, order: golfMapper.DEFAULT_ORDER,
+            });
+            console.log("the options")
+            console.log(options)
+
+
+            const holes = await holeMapper.getAllHoles(options);
+            console.log("the holes")
+            console.log(holes)
+            if (typeof holes === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", holes);
+            }
+            console.log("sdasdf")
+            return golfMapper.prepareListResults(holes, options);
         } catch (error) {
             setResponseStatus(event, 500);
             return useResponseError("InternalServerError", error.toString());
@@ -292,11 +342,15 @@ export class GolfController {
 
 
 
-    public static apiUpdateTeamById = defineEventHandler(async (event) => {
+    public static apiCreateHole = defineEventHandler(async (event) => {
         try {
             const body = await readBody(event);
+
             console.log("the body")
             console.log(body);
+            const params = {
+
+            }
             const bodyArray: OptionsPlayer = {
                 TeamId: body.TeamId,
                 players: [{
@@ -308,11 +362,37 @@ export class GolfController {
                 individual: false,
                 email_type:"register"
             }
+            body.id = body.name.replace(/\s+/g, '-').toLowerCase()
+            console.log("defiend")
+            await holeMapper.createHole(body)
+
+            return useResponseSuccess(event);
+        } catch (error) {
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
+        }
+    });
+
+    public static apiUpdateTeamById = defineEventHandler(async (event) => {
+        try {
+            const body = await readBody(event);
+            const {id} = body;
+            console.log("the body")
+            console.log(body);
+            console.log("the id")
+            console.log(id);
+            const bodyArray = {
+                id: body.id,
+                name: body.name,
+                captain: body.captain,
+                hole: body.hole,
+            }
+
             console.log("defiend")
             console.log(bodyArray)
 //            bodyArray.push(body);
 
-            const result = await golfMapper.createPlayerRegistration(bodyArray);
+            const result = await teamMapper.updateTeamById(bodyArray, id);
 
             if (typeof result === "string") {
                 setResponseStatus(event, 500);
@@ -325,5 +405,27 @@ export class GolfController {
             return useResponseError("InternalServerError", error.toString());
         }
     });
+
+
+    public static apiUpdateHoleById = defineEventHandler(async (event) => {
+        try {
+            const body = await readBody(event);
+            const {id} = body
+
+
+            const result = await holeMapper.updatHoleById(body, id);
+
+            if (typeof result === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", result);
+            }
+
+            return useResponseSuccess(result);
+        } catch (error) {
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
+        }
+    });
+
 
 }

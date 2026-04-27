@@ -10,33 +10,25 @@ import {Team2} from "../models/Team2";
 import {Image2} from "../models/Image2";
 import {EmailMessaging} from "../models/EmailMessaging";
 import {team} from "../models/Team";
-import {eq, and, sql, count, lt, isNotNull} from 'drizzle-orm';
+import {hole} from "../models/Hole"
+import {eq, and, sql, count, lt, isNotNull, asc,desc} from 'drizzle-orm';
 import {test} from "mocha";
 import {gallery} from "../models/Gallery";
 import {calendar} from "../models/Calendar";
 
 
-export interface PlayerObject {
-    id?:number,
-    name:string,
-    email: string,
-    phone: string
-    individual: boolean
-    TeamId: string,
-    allergies: string
-    payment: number,
-    member: string,
-    total?:number,
+export interface HoleObject {
 //                    createdAt: moment().format('YYYY-MM-DD'),
     //                  updatedAt: moment().format('YYYY-MM-DD'),
-}
+}[]
 
-export class GolfMapper extends BaseMapper {
+
+export class HoleMapper extends BaseMapper {
     private _PARAMS_NAME: string = 'name';
     private _DEFAULT_SORT: string = 'name';
     private _LABEL_SORT: string = 'label';
-    private _VALUE_SORT: string = 'value';
-    declare protected _OBJECT_RETRIEVED: PlayerObject
+    private _LABEL_VALUE: string = 'value';
+    declare protected _OBJECT_RETRIEVED: HoleObject
 
 
 
@@ -44,41 +36,39 @@ export class GolfMapper extends BaseMapper {
         super();
 //        this.initializeSequelize()
         this.initializeDrizzle()
- //       this.initializePlayer();
+        //       this.initializePlayer();
     }
 
 
 
     private async initializePlayer() {
 
-       // const team = Team.initialize(this.SEQUELIZE);
+        // const team = Team.initialize(this.SEQUELIZE);
 
-     //   Player2.initialize(this.SEQUELIZE, team);
+        //   Player2.initialize(this.SEQUELIZE, team);
     }
 
 
 
-    public async createPlayerRegistration(params: OptionsPlayer) {
+    public async createHole(params) {
         let retval;
 //        console.log("the registration")
         console.log(params)
         try {
-            for (let x=0; x< params.players.length; x++) {
-                const playerObject :PlayerObject  = {
-                    name: params.players[x].player,
-                    email: params.players[x].email,
-                    phone: params.players[x].phone,
-                    individual: params.individual,
-                    TeamId: params.TeamId ?? null,
-                    allergies: params.players[x].allergies ?? null,
-                    payment: params.payment ?? null,
-                    member:params.member ?? null
+
+
+
+                const holeObject   = {
+                    id: params.id,
+                    name: params.name,
+                    par: params.par
+
 
 //                    createdAt: moment().format('YYYY-MM-DD'),
-  //                  updatedAt: moment().format('YYYY-MM-DD'),
+                    //                  updatedAt: moment().format('YYYY-MM-DD'),
                 };
-    //            console.log("playe")
-      //          console.log(playerObject);
+                //            console.log("playe")
+                //          console.log(playerObject);
                 /*
                 console.log("before player")
                 console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
@@ -87,19 +77,13 @@ export class GolfMapper extends BaseMapper {
                 console.log("Player")
 */
 
-                const playerSQL = this.DRIZZLE.insert(player).values(playerObject).$returningId();
+                const holeSQL = this.DRIZZLE.insert(hole).values(holeObject).$returningId();
 
 
-                console.log(playerSQL.toSQL())
-                const retval = await this.getSQLData(playerSQL.toSQL())
+                console.log(holeSQL.toSQL())
+                const retval = await this.getSQLData(holeSQL.toSQL())
                 console.log('the reval')
-                playerObject.id = retval.insertId
 
-
-                const test =  await mailMapper.setupEmail({email_type:EmailMessaging.EMAIL_TYPE_SEND_ID, data: playerObject})
-                console.log("test")
-                console.log(test)
-            }
             /*
             const test = params.players.map( async (player) => {
 
@@ -124,9 +108,9 @@ export class GolfMapper extends BaseMapper {
 
             }) */
 
-         //   console.log("the testing stuff")
-           // console.log(test);
-          //  test.email_type = EmailMessaging.EMAIL_TYPE_SEND_ID
+            //   console.log("the testing stuff")
+            // console.log(test);
+            //  test.email_type = EmailMessaging.EMAIL_TYPE_SEND_ID
 
 
         } catch (error) {
@@ -134,7 +118,7 @@ export class GolfMapper extends BaseMapper {
         } finally {
             // close any opened connections during the invocation
             // this will wait for any in-progress queries to finish before closing the connections
-        //    await this.SEQUELIZE.connectionManager.close();
+            //    await this.SEQUELIZE.connectionManager.close();
         }
 
     }
@@ -146,27 +130,14 @@ export class GolfMapper extends BaseMapper {
      * @param id
      * @returns
      */
-    public async updatePlayerById(playerObject, id) {
+    public async updatHoleById(holeObject, id) {
         try {
 
-            console.log("checking")
-            console.log(playerObject);
-            console.log(playerObject.name)
-            console.log({
-                name: playerObject.name,
-                email: playerObject.email,
-                phone: playerObject.phone,
-                TeamId: playerObject.TeamId,
-                allergies: playerObject.allergies
 
-            })
-            const playerSQL = this.DRIZZLE.update(player).set({
-                name: playerObject.name,
-                email: playerObject.email,
-                phone: playerObject.phone,
-                TeamId: playerObject.TeamId,
-                allergies: playerObject.allergies
-            }).where(eq(player.id, id))
+            const playerSQL = this.DRIZZLE.update(hole).set({
+                name: holeObject.name,
+                par: holeObject.par,
+            }).where(eq(hole.id, id))
             console.log("eoot")
             console.log(playerSQL.toSQL())
 
@@ -220,39 +191,102 @@ export class GolfMapper extends BaseMapper {
             }).from(player).innerJoin(team, eq(player.TeamId, team.id)).where(eq(team.id, options.id))
 
             return await this.getSQLData(playerSQL.toSQL())
-/*
-            const offset = ((options.pageIndex - 1) * options.pageSize)
-            const players = {
-                include: [
-                    {
-                        Model: Team2,
-                        association: Player2.Team,
-                        required: false
-                    },
-                ],
-                where: [{ TeamId: options.id }],
-                offset: offset,
-                limit: options.pageSize,
+            /*
+                        const offset = ((options.pageIndex - 1) * options.pageSize)
+                        const players = {
+                            include: [
+                                {
+                                    Model: Team2,
+                                    association: Player2.Team,
+                                    required: false
+                                },
+                            ],
+                            where: [{ TeamId: options.id }],
+                            offset: offset,
+                            limit: options.pageSize,
 
-            }
+                        }
 
-            console.log("players")
-            console.log(players)
+                        console.log("players")
+                        console.log(players)
 
-            return await Player2.findAll(players).then(data => {
-                console.log("the players")
-                console.log(data);
-                return this.processArray(data);
-            }).catch(err => {
-                return err;
-            }) */
+                        return await Player2.findAll(players).then(data => {
+                            console.log("the players")
+                            console.log(data);
+                            return this.processArray(data);
+                        }).catch(err => {
+                            return err;
+                        }) */
         } catch (error) {
             console.log(`Could not fetch galleries ${error}`)
         }
     }
 
+    public async getAllHolesNeedingTeamsLabelValue(params) {
 
-    public async getAllPlayers(params: paramsOptions): Promise<PlayerObject[] | string>  { //: Promise<string[] | string> {
+        try {
+            //  this.DRIZZLE.select().count().from(team).where(eq(team.id, ${team.id}));
+
+            let holeNeedingTeamsSQL = this.DRIZZLE.select({
+                value: sql<string>`${hole.id}`.as("value"),
+                label: sql<string>`${hole.name}`.as("label"),
+                countTeams: sql<number> `count(${team.id})`.as("countTeams"),
+                total: sql<string>`(SELECT count('id') from hole)`.as('total')
+            }).from(hole)
+                .leftJoin(team, eq(hole.id, team.hole))
+                .groupBy(hole.id, hole.name)
+                .having(lt(sql<number>`count(${team.id})`, 2));
+            ;
+
+//            holeNeedingTeamsSQL = holeNeedingTeamsSQL.innerJoin(team, eq(hole.id, team.hole)).having(lt(holeNeedingTeamsSQL.config.fields.countTeams, 2)).groupBy(hole.id, hole.name)
+
+
+
+
+            //    teamsNeedingPlayersSQL = teamsNeedingPlayersSQL.where(lt(teamsNeedingPlayersSQL.config.fields.countPlayers.fieldAlias, 3));
+            console.log(holeNeedingTeamsSQL.toSQL())
+            /* SELECT count(*)
+
+                                         FROM ${player}
+                                         left join team on player.teamId = team.id)`, 3)); */
+            //return true;
+            return this.getSQLData(holeNeedingTeamsSQL.toSQL());
+        } catch (error) {
+            return error.toString()
+        }
+    }
+
+    /*     const team = {
+             attributes: {
+                 include: [
+                     [
+                         this.SEQUELIZE.literal(`(
+                     SELECT count(\`player\`.\`id\`) FROM player LEFT JOIN team ON player.teamId = team.id)`),
+                         'count',
+                     ]
+                 ],
+                 where: {
+                 //    'count' > 3,
+                 },
+             firstName:
+                 {
+                     [Op.like]: `%${check.filterQuery}%`
+                 }
+             } 8/
+         }
+         return await Team.findAll(team).then(data => {
+             return data;
+         }).catch(err => {
+             return err;
+         })
+     } catch (error) {
+         console.log(`Could not fetch gallery ${error}`)
+     }
+ }
+*/
+
+
+    public async getAllHoles(params: paramsOptions)  { //: Promise<string[] | string> {
         try {
             console.log(params);
 
@@ -261,18 +295,20 @@ export class GolfMapper extends BaseMapper {
             console.log("offset")
             console.log(offset);
             const playerSQL = this.DRIZZLE.select({
-                id:  player.id,
-                name: player.name,
-                email: player.email,
-                phone: player.phone,
-                TeamId: player.TeamId,
-                individual: player.individual,
-                allergies: player.allergies,
-                payment: player.payment,
-                member: player.member,
-                total: sql<string>`(SELECT count('id') from player)`.as('total')
-            }).from(player).offset(offset).limit(params.pageSize)
+                id:  hole.id,
+                name: hole.name,
+                par: hole.par,
+                total: sql<string>`(SELECT count('id') from hole)`.as('total')
+            }).from(hole).offset(offset).limit(params.pageSize)
+            console.log(params.order);
 
+            if (params.order == "asc")  {
+                console.log("doijng asc")
+                playerSQL.orderBy(asc(hole.name))
+            } else {
+                console.log("doijng desc")
+                playerSQL.orderBy(desc(hole.name))
+            }
 
             return this.getSQLData(playerSQL.toSQL());
         } catch (error) {
@@ -281,41 +317,41 @@ export class GolfMapper extends BaseMapper {
         }
     }
 
-/*
-    public async getAllTeamsMissingPlayers(params: paramsOptions) { //: Promise<string[] | string> {
-        try {
-/*            console.log(params);
+    /*
+        public async getAllTeamsMissingPlayers(params: paramsOptions) { //: Promise<string[] | string> {
+            try {
+    /*            console.log(params);
 
-            const offset = ((params.pageIndex - 1) * params.pageSize) ?? 1
+                const offset = ((params.pageIndex - 1) * params.pageSize) ?? 1
 
-            console.log("offset")
+                console.log("offset")
 
-            console.log(offset);
-            const golfConfig = {
-                include: [
-                    {
-                        Model: Tag2,
-                        association: Gallery2.Tag,
-                        required: false
-                    },
-                ],
-                attributes: {exclude: ['ImageId', 'GalleryTagTagId']},
-                offset: offset,
-                limit: params.pageSize,
+                console.log(offset);
+                const golfConfig = {
+                    include: [
+                        {
+                            Model: Tag2,
+                            association: Gallery2.Tag,
+                            required: false
+                        },
+                    ],
+                    attributes: {exclude: ['ImageId', 'GalleryTagTagId']},
+                    offset: offset,
+                    limit: params.pageSize,
+                }
+                return await Player.findAll(golfConfig).then(galleries => {
+                    return this.processArray(galleries);
+                }).catch(err => {
+                    console.log('the error');
+                    console.log(err);
+                    return err;
+                })
+            } catch (error) {
+
+                return error.toString();
             }
-            return await Player.findAll(golfConfig).then(galleries => {
-                return this.processArray(galleries);
-            }).catch(err => {
-                console.log('the error');
-                console.log(err);
-                return err;
-            })
-        } catch (error) {
-
-            return error.toString();
         }
-    }
-*/
+    */
     public async getAllPlayersNeedingTeamsLabelValue(params) {
 
         try {
@@ -338,7 +374,7 @@ export class GolfMapper extends BaseMapper {
             //  console.log(test);
             //  console.log("test")
             //  console.log( teamsNeedingPlayersSQL.config.fields)
-          //  teamsNeedingPlayersSQL = teamsNeedingPlayersSQL.innerJoin(player, eq(team.id, player.TeamId)).having(lt(teamsNeedingPlayersSQL.config.fields.countPlayers, 4)).groupBy(team.id, team.name)
+            //  teamsNeedingPlayersSQL = teamsNeedingPlayersSQL.innerJoin(player, eq(team.id, player.TeamId)).having(lt(teamsNeedingPlayersSQL.config.fields.countPlayers, 4)).groupBy(team.id, team.name)
 
 
 
@@ -355,41 +391,41 @@ export class GolfMapper extends BaseMapper {
             return error.toString()
         }
     }
-/*
-    public async getAllPlayersWithoutTeams(params: paramsOptions) { //: Promise<string[] | string> {
-        try {
-            console.log(params);
+    /*
+        public async getAllPlayersWithoutTeams(params: paramsOptions) { //: Promise<string[] | string> {
+            try {
+                console.log(params);
 
-            const offset = ((params.pageIndex - 1) * params.pageSize) ?? 1
+                const offset = ((params.pageIndex - 1) * params.pageSize) ?? 1
 
-            console.log("offset")
+                console.log("offset")
 
-            console.log(offset);
-            const golfConfig = {
-                include: [
-                    {
-                        Model: Tag2,
-                        association: Gallery2.Tag,
-                        required: false
-                    },
-                ],
-                attributes: {exclude: ['ImageId', 'GalleryTagTagId']},
-                offset: offset,
-                limit: params.pageSize,
+                console.log(offset);
+                const golfConfig = {
+                    include: [
+                        {
+                            Model: Tag2,
+                            association: Gallery2.Tag,
+                            required: false
+                        },
+                    ],
+                    attributes: {exclude: ['ImageId', 'GalleryTagTagId']},
+                    offset: offset,
+                    limit: params.pageSize,
+                }
+                return await Player.findAll(golfConfig).then(galleries => {
+                    return this.processArray(galleries);
+                }).catch(err => {
+                    console.log('the error');
+                    console.log(err);
+                    return err;
+                })
+            } catch (error) {
+
+                return error.toString();
             }
-            return await Player.findAll(golfConfig).then(galleries => {
-                return this.processArray(galleries);
-            }).catch(err => {
-                console.log('the error');
-                console.log(err);
-                return err;
-            })
-        } catch (error) {
-
-            return error.toString();
         }
-    }
-*/
+    */
 
     /**
      *
@@ -464,13 +500,9 @@ export class GolfMapper extends BaseMapper {
     }
 
 
-    get VALUE_SORT(): string {
-        return this._VALUE_SORT;
-    }
-
-    get OBJECT_RETRIEVED(): PlayerObject {
-        return this._OBJECT_RETRIEVED;
+    get LABEL_VALUE(): string {
+        return this._LABEL_VALUE;
     }
 }
 
-export const golfMapper = new GolfMapper();
+export const holeMapper = new HoleMapper();

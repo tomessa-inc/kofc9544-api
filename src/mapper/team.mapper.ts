@@ -129,26 +129,31 @@ export class TeamMapper extends BaseMapper {
 
         try {
           //  this.DRIZZLE.select().count().from(team).where(eq(team.id, ${team.id}));
-
+            const countPlayers = sql<number>`count(${player.id})`.as('countPlayers');
             let teamsNeedingPlayersSQL = this.DRIZZLE.select({
                 value: sql<string>`${team.id}`.as("value"),
-                label: sql<string>`${team.name}`.as("label"),
-                countPlayers: sql<number> `count(${player.id})`.as("countPlayer"),
-                total: sql<string>`(SELECT count('id') from team)`.as('total')
-/*
-                sql<bigint>`(SELECT count(player.id)
-                                    from ${player}
-                                    inner join team as subteam on player.teamId = subteam.id
-                                    where subteam.id = value
-                                    GROUP BY subteam.id
-                                    
-                                    )`.as('countPlayers') */
-            }).from(team);
+             //   label: sql<string>`${team.name}`.as("label"),
+                label: sql<string>`CONCAT(${team.name}, '-', (
+                SELECT hole.name
+                FROM hole
+                INNER JOIN team AS sub_team ON sub_team.hole = hole.id
+                WHERE sub_team.id = ${team.id}
+                ))`.as('label'),
+                countPlayers: countPlayers,
+                total: sql<string>`(SELECT count('id') from team)`.as('total'),
+                hole: sql<string>`(SELECT hole.name
+                                  from hole
+                                           inner join team as sub_team on team.hole = hole.id
+                                  WHERE sub_team.id = team.id)`.as('hole'),
+            }).from(team)
+                .innerJoin(player, eq(team.id, player.TeamId))
+                .groupBy(team.id, team.name)
+                .having(lt(countPlayers, 4));
            // const test = teamsNeedingPlayersSQL.config.fields.countPlayers.fieldAlias;
           //  console.log(test);
           //  console.log("test")
           //  console.log( teamsNeedingPlayersSQL.config.fields)
-            teamsNeedingPlayersSQL = teamsNeedingPlayersSQL.innerJoin(player, eq(team.id, player.TeamId)).having(lt(teamsNeedingPlayersSQL.config.fields.countPlayers, 4)).groupBy(team.id, team.name)
+         //   teamsNeedingPlayersSQL = teamsNeedingPlayersSQL.innerJoin(player, eq(team.id, player.TeamId)).having(lt(teamsNeedingPlayersSQL.config.fields.countPlayers, 4)).groupBy(team.id, team.name)
 
 
 
@@ -251,6 +256,15 @@ export class TeamMapper extends BaseMapper {
                                     where player.TeamId = team.id
                                     GROUP BY subteam.id
                                          )`.as('countPlayers'),
+                hole: sql<string>`(SELECT hole.name
+                                           from hole
+                                                    inner join team as sub_team on sub_team.hole = hole.id 
+                                           WHERE sub_team.id = team.id)`.as('hole'),
+                par: sql<string>`(SELECT hole.par
+                                  from hole
+                                           inner join team as sub_team on team.hole = hole.id
+                                  WHERE sub_team.id = team.id
+                                  )`.as('par'),
                 total: sql<string>`(SELECT count('id') from team)`.as('total')
 
 
@@ -435,6 +449,55 @@ public async getAllTags(params) { //: Promise<string[] | string> {
         console.log(error);
         return error.toString();
     } */
+
+    /**
+     *
+     * @param playerObject
+     * @param id
+     * @returns
+     */
+    public async updateTeamById(teamObject, id) {
+        try {
+
+            const teamSQL = this.DRIZZLE.update(team).set({
+                name: teamObject.name,
+                captain: teamObject.captain,
+                hole: teamObject.hole,
+            }).where(eq(team.id, id))
+            console.log("eoot")
+            console.log(teamSQL.toSQL())
+
+            return await this.getSQLData(teamSQL.toSQL())
+            /*
+                        const offset = ((options.pageIndex - 1) * options.pageSize)
+                        const players = {
+                            include: [
+                                {
+                                    Model: Team2,
+                                    association: Player2.Team,
+                                    required: false
+                                },
+                            ],
+                            where: [{ TeamId: options.id }],
+                            offset: offset,
+                            limit: options.pageSize,
+
+                        }
+
+                        console.log("players")
+                        console.log(players)
+
+                        return await Player2.findAll(players).then(data => {
+                            console.log("the players")
+                            console.log(data);
+                            return this.processArray(data);
+                        }).catch(err => {
+                            return err;
+                        }) */
+        } catch (error) {
+            return error.toString()
+        }
+    }
 
     get DEFAULT_SORT(): string {
         return this._DEFAULT_SORT;

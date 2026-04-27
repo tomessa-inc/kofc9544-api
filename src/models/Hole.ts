@@ -5,11 +5,11 @@ import {DataTypes} from "../db";
 
 
 // Define your schema
-export const team = mysqlTable('team', {
+export const hole = mysqlTable('hole', {
     id: varchar('id', {length: 25}).primaryKey(),
     name: varchar('name', {length: 255}).notNull(),
-    captain: varchar('captain', {length: 255}).notNull(),
-    hole: varchar('hole', {length: 255}).notNull(),
+    par: varchar('par', {length: 255}).notNull(),
+
 //    createdAt:timestamp().defaultNow(),
     //  updatedAt: timestamp().defaultNow(),
 })
