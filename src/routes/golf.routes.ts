@@ -19,6 +19,6 @@ golfRouter.post("/teams-missing-players-label-value/page-index/:pageIndex/page-s
 golfRouter.post("/players-missing-teams-label-value/page-index/:pageIndex/page-size/:pageSize/:sort/:order", defineEventHandler(GolfController.getAllPlayersNeedingTeamsLabelValue));
 golfRouter.post("/team/page-index/:pageIndex/page-size/:pageSize/:sort/:order",                              defineEventHandler(GolfController.apiGetAllTeams));
 golfRouter.post("/team/id/:id/page-index/:pageIndex/page-size/:pageSize/:sort/:order",                       defineEventHandler(GolfController.apiGetPlayersByTeamId));
-
+golfRouter.post("/player-csv/:sort/:order",        defineEventHandler(GolfController.getPlayerCSV));
 
 export { golfRouter };

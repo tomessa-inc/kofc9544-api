@@ -10,7 +10,7 @@ import {Team2} from "../models/Team2";
 import {Image2} from "../models/Image2";
 import {EmailMessaging} from "../models/EmailMessaging";
 import {team} from "../models/Team";
-import {eq, and, sql, count, lt, isNotNull} from 'drizzle-orm';
+import {eq, and, sql, count, lt, isNotNull, asc,desc} from 'drizzle-orm';
 import {test} from "mocha";
 import {gallery} from "../models/Gallery";
 import {calendar} from "../models/Calendar";
@@ -353,6 +353,41 @@ export class GolfMapper extends BaseMapper {
             return this.getSQLData(teamsNeedingPlayersSQL.toSQL());
         } catch (error) {
             return error.toString()
+        }
+    }
+
+
+    /**
+     *
+     * @param options
+     * @returns
+     */
+    public async getPlayersCSV(options: paramsOptions) {
+        try {
+
+            const playerSQL = this.DRIZZLE.select({
+                id:    player.id,
+                name:  player.name,
+                total: sql<number>`(SELECT COUNT(*) FROM player)`.as('total')
+                 })
+                .from(player)
+
+
+                if (options.order == "asc") {
+                    playerSQL.orderBy(asc(player.name));
+                } else {
+                    playerSQL.orderBy(desc(player.name));
+
+                }
+
+//            console.log('get gallery');
+            //          const gallerySQL = this.DRIZZLE.select().from(gallery).where(eq(gallery.id,options.id)).leftJoin(galleryTag, (galleryTag.GalleryId, gallery.id))
+
+
+            return this.getSQLData(playerSQL.toSQL())
+
+        } catch (error) {
+            return error.toString();
         }
     }
 /*

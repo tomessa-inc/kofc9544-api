@@ -186,6 +186,14 @@ Resources:
                         Path: /golf/team/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
                         Method: ANY
 
+                GolfPlayersByCSV:
+                  Type: Api
+                  Properties:
+                    RestApiId: !Ref ExpressApi
+                    Path: /golf/player-csv/{sort}/{order}
+                    Method: ANY
+
+
                 GolfPlayersByTeam:
                     Type: Api
                     Properties:
@@ -199,7 +207,6 @@ Resources:
                         RestApiId: !Ref ExpressApi
                         Path: /golf/team/{id}
                         Method: ANY
-
 
 
                 GolfHoleList:

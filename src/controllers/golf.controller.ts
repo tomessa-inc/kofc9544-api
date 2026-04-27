@@ -428,4 +428,26 @@ export class GolfController {
     });
 
 
+    public static getPlayerCSV = defineEventHandler(async (event) => {
+        try {
+            const params = getRouterParams(event);
+            const options = parseParams(params, {
+                pageIndex: 1, pageSize: 10, filterQuery: "",
+                sort: golfMapper.DEFAULT_SORT, order: golfMapper.DEFAULT_ORDER,
+            });
+
+            const teams = await golfMapper.getPlayersCSV(options);
+
+            if (typeof teams === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", teams);
+            }
+
+            return golfMapper.prepareListResults(teams, options);
+        } catch (error) {
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
+        }
+    });
+
 }

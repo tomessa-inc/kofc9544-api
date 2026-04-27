@@ -201,6 +201,7 @@ export class GalleryMapper extends BaseMapper {
         }
     }
 
+
     get DEFAULT_SORT(): string {
         return this._DEFAULT_SORT;
     }
