@@ -197,7 +197,7 @@ Resources:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
-                        Path: /golf/hold/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
+                        Path: /golf/hole/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
                         Method: ANY
 
                 GolfHoleMissingTeamsLV:
