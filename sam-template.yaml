@@ -192,6 +192,34 @@ Resources:
                         RestApiId: !Ref ExpressApi
                         Path: /golf/team/id/{id}/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
                         Method: ANY
+
+                GolfHoleList:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/hold/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
+                        Method: ANY
+
+                GolfHoleMissingTeamsLV:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/holes-missing-teams-label-value/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
+                        Method: ANY
+
+                GolfHoleNew:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/hole-new
+                        Method: ANY
+
+                GolfHoleUpdate:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/{id}
+                        Method: ANY
                 Mail:
                     Type: Api
                     Properties:
