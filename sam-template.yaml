@@ -193,6 +193,15 @@ Resources:
                         Path: /golf/team/id/{id}/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
                         Method: ANY
 
+                GolfTeamUpdate:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/team/{id}
+                        Method: ANY
+
+
+
                 GolfHoleList:
                     Type: Api
                     Properties:
