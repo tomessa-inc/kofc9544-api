@@ -24,7 +24,7 @@ userRouter.post("/page-index/:pageIndex/page-size/:pageSize?/:sort?/:order?",   
 
 userRouter.patch("/",                                                                                      defineEventHandler(UserController.patchUpdateUser));
 userRouter.post("/id/:id",                                                                                 defineEventHandler(UserController.getUserById));
-userRouter.put("/id/:",                                                                                  defineEventHandler(UserController.apiUpdateUser));
+//userRouter.put("/id/:id",                                                                                  defineEventHandler(UserController.apiUpdateUser));
 
 
 export { userRouter };
