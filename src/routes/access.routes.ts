@@ -3,8 +3,8 @@ import { AccessController } from "../controllers/access.controller";
 import {UserController} from "../controllers/user.controller";
 
 const accessRouter = createRouter();
-accessRouter.post("/",                                                          defineEventHandler(AccessController.getAllAccess));
-accessRouter.post("/new",                                                       defineEventHandler(AccessController.apiCreateAccess));
-accessRouter.post("/list/page-index/:pageIndex/page-size/:pageSize?/:sort?/:order?", defineEventHandler(AccessController.apiGetAllAccessAsLabelValues));
+//accessRouter.post("/",                                                          defineEventHandler(AccessController.getAllAccess));
+//accessRouter.post("/new",                                                       defineEventHandler(AccessController.apiCreateAccess));
+//accessRouter.post("/list/page-index/:pageIndex/page-size/:pageSize?/:sort?/:order?", defineEventHandler(AccessController.apiGetAllAccessAsLabelValues));
 
 export { accessRouter };
