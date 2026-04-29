@@ -212,7 +212,7 @@ Resources:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
-                        Path: /golf/team/{teamId}
+                        Path: /golf/team-delete/{teamId}
                         Method: ANY
 
 
