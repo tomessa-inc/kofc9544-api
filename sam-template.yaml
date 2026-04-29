@@ -21,29 +21,28 @@ Parameters:
         Default: $BucketNameImages
     Stage:
         Type: String
-        Description: Bucket for Images
+        Description: Stage name
         Default: $Stage
     DbHost:
         Type: String
-        Description: Bucket for Images
+        Description: DB Host
         Default: $DbHost
     DbName:
         Type: String
-        Description: Bucket for Images
+        Description: DB Name
         Default: $DbName
     DbUserName:
         Type: String
-        Description: Bucket for Images
+        Description: DB Username
         Default: $DbUserName
     DbPassword:
         Type: String
-        Description: Bucket for Images
+        Description: DB Password
         Default: $DbPassword
     NodeEnv:
         Type: String
-        Description: Bucket for Images
+        Description: Node Environment
         Default: $NodeEnv
-
     TokenSecret:
         Type: String
         Description: Token Secret
@@ -52,20 +51,17 @@ Parameters:
         Type: String
         Description: Cache ID
         Default: $CacheId
-
     RDSHost:
         Type: String
         Description: RDS Host URL
         Default: $RDSHost
-
     RDSDBName:
         Type: String
         Description: RDS Database
         Default: $RDSDBName
-
     DEBUG:
         Type: String
-        Description: Cache ID
+        Description: Debug setting
         Default: sequelize:sql*
 
 Conditions:
@@ -80,7 +76,6 @@ Conditions:
 
 Globals:
     Api:
-        StageName: !Ref Stage
         BinaryMediaTypes:
             - image/png
             - image/jpg
@@ -98,7 +93,7 @@ Resources:
             Environment:
                 Variables:
                     DB_NAME: !Ref DbName
-                    STAGE: !Ref Stage   
+                    STAGE: !Ref Stage
                     DB_HOST: !Ref DbHost
                     DB_USERNAME: !Ref DbUserName
                     DB_PASSWORD: !Ref DbPassword
@@ -115,7 +110,7 @@ Resources:
                     Properties:
                         Path: /{proxy+}
                         Method: ANY
-
+                        StageName: !Ref Stage
             Policies:
                 - SESBulkTemplatedCrudPolicy_v2:
                       IdentityName: kofc9544.ca
@@ -131,7 +126,6 @@ Resources:
                             - cloudfront:CreateInvalidation
                         Resource: '*'
 
-
     WarmupRule:
         Type: AWS::Events::Rule
         Properties:
@@ -143,8 +137,6 @@ Resources:
                   Arn: !GetAtt ExpressLambdaFunction.Arn
                   Input: '{"source": "warmup-ping"}'
 
-
-    # Permission for EventBridge to invoke Lambda
     WarmupPermission:
         Type: AWS::Lambda::Permission
         Properties:
@@ -153,11 +145,8 @@ Resources:
             Principal: events.amazonaws.com
             SourceArn: !GetAtt WarmupRule.Arn
 
-
-
     MyApiRoute53RecordSetGroup:
         Type: AWS::Route53::RecordSetGroup
-   #     Condition: UseDomainName
         Properties:
             HostedZoneName: !Sub ${ParentDomainName}.
             RecordSets:
@@ -174,26 +163,25 @@ Resources:
             Tags:
                 - Key: Environment
                   Value: !Ref NodeEnv
-
             DistributionConfig:
                 Enabled: "true"
                 Comment: !Ref AWS::StackName
                 Aliases:
-                     - !Ref DomainName
+                    - !Ref DomainName
                 CNAMEs:
-                     - !Ref DomainName
+                    - !Ref DomainName
                 ViewerCertificate:
-                         AcmCertificateArn: arn:aws:acm:us-east-1:767397839074:certificate/8ddd4c0d-1ef3-4f40-b226-6f96c67b4dfe
-                         SslSupportMethod: sni-only
+                    AcmCertificateArn: arn:aws:acm:us-east-1:767397839074:certificate/8ddd4c0d-1ef3-4f40-b226-6f96c67b4dfe
+                    SslSupportMethod: sni-only
                 HttpVersion: http2
                 Origins:
-                  - DomainName: "${ExpressLambdaFunction}.execute-api.${AWS::Region}.amazonaws.com"
-                    OriginPath: !Sub "/${Stage}"
-                    Id: ApiOrigin
-                    CustomOriginConfig:
-                        HTTPPort: 80
-                        HTTPSPort: 443
-                        OriginProtocolPolicy: https-only
+                    - DomainName: !Sub "${ServerlessDeploymentApplication}.execute-api.${AWS::Region}.amazonaws.com"
+                      OriginPath: !Sub "/${Stage}"
+                      Id: ApiOrigin
+                      CustomOriginConfig:
+                          HTTPPort: 80
+                          HTTPSPort: 443
+                          OriginProtocolPolicy: https-only
                 DefaultCacheBehavior:
                     Compress: "true"
                     AllowedMethods:
@@ -209,7 +197,6 @@ Resources:
                     CachePolicyId: !Ref CacheId
                     OriginRequestPolicyId: "b689b0a8-53d0-40ab-baf2-68738e2966ac"
 
-
 Outputs:
     LambdaFunctionConsoleUrl:
         Description: Console URL for the Lambda Function.
@@ -217,12 +204,11 @@ Outputs:
 
     ApiGatewayApiConsoleUrl:
         Description: Console URL for the API Gateway API's Stage.
-        Value: !Sub https://${AWS::Region}.console.aws.amazon.com/apigateway/home?region=${AWS::Region}#/apis/${ExpressApi}/stages/${Stage}
+        Value: !Sub https://${AWS::Region}.console.aws.amazon.com/apigateway/home?region=${AWS::Region}#/apis/${ServerlessDeploymentApplication}/stages/${Stage}
 
     ApiUrl:
-        Description: Invoke URL for your API. Clicking this link will perform a GET request
-            on the root resource of your API.
-        Value: !Sub https://${ExpressApi}.execute-api.${AWS::Region}.amazonaws.com/
+        Description: Invoke URL for your API.
+        Value: !Sub https://${ServerlessDeploymentApplication}.execute-api.${AWS::Region}.amazonaws.com/
 
     LambdaFunctionName:
         Description: Name of the Serverless Express Lambda Function
