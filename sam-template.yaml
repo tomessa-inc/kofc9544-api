@@ -1,3 +1,83 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Serverless Express KOFC9544 API powered by API Gateway and Lambda
+Parameters:
+    ParentDomainName:
+        Type: String
+        Description: API Domain name
+        Default: "kofc9544.ca"
+    DomainName:
+        Type: String
+        Description: API Domain name
+        Default: $DomainName
+    Certificate:
+        Type: String
+        Description: Certificate
+        Default: $Certificate
+    BucketNameImages:
+        Type: String
+        Description: Bucket for Images
+        Default: $BucketNameImages
+    Stage:
+        Type: String
+        Description: Bucket for Images
+        Default: $Stage
+    DbHost:
+        Type: String
+        Description: Bucket for Images
+        Default: $DbHost
+    DbName:
+        Type: String
+        Description: Bucket for Images
+        Default: $DbName
+    DbUserName:
+        Type: String
+        Description: Bucket for Images
+        Default: $DbUserName
+    DbPassword:
+        Type: String
+        Description: Bucket for Images
+        Default: $DbPassword
+    NodeEnv:
+        Type: String
+        Description: Bucket for Images
+        Default: $NodeEnv
+
+    TokenSecret:
+        Type: String
+        Description: Token Secret
+        Default: $TokenSecret
+    CacheId:
+        Type: String
+        Description: Cache ID
+        Default: $CacheId
+
+    RDSHost:
+        Type: String
+        Description: RDS Host URL
+        Default: $RDSHost
+
+    RDSDBName:
+        Type: String
+        Description: RDS Database
+        Default: $RDSDBName
+
+    DEBUG:
+        Type: String
+        Description: Cache ID
+        Default: sequelize:sql*
+
+
+Conditions:
+    UseDomainName: !Not
+        - !Equals
+            - !Ref DomainName
+            - ''
+    UseCertificate: !Not
+        - !Equals
+            - !Ref Certificate
+            - ''
 Resources:
     ExpressApi:
         Type: AWS::Serverless::Api
