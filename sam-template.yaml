@@ -1,79 +1,3 @@
----
-AWSTemplateFormatVersion: '2010-09-09'
-Transform: AWS::Serverless-2016-10-31
-Description: Serverless Express KOFC9544 API powered by API Gateway and Lambda
-Parameters:
-    ParentDomainName:
-        Type: String
-        Description: API Domain name
-        Default: "kofc9544.ca"
-    DomainName:
-        Type: String
-        Description: API Domain name
-        Default: $DomainName
-    Certificate:
-        Type: String
-        Description: Certificate
-        Default: $Certificate
-    BucketNameImages:
-        Type: String
-        Description: Bucket for Images
-        Default: $BucketNameImages
-    Stage:
-        Type: String
-        Description: Stage name
-        Default: $Stage
-    DbHost:
-        Type: String
-        Description: DB Host
-        Default: $DbHost
-    DbName:
-        Type: String
-        Description: DB Name
-        Default: $DbName
-    DbUserName:
-        Type: String
-        Description: DB Username
-        Default: $DbUserName
-    DbPassword:
-        Type: String
-        Description: DB Password
-        Default: $DbPassword
-    NodeEnv:
-        Type: String
-        Description: Node Environment
-        Default: $NodeEnv
-    TokenSecret:
-        Type: String
-        Description: Token Secret
-        Default: $TokenSecret
-    CacheId:
-        Type: String
-        Description: Cache ID
-        Default: $CacheId
-    RDSHost:
-        Type: String
-        Description: RDS Host URL
-        Default: $RDSHost
-    RDSDBName:
-        Type: String
-        Description: RDS Database
-        Default: $RDSDBName
-    DEBUG:
-        Type: String
-        Description: Debug setting
-        Default: sequelize:sql*
-
-Conditions:
-    UseDomainName: !Not
-        - !Equals
-            - !Ref DomainName
-            - ''
-    UseCertificate: !Not
-        - !Equals
-            - !Ref Certificate
-            - ''
-
 Globals:
     Api:
         BinaryMediaTypes:
@@ -83,6 +7,11 @@ Globals:
             - multipart/form-data
 
 Resources:
+    ExpressApi:
+        Type: AWS::Serverless::Api
+        Properties:
+            StageName: !Ref Stage
+
     ExpressLambdaFunction:
         Type: AWS::Serverless::Function
         Properties:
@@ -110,7 +39,7 @@ Resources:
                     Properties:
                         Path: /{proxy+}
                         Method: ANY
-                        StageName: !Ref Stage
+                        RestApiId: !Ref ExpressApi
             Policies:
                 - SESBulkTemplatedCrudPolicy_v2:
                       IdentityName: kofc9544.ca
@@ -175,7 +104,7 @@ Resources:
                     SslSupportMethod: sni-only
                 HttpVersion: http2
                 Origins:
-                    - DomainName: !Sub "${ServerlessDeploymentApplication}.execute-api.${AWS::Region}.amazonaws.com"
+                    - DomainName: !Sub "${ExpressApi}.execute-api.${AWS::Region}.amazonaws.com"
                       OriginPath: !Sub "/${Stage}"
                       Id: ApiOrigin
                       CustomOriginConfig:
@@ -204,11 +133,11 @@ Outputs:
 
     ApiGatewayApiConsoleUrl:
         Description: Console URL for the API Gateway API's Stage.
-        Value: !Sub https://${AWS::Region}.console.aws.amazon.com/apigateway/home?region=${AWS::Region}#/apis/${ServerlessDeploymentApplication}/stages/${Stage}
+        Value: !Sub https://${AWS::Region}.console.aws.amazon.com/apigateway/home?region=${AWS::Region}#/apis/${ExpressApi}/stages/${Stage}
 
     ApiUrl:
         Description: Invoke URL for your API.
-        Value: !Sub https://${ServerlessDeploymentApplication}.execute-api.${AWS::Region}.amazonaws.com/
+        Value: !Sub https://${ExpressApi}.execute-api.${AWS::Region}.amazonaws.com/
 
     LambdaFunctionName:
         Description: Name of the Serverless Express Lambda Function
