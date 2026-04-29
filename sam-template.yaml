@@ -68,7 +68,6 @@ Parameters:
         Description: Cache ID
         Default: sequelize:sql*
 
-
 Conditions:
     UseDomainName: !Not
         - !Equals
@@ -78,6 +77,7 @@ Conditions:
         - !Equals
             - !Ref Certificate
             - ''
+
 Resources:
     ExpressApi:
         Type: AWS::Serverless::Api
@@ -111,12 +111,271 @@ Resources:
             MemorySize: 2048
             Timeout: 900
             Events:
-                ApiEvent:
+                AuthLogin:
                     Type: Api
                     Properties:
-                        Path: /{proxy+}
-                        Method: ANY
                         RestApiId: !Ref ExpressApi
+                        Path: /auth/login
+                        Method: ANY
+                AuthLogout:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /auth/logout
+                        Method: ANY
+                AuthCodes:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /auth/codes
+                        Method: ANY
+
+
+                UserCodes:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /user/codes
+                        Method: ANY
+
+                UserInfo:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /user/info
+                        Method: ANY
+
+                GolfRegister:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/register
+                        Method: ANY
+
+                GolfPLayerUpdate:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/player/{id}
+                        Method: ANY
+
+
+                GolfPlayerList:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
+                        Method: ANY
+                GolfPlayerTeamListValue:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/teams-missing-players-label-value/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
+                        Method: ANY
+
+                GolfHoleList:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/hole/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
+                        Method: ANY
+
+                GolfHoleMissingTeamsLV:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/holes-missing-teams-label-value/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
+                        Method: ANY
+
+                GolfHoleNew:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/hole-new
+                        Method: ANY
+
+                GolfHoleUpdate:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/{id}
+                        Method: ANY
+
+                GolfTeamList:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/team/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
+                        Method: ANY
+                Mail:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /mail
+                        Method: ANY
+                Media:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /media
+                        Method: ANY
+                UserSignIn:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /user/login
+                        Method: ANY
+                UserSignUp:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /user/sign-up
+                        Method: ANY
+                UserSignOut:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /user/sign-out
+                        Method: ANY
+                UserForgotPassword:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /user/forgot-password
+                        Method: ANY
+
+                UserForgotPasswordToken:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /user/forgot-password-token/{token}
+                        Method: ANY
+                UserResetPassword:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /user/reset-password
+                        Method: ANY
+                UserResetPasswordToken:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /user/reset-password-token/{token}
+                        Method: ANY
+                UserList:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /user/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
+                        Method: ANY
+                UserListFilter:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /user/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}/{filterQuery}
+                        Method: ANY
+                UserId:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /user/id/{id}
+                        Method: ANY
+                AccessList:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /access/list/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
+                        Method: ANY
+                MediaId:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /media/id/{id}
+                        Method: ANY
+                MediaImagesByIdPagination:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /media/id/{id}/image/{pageIndex}/{pageSize}/{sort}/{order}
+                        Method: ANY
+                MediaImagesPrimary:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /media/primary/logged/{logged}
+                        Method: GET
+                MediaImagesPrimaryWithCode:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /media/primary/{code}
+                        Method: GET
+
+                MediaImagesAllGalleries:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /media/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
+                        Method: ANY
+
+                MediaAllImages:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /media/image/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
+                        Method: ANY
+                MediaImagesById:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /media/image/id/{id}
+                        Method: ANY
+
+                MediaAllTags:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /media/tag/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{query}
+                        Method: ANY
+
+                MediaTagByLabelValue:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /media/tag/list
+                        Method: ANY
+
+                MediaNewTag:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /media/tag/new
+                        Method: ANY
+                EventCreate:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /event
+                        Method: ANY
+
+                EventMonth:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /event/month/
+                        Method: ANY
+                EventMonthCache:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /event/month/{month}/year/{year}
+                        Method: ANY
+                EventMonthPublish:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /event/publish
+                        Method: ANY
             Policies:
                 - SESBulkTemplatedCrudPolicy_v2:
                       IdentityName: kofc9544.ca
@@ -132,98 +391,99 @@ Resources:
                             - cloudfront:CreateInvalidation
                         Resource: '*'
 
-            WarmupRule:
-                Type: AWS::Events::Rule
-                Properties:
-                    ScheduleExpression: rate(2 minutes)
-                    State: ENABLED
-                    Description: Rule to ping Lambda function every 2 minutes to keep it warm
-                    Targets:
-                        - Id: TargetFunction
-                          Arn: !GetAtt ExpressLambdaFunction.Arn
-                          Input: '{"source": "warmup-ping"}'
+
+    WarmupRule:
+        Type: AWS::Events::Rule
+        Properties:
+            ScheduleExpression: rate(2 minutes)
+            State: ENABLED
+            Description: Rule to ping Lambda function every 2 minutes to keep it warm
+            Targets:
+                - Id: TargetFunction
+                  Arn: !GetAtt ExpressLambdaFunction.Arn
+                  Input: '{"source": "warmup-ping"}'
 
 
-            # Permission for EventBridge to invoke Lambda
-            WarmupPermission:
-                Type: AWS::Lambda::Permission
-                Properties:
-                    Action: lambda:InvokeFunction
-                    FunctionName: !Ref ExpressLambdaFunction
-                    Principal: events.amazonaws.com
-                    SourceArn: !GetAtt WarmupRule.Arn
+    # Permission for EventBridge to invoke Lambda
+    WarmupPermission:
+        Type: AWS::Lambda::Permission
+        Properties:
+            Action: lambda:InvokeFunction
+            FunctionName: !Ref ExpressLambdaFunction
+            Principal: events.amazonaws.com
+            SourceArn: !GetAtt WarmupRule.Arn
 
 
 
-            MyApiRoute53RecordSetGroup:
-                Type: AWS::Route53::RecordSetGroup
-                #     Condition: UseDomainName
-                Properties:
-                    HostedZoneName: !Sub ${ParentDomainName}.
-                    RecordSets:
-                        - Name: !Sub "${DomainName}."
-                          Type: A
-                          AliasTarget:
-                              EvaluateTargetHealth: true
-                              HostedZoneId: Z2FDTNDATAQYW2
-                              DNSName: !Sub ${Distribution.DomainName}.
+    MyApiRoute53RecordSetGroup:
+        Type: AWS::Route53::RecordSetGroup
+        #     Condition: UseDomainName
+        Properties:
+            HostedZoneName: !Sub ${ParentDomainName}.
+            RecordSets:
+                - Name: !Sub "${DomainName}."
+                  Type: A
+                  AliasTarget:
+                      EvaluateTargetHealth: true
+                      HostedZoneId: Z2FDTNDATAQYW2
+                      DNSName: !Sub ${Distribution.DomainName}.
 
-            Distribution:
-                Type: AWS::CloudFront::Distribution
-                Properties:
-                    Tags:
-                        - Key: Environment
-                          Value: !Ref NodeEnv
+    Distribution:
+        Type: AWS::CloudFront::Distribution
+        Properties:
+            Tags:
+                - Key: Environment
+                  Value: !Ref NodeEnv
 
-                    DistributionConfig:
-                        Enabled: "true"
-                        Comment: !Ref AWS::StackName
-                        Aliases:
-                            - !Ref DomainName
-                        CNAMEs:
-                            - !Ref DomainName
-                        ViewerCertificate:
-                            AcmCertificateArn: arn:aws:acm:us-east-1:767397839074:certificate/8ddd4c0d-1ef3-4f40-b226-6f96c67b4dfe
-                            SslSupportMethod: sni-only
-                        HttpVersion: http2
-                        Origins:
-                            - DomainName: !Sub "${ExpressApi}.execute-api.${AWS::Region}.amazonaws.com"
-                              OriginPath: !Sub "/${Stage}"
-                              Id: ApiOrigin
-                              CustomOriginConfig:
-                                  HTTPPort: 80
-                                  HTTPSPort: 443
-                                  OriginProtocolPolicy: https-only
-                        DefaultCacheBehavior:
-                            Compress: "true"
-                            AllowedMethods:
-                                - GET
-                                - HEAD
-                                - OPTIONS
-                                - PUT
-                                - POST
-                                - PATCH
-                                - DELETE
-                            TargetOriginId: ApiOrigin
-                            ViewerProtocolPolicy: "allow-all"
-                            CachePolicyId: !Ref CacheId
-                            OriginRequestPolicyId: "b689b0a8-53d0-40ab-baf2-68738e2966ac"
+            DistributionConfig:
+                Enabled: "true"
+                Comment: !Ref AWS::StackName
+                Aliases:
+                    - !Ref DomainName
+                CNAMEs:
+                    - !Ref DomainName
+                ViewerCertificate:
+                    AcmCertificateArn: arn:aws:acm:us-east-1:767397839074:certificate/8ddd4c0d-1ef3-4f40-b226-6f96c67b4dfe
+                    SslSupportMethod: sni-only
+                HttpVersion: http2
+                Origins:
+                    - DomainName: !Sub "${ExpressApi}.execute-api.${AWS::Region}.amazonaws.com"
+                      OriginPath: !Sub "/${Stage}"
+                      Id: ApiOrigin
+                      CustomOriginConfig:
+                          HTTPPort: 80
+                          HTTPSPort: 443
+                          OriginProtocolPolicy: https-only
+                DefaultCacheBehavior:
+                    Compress: "true"
+                    AllowedMethods:
+                        - GET
+                        - HEAD
+                        - OPTIONS
+                        - PUT
+                        - POST
+                        - PATCH
+                        - DELETE
+                    TargetOriginId: ApiOrigin
+                    ViewerProtocolPolicy: "allow-all"
+                    CachePolicyId: !Ref CacheId
+                    OriginRequestPolicyId: "b689b0a8-53d0-40ab-baf2-68738e2966ac"
 
 
-        Outputs:
-            LambdaFunctionConsoleUrl:
-                Description: Console URL for the Lambda Function.
-                Value: !Sub https://${AWS::Region}.console.aws.amazon.com/lambda/home?region=${AWS::Region}#/functions/${ExpressLambdaFunction}
+Outputs:
+    LambdaFunctionConsoleUrl:
+        Description: Console URL for the Lambda Function.
+        Value: !Sub https://${AWS::Region}.console.aws.amazon.com/lambda/home?region=${AWS::Region}#/functions/${ExpressLambdaFunction}
 
-            ApiGatewayApiConsoleUrl:
-                Description: Console URL for the API Gateway API's Stage.
-                Value: !Sub https://${AWS::Region}.console.aws.amazon.com/apigateway/home?region=${AWS::Region}#/apis/${ExpressApi}/stages/${Stage}
+    ApiGatewayApiConsoleUrl:
+        Description: Console URL for the API Gateway API's Stage.
+        Value: !Sub https://${AWS::Region}.console.aws.amazon.com/apigateway/home?region=${AWS::Region}#/apis/${ExpressApi}/stages/${Stage}
 
-            ApiUrl:
-                Description: Invoke URL for your API. Clicking this link will perform a GET request
-                    on the root resource of your API.
-                Value: !Sub https://${ExpressApi}.execute-api.${AWS::Region}.amazonaws.com/
+    ApiUrl:
+        Description: Invoke URL for your API. Clicking this link will perform a GET request
+            on the root resource of your API.
+        Value: !Sub https://${ExpressApi}.execute-api.${AWS::Region}.amazonaws.com/
 
-            LambdaFunctionName:
-                Description: Name of the Serverless Express Lambda Function
-                Value: !Ref ExpressLambdaFunction
+    LambdaFunctionName:
+        Description: Name of the Serverless Express Lambda Function
+        Value: !Ref ExpressLambdaFunction
