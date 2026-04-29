@@ -14,9 +14,9 @@ userRouter.post("/forgot-password",                                             
 userRouter.post("/reset-password",                                                            defineEventHandler(UserController.apiResetPassword));
 
 // Auth
-userRouter.post("/sign-in",                                                                                defineEventHandler(UserController.apiPostSignIn));
-userRouter.post("/sign-out",                                                                               defineEventHandler(UserController.apiPostSignOut));
-userRouter.post("/sign-up",                                                                                defineEventHandler(UserController.apiPostSignUp));
+//userRouter.post("/sign-in",                                                                                defineEventHandler(UserController.apiPostSignIn));
+//userRouter.post("/sign-out",                                                                               defineEventHandler(UserController.apiPostSignOut));
+//userRouter.post("/sign-up",                                                                                defineEventHandler(UserController.apiPostSignUp));
 
 // Users
 userRouter.post("/page-index/:pageIndex/page-size/:pageSize?/:sort?/:order?/:filterQuery?",               defineEventHandler(UserController.getAllUsers));
