@@ -116,7 +116,7 @@ Resources:
                     Properties:
                         Path: /{proxy+}
                         Method: ANY
-                        ApiId: !Ref ExpressApi
+                        RestApiId: !Ref ExpressApi
 
             Policies:
                 - SESBulkTemplatedCrudPolicy_v2:
