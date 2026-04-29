@@ -111,8 +111,8 @@ Resources:
             MemorySize: 2048
             Timeout: 900
             Events:
-                ThePaths:
-                    Type: Api
+                ApiEvent:
+                    Type: HttpApi
                     Properties:
                         Path: /{proxy+}
                         Method: ANY
