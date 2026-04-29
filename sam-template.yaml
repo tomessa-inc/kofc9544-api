@@ -111,10 +111,12 @@ Resources:
             MemorySize: 2048
             Timeout: 900
             Events:
-                Properties:
-                    Path: /{proxy+}
-                    Method: ANY
-                    ApiId: !Ref ExpressApi
+                ThePaths:
+                    Type: Api
+                    Properties:
+                        Path: /{proxy+}
+                        Method: ANY
+                        ApiId: !Ref ExpressApi
 
             Policies:
                 - SESBulkTemplatedCrudPolicy_v2:
