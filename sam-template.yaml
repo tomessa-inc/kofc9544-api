@@ -78,17 +78,16 @@ Conditions:
             - !Ref Certificate
             - ''
 
-Resources:
-    ExpressApi:
-        Type: AWS::Serverless::Api
-        Properties:
-            StageName: !Ref Stage
-            BinaryMediaTypes:
-                - image/png
-                - image/jpg
-                - image/jpeg
-                - multipart/form-data
+Globals:
+    Api:
+        StageName: !Ref Stage
+        BinaryMediaTypes:
+            - image/png
+            - image/jpg
+            - image/jpeg
+            - multipart/form-data
 
+Resources:
     ExpressLambdaFunction:
         Type: AWS::Serverless::Function
         Properties:
@@ -188,7 +187,7 @@ Resources:
                          SslSupportMethod: sni-only
                 HttpVersion: http2
                 Origins:
-                  - DomainName: !Sub "${ExpressApi}.execute-api.${AWS::Region}.amazonaws.com"
+                  - DomainName: "${ExpressLambdaFunction}.execute-api.${AWS::Region}.amazonaws.com"
                     OriginPath: !Sub "/${Stage}"
                     Id: ApiOrigin
                     CustomOriginConfig:
