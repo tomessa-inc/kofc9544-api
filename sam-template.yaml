@@ -112,7 +112,7 @@ Resources:
             Timeout: 900
             Events:
                 ApiEvent:
-                    Type: HttpApi
+                    Type: Api
                     Properties:
                         Path: /{proxy+}
                         Method: ANY
