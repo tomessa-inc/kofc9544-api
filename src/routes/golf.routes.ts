@@ -2,7 +2,7 @@ import { createRouter, defineEventHandler } from "h3";
 import { GolfController } from "../controllers/golf.controller";
 
 const golfRouter = createRouter();
-/*golfRouter.post("/hole/page-index/:pageIndex/page-size/:pageSize/:sort/:order", defineEventHandler(GolfController.apiGetAllHoles));
+golfRouter.post("/hole/page-index/:pageIndex/page-size/:pageSize/:sort/:order", defineEventHandler(GolfController.apiGetAllHoles));
 golfRouter.post("/holes-missing-teams-label-value/page-index/:pageIndex/page-size/:pageSize/:sort/:order", defineEventHandler(GolfController.getAllHolesNeedingTeamsLabelValue));
 
 golfRouter.post("/hole-new", defineEventHandler(GolfController.apiCreateHole));
@@ -20,5 +20,5 @@ golfRouter.post("/players-missing-teams-label-value/page-index/:pageIndex/page-s
 golfRouter.post("/team/page-index/:pageIndex/page-size/:pageSize/:sort/:order",                              defineEventHandler(GolfController.apiGetAllTeams));
 golfRouter.post("/team/id/:id/page-index/:pageIndex/page-size/:pageSize/:sort/:order",                       defineEventHandler(GolfController.apiGetPlayersByTeamId));
 golfRouter.post("/player-csv/:sort/:order",        defineEventHandler(GolfController.getPlayerCSV));
-*/
+
 export { golfRouter };

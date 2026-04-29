@@ -131,13 +131,6 @@ Resources:
                         Method: ANY
 
 
-                UserCodes:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /user/codes
-                        Method: ANY
-
                 UserInfo:
                     Type: Api
                     Properties:
@@ -255,24 +248,7 @@ Resources:
                         RestApiId: !Ref ExpressApi
                         Path: /media
                         Method: ANY
-                UserSignIn:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /user/login
-                        Method: ANY
-                UserSignUp:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /user/sign-up
-                        Method: ANY
-                UserSignOut:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /user/sign-out
-                        Method: ANY
+
                 UserForgotPassword:
                     Type: Api
                     Properties:
