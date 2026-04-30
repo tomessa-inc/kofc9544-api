@@ -192,14 +192,14 @@ Resources:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
-                        Path: /golf/team/{id}
+                        Path: /golf/team-update/{id}
                         Method: ANY
 
                 GolfTeamDelete:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
-                        Path: /golf/team/{teamId}
+                        Path: /golf/team-delete/{teamId}
                         Method: ANY
 
                 GolfHoleList:
