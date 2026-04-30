@@ -322,7 +322,7 @@ export class GolfController {
                 individual: false,
                 email_type:"register"
             }
-            console.log("defe")
+            console.log("defeddd")
             console.log(bodyArray)
 //            bodyArray.push(body);
 /*
