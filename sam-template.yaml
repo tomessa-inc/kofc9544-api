@@ -123,13 +123,6 @@ Resources:
                         RestApiId: !Ref ExpressApi
                         Path: /auth/logout
                         Method: ANY
-                AuthCodes:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /auth/codes
-                        Method: ANY
-
 
                 UserCodes:
                     Type: Api
@@ -195,12 +188,12 @@ Resources:
                         Path: /golf/team-update/{id}
                         Method: ANY
 
-                GolfTeamDelete:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /golf/team-delete/{teamId}
-                        Method: ANY
+          #      GolfTeamDelete:
+           #         Type: Api
+            #        Properties:
+             #           RestApiId: !Ref ExpressApi
+             #           Path: /golf/team-delete/{teamId}
+             #           Method: ANY
 
                 GolfHoleList:
                     Type: Api
@@ -247,24 +240,6 @@ Resources:
                     Properties:
                         RestApiId: !Ref ExpressApi
                         Path: /media
-                        Method: ANY
-                UserSignIn:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /user/login
-                        Method: ANY
-                UserSignUp:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /user/sign-up
-                        Method: ANY
-                UserSignOut:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /user/sign-out
                         Method: ANY
                 UserForgotPassword:
                     Type: Api
