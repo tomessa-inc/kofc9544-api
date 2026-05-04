@@ -89,6 +89,269 @@ Resources:
                 - image/jpeg
                 - multipart/form-data
 
+    ExpressLambdaFunction:
+        Type: AWS::Serverless::Function
+        Properties:
+            CodeUri: ./dist
+            PackageType: Zip
+            Runtime: nodejs20.x
+            Handler: lambda.handler
+            Environment:
+                Variables:
+                    DB_NAME: !Ref DbName
+                    STAGE: !Ref Stage
+                    DB_HOST: !Ref DbHost
+                    DB_USERNAME: !Ref DbUserName
+                    DB_PASSWORD: !Ref DbPassword
+                    NODE_ENV: !Ref NodeEnv
+                    TOKEN_SECRET: !Ref TokenSecret
+                    DEBUG: !Ref DEBUG
+                    RDS_HOST: !Ref RDSHost
+                    RDS_DB: !Ref RDSDBName
+            MemorySize: 2048
+            Timeout: 900
+            Events:
+                AuthLogin:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /auth/login
+                        Method: ANY
+                AuthLogout:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /auth/logout
+                        Method: ANY
+
+                UserCodes:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /user/codes
+                        Method: ANY
+
+                UserInfo:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /user/info
+                        Method: ANY
+
+                GolfRegister:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/register
+                        Method: ANY
+
+                GolfPLayerUpdate:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/player/{id}
+                        Method: ANY
+
+
+                GolfPlayerList:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
+                        Method: ANY
+                GolfPlayerTeamListValue:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/teams-missing-players-label-value/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
+                        Method: ANY
+
+                GolfPlayersByCSV:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/player-csv/{sort}/{order}
+                        Method: ANY
+
+
+                GolfTeamById:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/team/{id}
+                        Method: ANY
+
+                GolfPlayersByTeam:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/team/id/{id}/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
+                        Method: ANY
+
+                GolfTeamUpdate:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/team-update/{id}
+                        Method: ANY
+
+                GolfTeamDelete:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/team-delete/{teamId}
+                        Method: ANY
+
+                GolfHoleList:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/hole/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
+                        Method: ANY
+
+                GolfHoleMissingTeamsLV:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/holes-missing-teams-label-value/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
+                        Method: ANY
+
+                GolfHoleNew:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/hole-new
+                        Method: ANY
+
+                GolfHoleUpdate:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/{id}
+                        Method: ANY
+                GolfTeamList:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /golf/team/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
+                        Method: ANY
+                Mail:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /mail
+                        Method: ANY
+                UserForgotPassword:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /user/forgot-password
+                        Method: ANY
+
+                UserForgotPasswordToken:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /user/forgot-password-token/{token}
+                        Method: ANY
+                UserResetPassword:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /user/reset-password
+                        Method: ANY
+                UserResetPasswordToken:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /user/reset-password-token/{token}
+                        Method: ANY
+                UserList:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /user/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
+                        Method: ANY
+                UserListFilter:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /user/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}/{filterQuery}
+                        Method: ANY
+                UserId:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /user/id/{id}
+                        Method: ANY
+                AccessList:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /access/list/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
+                        Method: ANY
+                EventCreate:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /event
+                        Method: ANY
+
+                EventMonth:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /event/month/
+                        Method: ANY
+                EventMonthCache:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /event/month/{month}/year/{year}
+                        Method: ANY
+                EventMonthPublish:
+                    Type: Api
+                    Properties:
+                        RestApiId: !Ref ExpressApi
+                        Path: /event/publish
+                        Method: ANY
+            Policies:
+                - SESBulkTemplatedCrudPolicy_v2:
+                      IdentityName: kofc9544.ca
+                      TemplateName: DefaultEmailTemplate
+                - SESEmailTemplateCrudPolicy: {}
+                - S3WritePolicy:
+                      BucketName: !Ref BucketNameImages
+                - Version: '2012-10-17'
+                  Statement:
+                      - Effect: Allow
+                        Action:
+                            - tag:GetResources
+                            - cloudfront:CreateInvalidation
+                        Resource: '*'
+
+
+    WarmupRule:
+        Type: AWS::Events::Rule
+        Properties:
+            ScheduleExpression: rate(2 minutes)
+            State: ENABLED
+            Description: Rule to ping Lambda function every 2 minutes to keep it warm
+            Targets:
+                - Id: TargetFunction
+                  Arn: !GetAtt ExpressLambdaFunction.Arn
+                  Input: '{"source": "warmup-ping"}'
+
+
+    # Permission for EventBridge to invoke Lambda
+    WarmupPermission:
+        Type: AWS::Lambda::Permission
+        Properties:
+            Action: lambda:InvokeFunction
+            FunctionName: !Ref ExpressLambdaFunction
+            Principal: events.amazonaws.com
+            SourceArn: !GetAtt WarmupRule.Arn
+
 
 
     MyApiRoute53RecordSetGroup:
@@ -147,6 +410,9 @@ Resources:
 
 
 Outputs:
+    LambdaFunctionConsoleUrl:
+        Description: Console URL for the Lambda Function.
+        Value: !Sub https://${AWS::Region}.console.aws.amazon.com/lambda/home?region=${AWS::Region}#/functions/${ExpressLambdaFunction}
 
     ApiGatewayApiConsoleUrl:
         Description: Console URL for the API Gateway API's Stage.
@@ -157,3 +423,6 @@ Outputs:
             on the root resource of your API.
         Value: !Sub https://${ExpressApi}.execute-api.${AWS::Region}.amazonaws.com/
 
+    LambdaFunctionName:
+        Description: Name of the Serverless Express Lambda Function
+        Value: !Ref ExpressLambdaFunction
