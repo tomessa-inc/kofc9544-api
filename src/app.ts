@@ -29,7 +29,7 @@ const allowedOrigins = [
   "http://localhost:5555",
   "http://localhost:4200",
 ];
-
+console.log("sd")
 
 // ✅ Bug 1 fixed: CORS middleware registered BEFORE the router
 app.use(defineEventHandler((event) => {
