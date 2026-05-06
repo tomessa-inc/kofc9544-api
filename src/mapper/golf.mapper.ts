@@ -412,6 +412,27 @@ export class GolfMapper extends BaseMapper {
             return error.toString();
         }
     }
+
+    /**
+     *
+     * @param options
+     * @returns
+     */
+    public async deletePlayer(id) {
+        try {
+
+            const playerSQL = this.DRIZZLE.delete(player).where(eq(player.id, id));
+
+//            console.log('get gallery');
+            //          const gallerySQL = this.DRIZZLE.select().from(gallery).where(eq(gallery.id,options.id)).leftJoin(galleryTag, (galleryTag.GalleryId, gallery.id))
+
+
+            return this.getSQLData(playerSQL.toSQL())
+
+        } catch (error) {
+            return error.toString();
+        }
+    }
 /*
     public async getAllPlayersWithoutTeams(params: paramsOptions) { //: Promise<string[] | string> {
         try {

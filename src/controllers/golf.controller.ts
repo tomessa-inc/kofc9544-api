@@ -471,4 +471,24 @@ export class GolfController {
         }
     });
 
+
+    public static apiDeletePlayer = defineEventHandler(async (event) => {
+        try {
+            const params = getRouterParams(event);
+            const {playerId} = params
+
+            const teams = await golfMapper.deletePlayer(playerId);
+
+            if (typeof teams === "string") {
+                setResponseStatus(event, 500);
+                return useResponseError("InternalServerError", teams);
+            }
+            setResponseStatus(event, 200);
+            return useResponseSuccess(event);
+        } catch (error) {
+            setResponseStatus(event, 500);
+            return useResponseError("InternalServerError", error.toString());
+        }
+    });
+
 }

@@ -8,6 +8,8 @@ golfRouter.post("/holes-missing-teams-label-value/page-index/:pageIndex/page-siz
 golfRouter.post("/hole-new", defineEventHandler(GolfController.apiCreateHole));
 golfRouter.post("/hole/:id", defineEventHandler(GolfController.apiUpdateHoleById));
 golfRouter.delete("/team-delete/:teamId",        defineEventHandler(GolfController.apiDeleteTeam));
+golfRouter.delete("/player-delete/:playerId",        defineEventHandler(GolfController.apiDeletePlayer));
+
 golfRouter.put("/player-update/:id",                                                                           defineEventHandler(GolfController.apiUpdatePlayedById));
 golfRouter.put("/team/:id",                                                                                    defineEventHandler(GolfController.apiUpdateTeamById));
 golfRouter.put("/team-new",                                                                                    defineEventHandler(GolfController.apiCreateTeam));
