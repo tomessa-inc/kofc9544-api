@@ -61,7 +61,7 @@ Parameters:
     RDSDBName:
         Type: String
         Description: RDS Database
-        Default: $RDSDBName
+        Default: $DB_NAME
 
     DEBUG:
         Type: String
@@ -124,11 +124,11 @@ Resources:
                         Path: /auth/logout
                         Method: ANY
 
-                UserCodes:
+                AuthCodes:
                     Type: Api
                     Properties:
                         RestApiId: !Ref ExpressApi
-                        Path: /user/codes
+                        Path: /auth/codes
                         Method: ANY
 
                 UserInfo:
