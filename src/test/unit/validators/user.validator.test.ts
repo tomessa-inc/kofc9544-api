@@ -26,11 +26,17 @@ describe("user validators", () => {
     });
 
     it("validateUserUpdate keeps only editable fields", () => {
-        expect(validateUserUpdate({ firstName: "Tom", password: "pw", token: "t" })).to.deep.equal({ firstName: "Tom", password: "pw" });
+        expect(validateUserUpdate({ firstName: "Tom", password: " long pass ", token: "t" })).to.deep.equal({ firstName: "Tom", password: " long pass " });
+    });
+
+    it("new passwords are kept exactly as typed and must be at least 8 characters", () => {
+        expect(() => validateUserUpdate({ password: "short" })).to.throw(BadRequestError, "Password must be at least 8 characters");
+        expect(() => validateSignUp({ username: "tom", email: "e", password: "short" })).to.throw(BadRequestError, "Password must be at least 8 characters");
+        expect(validateUserUpdate({ firstName: "Tom", password: "" })).to.deep.equal({ firstName: "Tom" });
     });
 
     it("validateSignUp and validateAccess require their fields", () => {
-        expect(validateSignUp({ username: "tom", email: "e", password: "pw" })).to.include({ username: "tom", email: "e", password: "pw" });
+        expect(validateSignUp({ username: "tom", email: "e", password: "long enough" })).to.include({ username: "tom", email: "e", password: "long enough" });
         expect(() => validateSignUp({ username: "tom" })).to.throw(BadRequestError, "Missing required fields");
         expect(validateAccess({ name: "Admin", description: "d" })).to.include({ name: "Admin", description: "d" });
         expect(() => validateAccess({ name: "Admin" })).to.throw(BadRequestError);

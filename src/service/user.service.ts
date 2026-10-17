@@ -4,12 +4,17 @@ import { ConflictError, NotFoundError } from "../errors";
 import { UserMapper, userMapper } from "../mapper/user.mapper";
 import type { WriteResult } from "../mapper/types";
 import { ListParams, toPage } from "../validators/list.validator";
+import { PasswordService, passwordService } from "./password.service";
 
 type UserStore = Pick<UserMapper, "findPage" | "findById" | "findByUserNameOrEmail" | "insert" | "update">;
+type Passwords = Pick<PasswordService, "hash">;
 
 /** Member administration. */
 export class UserService {
-    constructor(private readonly users: UserStore) {}
+    constructor(
+        private readonly users: UserStore,
+        private readonly passwords: Passwords,
+    ) {}
 
     public list(params: ListParams) {
         return this.users.findPage(toPage(params), params.filterQuery || undefined);
@@ -21,8 +26,10 @@ export class UserService {
         return user;
     }
 
-    public update(id: string, changes: UserUpdateDto): Promise<WriteResult> {
-        return this.users.update(id, changes);
+    /** Update a member; a new password is stored hashed. */
+    public async update(id: string, changes: UserUpdateDto): Promise<WriteResult> {
+        const { password, ...rest } = changes;
+        return this.users.update(id, password === undefined ? rest : { ...rest, password: await this.passwords.hash(password) });
     }
 
     public async signUp(dto: SignUpDto): Promise<{ id: string }> {
@@ -35,7 +42,7 @@ export class UserService {
             id,
             userName: dto.username,
             email: dto.email,
-            password: dto.password,
+            password: await this.passwords.hash(dto.password),
             firstName: dto.firstName ?? "",
             lastName: dto.lastName ?? "",
         });
@@ -43,4 +50,4 @@ export class UserService {
     }
 }
 
-export const userService = new UserService(userMapper);
+export const userService = new UserService(userMapper, passwordService);

@@ -53,7 +53,7 @@ Follow the `mvc-solid` skill (`.claude/skills/mvc-solid/SKILL.md`) for all new o
 
 Requires a `.env` file with `TOKEN_SECRET` (JWT signing; startup of auth fails without it), `STAGE`, `NODE_ENV`, `RDS_HOST`, `RDS_DB`. See `sam-template.yaml` for what is injected at deploy time.
 
-Passwords are stored and compared in plain text (`UserMapper.findByCredentials`); moving to hashed passwords needs a migration plan.
+Passwords are hashed with scrypt (`service/password.service.ts`; never store or compare them yourself). Legacy plain-text passwords still sign in and are re-hashed on that login; `npm run passwords:hash` (dry run) / `npm run passwords:hash -- --apply` hashes all remaining ones against the database in `RDS_HOST`/`RDS_DB`. Once that has run everywhere, the plain-text fallback in `PasswordService.verify` can be removed.
 
 ## Deployment
 

@@ -1,6 +1,7 @@
 import type { AccessDto, LoginDto, SignUpDto, UserUpdateDto } from "../dto/user.dto";
 import { BadRequestError } from "../errors";
 import { MissingCredentialsError } from "../errors/auth.errors";
+import { MIN_PASSWORD_LENGTH } from "../service/password.service";
 
 type Body = Record<string, unknown> | undefined;
 
@@ -34,12 +35,21 @@ export function validateUserUpdate(body: Body): UserUpdateDto {
     return pickUserChanges(body ?? {});
 }
 
+/** A new password, taken exactly as typed (never trimmed: sign-in compares it as typed). */
+function newPassword(value: unknown): string {
+    if (typeof value !== "string" || value.length < MIN_PASSWORD_LENGTH) {
+        throw new BadRequestError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`);
+    }
+    return value;
+}
+
 function pickUserChanges(source: Record<string, unknown>): UserUpdateDto {
     const changes: UserUpdateDto = {};
-    for (const field of ["firstName", "lastName", "email", "password"] as const) {
+    for (const field of ["firstName", "lastName", "email"] as const) {
         const value = text(source[field]);
         if (value !== undefined) changes[field] = value;
     }
+    if (source.password !== undefined && source.password !== "") changes.password = newPassword(source.password);
     if (Object.keys(changes).length === 0) throw new BadRequestError("Nothing to update");
     return changes;
 }
@@ -47,9 +57,8 @@ function pickUserChanges(source: Record<string, unknown>): UserUpdateDto {
 export function validateSignUp(body: Body): SignUpDto {
     const username = text(body?.username);
     const email = text(body?.email);
-    const password = typeof body?.password === "string" && body.password ? body.password : undefined;
-    if (!username || !email || !password) throw new BadRequestError("Missing required fields");
-    return { username, email, password, firstName: text(body?.firstName), lastName: text(body?.lastName) };
+    if (!username || !email || !body?.password) throw new BadRequestError("Missing required fields");
+    return { username, email, password: newPassword(body.password), firstName: text(body?.firstName), lastName: text(body?.lastName) };
 }
 
 export function validateAccess(body: Body): AccessDto {

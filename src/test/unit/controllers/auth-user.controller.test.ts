@@ -184,14 +184,14 @@ describe("Auth / User / Access controllers (HTTP contract)", () => {
             const signUp = stub(userService, "signUp", async () => ({ id: "u2" }));
             const client = () => mount(UserController.apiPostSignUp);
 
-            expect((await client().post("/").send({ username: "tom", email: "t@x.ca", password: "pw" })).body.data).to.deep.equal({ message: "User has been created" });
+            expect((await client().post("/").send({ username: "tom", email: "t@x.ca", password: "long enough" })).body.data).to.deep.equal({ message: "User has been created" });
             expect((await client().post("/").send({ email: "t@x.ca" })).status).to.equal(400);
 
             signUp.restore();
             stub(userService, "signUp", async () => {
                 throw new ConflictError("Username already exists");
             });
-            expect((await client().post("/").send({ username: "tom", email: "t@x.ca", password: "pw" })).status).to.equal(409);
+            expect((await client().post("/").send({ username: "tom", email: "t@x.ca", password: "long enough" })).status).to.equal(409);
         });
 
         it("apiUpdateUser (not routed) updates by route id", async () => {
@@ -232,24 +232,43 @@ describe("Auth / User / Access controllers (HTTP contract)", () => {
             process.env.TOKEN_SECRET = secret;
         });
 
-        it("login, info and logout share one recorded session", async () => {
-            const sessions = new Map<string, string>(); // token -> user id
+        function fakeDatabase(storedPassword: string) {
+            const db = { password: storedPassword, sessions: new Map<string, string>(), writes: [] as string[] };
             stub(sqlExecutor, "run", async (q) => {
                 const { sql, params } = q.toSQL();
-                if (sql.includes("`user`.`password` = ?")) return params[0] === "pw" ? [tom] : [];
-                if (sql.startsWith("insert into `user_authentication`")) return sessions.set(params[1] as string, params[0] as string), { affectedRows: 1 };
-                if (sql.startsWith("delete from `user_authentication` where `user_authentication`.`token`")) return sessions.delete(params[0] as string), { affectedRows: 1 };
+                if (sql.includes("`password` from `user` where")) return [{ ...tom, password: db.password }];
+                if (sql.startsWith("update `user` set `password`")) return db.writes.push(sql), (db.password = params[0] as string), { affectedRows: 1 };
+                if (sql.startsWith("insert into `user_authentication`")) return db.sessions.set(params[1] as string, params[0] as string), { affectedRows: 1 };
+                if (sql.startsWith("delete from `user_authentication` where `user_authentication`.`token`")) return db.sessions.delete(params[0] as string), { affectedRows: 1 };
                 if (sql.startsWith("delete from `user_authentication`")) return { affectedRows: 0 };
-                if (sql.includes("inner join `user_authentication`")) return sessions.has(params[0] as string) ? [{ ...tom, realName: "Tom C" }] : [];
+                if (sql.includes("inner join `user_authentication`")) return db.sessions.has(params[0] as string) ? [{ ...tom, realName: "Tom C" }] : [];
                 throw new Error(`unexpected SQL: ${sql}`);
             });
+            return db;
+        }
 
-            const login = await api().post("/auth/login").send({ username: "tom@x.ca", password: "pw" });
+        it("login, info and logout share one recorded session, and the password never reaches the client", async () => {
+            fakeDatabase("legacy-plain-text");
+
+            const login = await api().post("/auth/login").send({ username: "tom@x.ca", password: "legacy-plain-text" });
             const token = login.body.data.accessToken;
 
+            expect(login.body.data.user).to.not.have.property("password");
             expect((await api().post("/user/info").set("Authorization", `Bearer ${token}`)).body.data).to.include({ id: "u1" });
             await api().post("/auth/logout").set("Authorization", `Bearer ${token}`);
             expect((await api().post("/user/info").set("Authorization", `Bearer ${token}`)).body.data).to.equal("");
+        });
+
+        it("a plain-text password is re-hashed on login, and the hash then works (production scrypt settings)", async () => {
+            const db = fakeDatabase("legacy-plain-text");
+
+            expect((await api().post("/auth/login").send({ username: "tom@x.ca", password: "legacy-plain-text" })).status).to.equal(200);
+            expect(db.writes).to.have.length(1);
+            expect(db.password).to.match(/^scrypt\$131072\$8\$1\$/);
+
+            expect((await api().post("/auth/login").send({ username: "tom@x.ca", password: "legacy-plain-text" })).status).to.equal(200);
+            expect((await api().post("/auth/login").send({ username: "tom@x.ca", password: "wrong" })).status).to.equal(400);
+            expect(db.writes).to.have.length(1);
         });
     });
 });

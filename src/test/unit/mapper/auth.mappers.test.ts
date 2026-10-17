@@ -6,19 +6,31 @@ import { fakeExecutor } from "../helpers/fake-executor";
 
 describe("auth mappers", () => {
     describe("UserMapper", () => {
-        it("findByCredentials matches the password plus email or id, returning the first profile", async () => {
-            const db = fakeExecutor([{ id: "u1" }]);
+        it("findLoginCandidates looks the login up by email or id (the password is checked in code, not SQL)", async () => {
+            const db = fakeExecutor([{ id: "u1", password: "scrypt$..." }]);
 
-            expect(await new UserMapper(db).findByCredentials("tom@x.ca", "pw")).to.deep.equal({ id: "u1" });
-            expect(db.last.sql).to.include("where (`user`.`password` = ? and (`user`.`email` = ? or `user`.`id` = ?)) limit ?");
-            expect(db.last.params).to.deep.equal(["pw", "tom@x.ca", "tom@x.ca", 1]);
+            expect(await new UserMapper(db).findLoginCandidates("tom@x.ca")).to.deep.equal([{ id: "u1", password: "scrypt$..." }]);
+            expect(db.last.sql).to.include("`password` from `user` where (`user`.`email` = ? or `user`.`id` = ?) limit ?");
+            expect(db.last.params).to.deep.equal(["tom@x.ca", "tom@x.ca", 5]);
+        });
+
+        it("setPassword stores a new hash; findUnhashedPasswords finds values that are not scrypt hashes", async () => {
+            const db = fakeExecutor([]);
+            const users = new UserMapper(db);
+
+            await users.setPassword("u1", "scrypt$hash");
+            await users.findUnhashedPasswords();
+
+            expect(db.calls[0].sql).to.equal("update `user` set `password` = ? where `user`.`id` = ?");
+            expect(db.calls[0].params).to.deep.equal(["scrypt$hash", "u1"]);
+            expect(db.calls[1].sql).to.equal("select `id`, `password` from `user` where `user`.`password` not like ?");
+            expect(db.calls[1].params).to.deep.equal(["scrypt$%"]);
         });
 
         it("profile lookups never select the password or token columns", async () => {
             const db = fakeExecutor([]);
             const users = new UserMapper(db);
 
-            await users.findByCredentials("a", "b");
             await users.findByEmail("a");
             await users.findById("u1");
             await users.findPage({ offset: 0, limit: 10 });

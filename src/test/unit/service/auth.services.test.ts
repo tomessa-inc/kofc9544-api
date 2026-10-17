@@ -5,6 +5,7 @@ import { InvalidCredentialsError } from "../../../errors/auth.errors";
 import { TokenType } from "../../../mapper/session-token.mapper";
 import { AccessService } from "../../../service/access.service";
 import { AuthService } from "../../../service/auth.service";
+import { PasswordService } from "../../../service/password.service";
 import { TokenService } from "../../../service/token.service";
 import { UserService } from "../../../service/user.service";
 import { parseListParams } from "../../../validators/list.validator";
@@ -29,6 +30,9 @@ async function rejects(promise: Promise<unknown>): Promise<Error> {
 }
 
 const tom = { id: "u1", firstName: "Tom", lastName: "C", email: "tom@x.ca", roles: ["admin"] };
+
+/** Cheap scrypt settings so tests stay fast (production uses DEFAULT_SCRYPT). */
+const passwords = new PasswordService({ N: 2 ** 10, r: 8, p: 1 });
 
 describe("auth services", () => {
     describe("TokenService", () => {
@@ -60,8 +64,15 @@ describe("auth services", () => {
     });
 
     describe("AuthService", () => {
-        function setup({ credentials = tom as any, sessionUser = tom as any, byEmail = tom as any, failMail = false } = {}) {
-            const users = fake({ findByCredentials: async () => credentials, findByEmail: async () => byEmail });
+        function setup({ candidates = [] as any[], sessionUser = tom as any, byEmail = tom as any, failMail = false, failSetPassword = false } = {}) {
+            const users = fake({
+                findLoginCandidates: async () => candidates,
+                findByEmail: async () => byEmail,
+                setPassword: async () => {
+                    if (failSetPassword) throw new Error("db down");
+                    return { affectedRows: 1 };
+                },
+            });
             const sessions = fake({
                 insert: async () => ({ affectedRows: 1 }),
                 deleteForUser: async () => ({ affectedRows: 1 }),
@@ -74,26 +85,65 @@ describe("auth services", () => {
                     if (failMail) throw new Error("SES down");
                 },
             });
-            return { service: new AuthService(users.proxy, sessions.proxy, tokens, mail.proxy), users, sessions, tokens, mail };
+            return { service: new AuthService(users.proxy, sessions.proxy, tokens, mail.proxy, passwords), users, sessions, tokens, mail };
         }
 
         it("login starts a single session: clears reset links and other sessions, then records the new one", async () => {
-            const { service, sessions, tokens } = setup();
+            const { service, sessions, tokens, users } = setup({ candidates: [{ ...tom, password: await passwords.hash("correct horse") }] });
 
-            const session = await service.login("tom@x.ca", "pw");
+            const session = await service.login("tom@x.ca", "correct horse");
 
             expect(session.user).to.deep.equal(tom);
+            expect(users.calls.setPassword).to.have.length(0);
             expect(tokens.verify(session.accessToken, "access")).to.equal("u1");
             expect(tokens.verify(session.refreshToken, "refresh")).to.equal("u1");
             expect(sessions.calls.deleteForUser).to.deep.equal([["u1", TokenType.PasswordReset], ["u1", TokenType.Session]]);
             expect(sessions.calls.insert).to.deep.equal([["u1", session.accessToken, TokenType.Session]]);
         });
 
-        it("login with unknown credentials throws InvalidCredentialsError", async () => {
-            const { service, sessions } = setup({ credentials: null });
+        it("login with an unknown login or a wrong password throws InvalidCredentialsError", async () => {
+            const unknown = setup({ candidates: [] });
+            expect(await rejects(unknown.service.login("x", "y"))).to.be.instanceOf(InvalidCredentialsError);
 
-            expect(await rejects(service.login("x", "y"))).to.be.instanceOf(InvalidCredentialsError);
-            expect(sessions.calls.insert).to.have.length(0);
+            const wrong = setup({ candidates: [{ ...tom, password: await passwords.hash("correct horse") }] });
+            expect(await rejects(wrong.service.login("tom@x.ca", "wrong horse"))).to.be.instanceOf(InvalidCredentialsError);
+            expect(wrong.sessions.calls.insert).to.have.length(0);
+        });
+
+        it("login accepts a legacy plain-text password once and replaces it with a hash", async () => {
+            const { service, users } = setup({ candidates: [{ ...tom, password: "legacy-pw" }] });
+
+            await service.login("tom@x.ca", "legacy-pw");
+
+            const [[userId, stored]] = users.calls.setPassword;
+            expect(userId).to.equal("u1");
+            expect(stored).to.match(/^scrypt\$/);
+            expect(await passwords.verify("legacy-pw", stored)).to.equal(true);
+        });
+
+        it("login re-hashes a password stored with older scrypt settings", async () => {
+            const weak = await new PasswordService({ N: 2 ** 9, r: 8, p: 1 }).hash("correct horse");
+            const { service, users } = setup({ candidates: [{ ...tom, password: weak }] });
+
+            await service.login("tom@x.ca", "correct horse");
+
+            expect(users.calls.setPassword[0][1]).to.match(/^scrypt\$1024\$/);
+        });
+
+        it("login still succeeds when the hash upgrade cannot be saved", async () => {
+            const { service } = setup({ candidates: [{ ...tom, password: "legacy-pw" }], failSetPassword: true });
+
+            expect((await service.login("tom@x.ca", "legacy-pw")).user).to.deep.equal(tom);
+        });
+
+        it("login checks every account matching the login and never returns the stored password", async () => {
+            const other = { ...tom, id: "u2", password: await passwords.hash("other password") };
+            const { service } = setup({ candidates: [other, { ...tom, password: await passwords.hash("correct horse") }] });
+
+            const session = await service.login("tom@x.ca", "correct horse");
+
+            expect(session.user.id).to.equal("u1");
+            expect(session.user).to.not.have.property("password");
         });
 
         it("logout revokes the session token", async () => {
@@ -188,7 +238,7 @@ describe("auth services", () => {
                 insert: async () => ({ affectedRows: 1 }),
                 update: async () => ({ affectedRows: 1 }),
             });
-            return { service: new UserService(store.proxy), store };
+            return { service: new UserService(store.proxy, passwords), store };
         }
 
         it("list pages with the name filter", async () => {
@@ -206,19 +256,23 @@ describe("auth services", () => {
         it("signUp creates the member with a uuid, or conflicts", async () => {
             const { service, store } = setup();
 
-            const { id } = await service.signUp({ username: "tom", email: "t@x.ca", password: "pw" });
+            const { id } = await service.signUp({ username: "tom", email: "t@x.ca", password: "correct horse" });
 
             expect(id).to.match(/^[0-9a-f-]{36}$/);
             expect(store.calls.insert[0][0]).to.include({ id, userName: "tom", email: "t@x.ca", firstName: "", lastName: "" });
-            expect(await rejects(setup([{ id: "u1" }]).service.signUp({ username: "tom", email: "t@x.ca", password: "pw" }))).to.be.instanceOf(ConflictError);
+            expect(await passwords.verify("correct horse", store.calls.insert[0][0].password)).to.equal(true);
+            expect(store.calls.insert[0][0].password).to.not.include("correct horse");
+            expect(await rejects(setup([{ id: "u1" }]).service.signUp({ username: "tom", email: "t@x.ca", password: "correct horse" }))).to.be.instanceOf(ConflictError);
         });
 
         it("update delegates", async () => {
             const { service, store } = setup();
 
             await service.update("u1", { email: "new@x.ca" });
+            await service.update("u1", { password: "new password" });
 
             expect(store.calls.update[0]).to.deep.equal(["u1", { email: "new@x.ca" }]);
+            expect(await passwords.verify("new password", store.calls.update[1][1].password)).to.equal(true);
         });
     });
 

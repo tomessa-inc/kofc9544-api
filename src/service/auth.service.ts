@@ -3,9 +3,11 @@ import { InvalidCredentialsError } from "../errors/auth.errors";
 import { SessionTokenMapper, sessionTokenMapper, TokenType } from "../mapper/session-token.mapper";
 import { UserMapper, userMapper, type UserProfile } from "../mapper/user.mapper";
 import { mailService, type PasswordResetMailer } from "./mail.service";
+import { PasswordService, passwordService } from "./password.service";
 import { TokenService, tokenService } from "./token.service";
 
-type UserStore = Pick<UserMapper, "findByCredentials" | "findByEmail">;
+type UserStore = Pick<UserMapper, "findLoginCandidates" | "findByEmail" | "setPassword">;
+type Passwords = Pick<PasswordService, "verify" | "needsRehash" | "hash">;
 type SessionStore = Pick<SessionTokenMapper, "insert" | "deleteForUser" | "deleteToken" | "findUser">;
 type Tokens = Pick<TokenService, "sign" | "verify">;
 
@@ -26,12 +28,17 @@ export class AuthService {
         private readonly sessions: SessionStore,
         private readonly tokens: Tokens,
         private readonly mailer: PasswordResetMailer,
+        private readonly passwords: Passwords,
     ) {}
 
     public async login(login: string, password: string): Promise<Session> {
-        const user = await this.users.findByCredentials(login, password);
-        if (!user) throw new InvalidCredentialsError();
-        return this.startSession(user);
+        for (const { password: stored, ...user } of await this.users.findLoginCandidates(login)) {
+            if (await this.passwords.verify(password, stored)) {
+                await this.upgradePasswordHash(user.id, password, stored);
+                return this.startSession(user);
+            }
+        }
+        throw new InvalidCredentialsError();
     }
 
     public async logout(accessToken: string | null): Promise<void> {
@@ -83,6 +90,19 @@ export class AuthService {
         return user;
     }
 
+    /**
+     * Re-hash a password that is still plain text (or hashed with old settings) now that we know it.
+     * Best effort: a failed write must not stop the member signing in.
+     */
+    private async upgradePasswordHash(userId: string, password: string, stored: string): Promise<void> {
+        if (!this.passwords.needsRehash(stored)) return;
+        try {
+            await this.users.setPassword(userId, await this.passwords.hash(password));
+        } catch (error) {
+            console.error(`Password hash upgrade failed for ${userId}: ${error}`);
+        }
+    }
+
     /** One session per member: signing in ends their other sessions and any pending reset link. */
     private async startSession(user: UserProfile): Promise<Session> {
         const accessToken = this.tokens.sign(user.id, "access");
@@ -96,4 +116,4 @@ export class AuthService {
     }
 }
 
-export const authService = new AuthService(userMapper, sessionTokenMapper, tokenService, mailService);
+export const authService = new AuthService(userMapper, sessionTokenMapper, tokenService, mailService, passwordService);

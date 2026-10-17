@@ -1,4 +1,4 @@
-import { and, eq, like, or, sql } from "drizzle-orm";
+import { eq, like, notLike, or, sql } from "drizzle-orm";
 import { QueryExecutor, sqlExecutor } from "../db/executor";
 import { db } from "../db/query-builder";
 import { user } from "../models/User";
@@ -47,16 +47,26 @@ export class UserMapper {
     constructor(private readonly executor: QueryExecutor = sqlExecutor) {}
 
     /**
-     * The member whose email or id is `login` and whose password matches.
-     * NOTE: passwords are stored and compared in plain text; see the security note in the refactor summary.
+     * Accounts whose email or id is `login`, with their stored password (hash, or legacy plain text) for
+     * AuthService to verify. The stored password must never be returned to clients.
      */
-    public async findByCredentials(login: string, password: string): Promise<UserProfile | undefined> {
-        const rows: UserProfile[] = await this.executor.run(
-            db.select(profileColumns).from(user)
-                .where(and(eq(user.password, password), or(eq(user.email, login), eq(user.id, login))))
-                .limit(1),
+    public findLoginCandidates(login: string): Promise<(UserProfile & { password: string })[]> {
+        return this.executor.run(
+            db.select({ ...profileColumns, password: user.password }).from(user)
+                .where(or(eq(user.email, login), eq(user.id, login)))
+                .limit(5),
         );
-        return rows[0];
+    }
+
+    public setPassword(id: string, passwordHash: string): Promise<WriteResult> {
+        return this.executor.run(db.update(user).set({ password: passwordHash }).where(eq(user.id, id)));
+    }
+
+    /** Accounts whose password is still stored in plain text (not yet an scrypt hash). */
+    public findUnhashedPasswords(): Promise<{ id: string; password: string }[]> {
+        return this.executor.run(
+            db.select({ id: user.id, password: user.password }).from(user).where(notLike(user.password, "scrypt$%")),
+        );
     }
 
     public async findByEmail(email: string): Promise<UserProfile | undefined> {
