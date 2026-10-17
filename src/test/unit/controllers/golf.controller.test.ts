@@ -255,7 +255,7 @@ describe("GolfController (HTTP contract)", () => {
                 queries.push(captured);
                 return captured.sql.startsWith("select") ? [] : { insertId: 100 + queries.length, affectedRows: 1 };
             });
-            const ses = stub((mailMapper as any)._sesClient, "send", async () => ({ $metadata: { httpStatusCode: 200 } }));
+            const ses = stub((mailMapper as any).ses, "send", async () => ({ $metadata: { httpStatusCode: 200 } }));
 
             const res = await api().post("/golf/register").send({
                 team_name: "Eagles",

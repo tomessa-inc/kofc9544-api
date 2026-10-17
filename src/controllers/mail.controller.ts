@@ -1,18 +1,14 @@
-import { defineHandler, readBody } from "h3";
-import { mailMapper } from "../mapper/";
-import { useResponseError, useResponseSuccess } from "../utils/response";
+import { readBody } from "h3";
+import { mailService } from "../service/mail.service";
+import { useResponseSuccess } from "../utils/response";
+import { validateFormSubmission } from "../validators/mail.validator";
+import { controller } from "./controller";
 
+/** The site's contact, sponsor, volunteer and register forms. */
 export class MailController {
-
-    public static apiPostSendMail = defineHandler(async (event) => {
-        try {
-            const body = await readBody<Record<string, any>>(event);
-            const result = await mailMapper.setupEmail({ email_type: body.email_type, data: body });
-
-            return useResponseSuccess({ message: result });
-        } catch (error) {
-            event.res.status = 500;
-            return useResponseError("InternalServerError", error.toString());
-        }
+    public static apiPostSendMail = controller(async (event) => {
+        const { type, fields } = validateFormSubmission(await readBody<Record<string, unknown>>(event));
+        await mailService.sendFormSubmission(type, fields);
+        return useResponseSuccess({ message: { success: true } });
     });
 }
