@@ -94,7 +94,7 @@ Resources:
         Properties:
             CodeUri: ./dist
             PackageType: Zip
-            Runtime: nodejs20.x
+            Runtime: nodejs22.x
             Handler: lambda.handler
             Environment:
                 Variables:

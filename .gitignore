@@ -10,3 +10,6 @@ boot.
 .idea
 cdk
 .aws-sam
+# test coverage output
+build
+.nyc_output

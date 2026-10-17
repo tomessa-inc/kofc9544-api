@@ -1,28 +1,29 @@
-import { defineEventHandler, readBody, getRouterParams, setResponseStatus } from "h3";
-import { eventMapper, mailMapper, paramsOptions } from "../mapper/";
-import { EmailMessaging } from "../models/EmailMessaging";
+import { defineHandler, readBody, getRouterParams } from "h3";
+import { eventMapper, paramsOptions, userMapper } from "../mapper/";
 import { calendarMapper } from "../mapper/calendar.mapper";
+import { eventService, EventInput } from "../service/event.service";
 import { useResponseError, useResponseSuccess } from "../utils/response";
 
 export class EventController {
 
-    public static apiPublishEvents = defineEventHandler(async (event) => {
+    public static apiPublishEvents = defineHandler(async (event) => {
         try {
             await eventMapper.publishEvents();
             return useResponseSuccess({ result: "success" });
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });
 
-    public static apiGetEventsMonthByDay = defineEventHandler(async (event) => {
+    public static apiGetEventsMonthByDay = defineHandler(async (event) => {
         try {
-            const body = await readBody(event);
+            // Shared by GET /month/:month/year/:year and POST /month (readBody returns undefined for a GET).
+            const body = await readBody<Record<string, any>>(event);
             const params = getRouterParams(event);
 
-            const month = body?.data?.month ?? params.month;
-            const year = body?.data?.year ?? params.year;
+            const month = Number(body?.data?.month ?? params.month);
+            const year = Number(body?.data?.year ?? params.year);
 
             const options: paramsOptions = {
                 pageIndex: 1, pageSize: 10, filterQuery: "",
@@ -32,29 +33,35 @@ export class EventController {
             const events = await calendarMapper.getAllEventsByMonth(month, year);
 
             if (typeof events === "string") {
-                setResponseStatus(event, 500);
+                event.res.status = 500;
                 return useResponseError("InternalServerError", events);
             }
 
             return eventMapper.prepareListResults(events, options);
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });
 
-    public static apiCreateEvent = defineEventHandler(async (event) => {
+    public static apiCreateEvent = defineHandler(async (event) => {
         try {
-            const body = await readBody(event);
+            const body = await readBody<{ data: EventInput }>(event);
+            if (!body?.data) {
+                event.res.status = 400;
+                return useResponseError("BadRequest", "Missing event data");
+            }
+            const token = await userMapper.getAuthToken(event);
 
-            body.data.eventId = await eventMapper.createEvent(body.data);
-            await calendarMapper.createCalendar(body.data);
-            await mailMapper.prepareEmail({ email_type: EmailMessaging.EMAIL_TYPE_CALENDER_EVENT, data: body.data });
-            await mailMapper.apiSendMail();
+            const { eventId, emailSent } = await eventService.createEvent(body.data, token);
+            if (!eventId) {
+                event.res.status = 500;
+                return useResponseError("InternalServerError", "Event could not be created");
+            }
 
-            return useResponseSuccess({ success: true });
+            return useResponseSuccess({ success: true, emailSent });
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });

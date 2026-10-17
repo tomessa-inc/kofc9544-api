@@ -2,7 +2,6 @@ import type { EventHandlerRequest, H3Event } from 'h3';
 
 import type { UserInfo } from './mock-data';
 
-import { getHeader } from 'h3';
 import jwt from 'jsonwebtoken';
 
 import { MOCK_USERS } from './mock-data';
@@ -29,7 +28,7 @@ export function generateRefreshToken(user: UserInfo) {
 export function verifyAccessToken(
   event: H3Event<EventHandlerRequest>,
 ): null | Omit<UserInfo, 'password'> {
-  const authHeader = getHeader(event, 'Authorization');
+  const authHeader = event.req.headers.get('Authorization');
   if (!authHeader?.startsWith('Bearer')) {
     return null;
   }

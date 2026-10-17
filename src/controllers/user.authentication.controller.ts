@@ -1,4 +1,4 @@
-import { defineEventHandler, readBody, getRouterParams, setResponseStatus } from "h3";
+import { defineHandler, readBody, getRouterParams } from "h3";
 import { paramsOptions, userMapper, mailMapper } from "../mapper/";
 import { EmailMessaging } from "../models/EmailMessaging";
 import { userAuthenticationMapper } from "../mapper/user.authentication.mapper";
@@ -7,9 +7,9 @@ import {setRefreshTokenCookie} from "../utils/cookie-utils";
 
 export class UserAuthenticationController {
 
-    public static apiForgotPasswordNoId = defineEventHandler(async (event) => {
+    public static apiForgotPasswordNoId = defineHandler(async (event) => {
         try {
-            const body = await readBody(event);
+            const body = await readBody<Record<string, any>>(event);
             const userObj = await userMapper.getUserByEmail(body.email);
 
             const options: paramsOptions = {
@@ -27,15 +27,15 @@ export class UserAuthenticationController {
 
             return useResponseSuccess({ user: userObj, token: await userMapper.generateJWTToken() });
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });
 
-    public static apiForgotPassword = defineEventHandler(async (event) => {
+    public static apiForgotPassword = defineHandler(async (event) => {
         try {
           //  const { id } = getRouterParams(event);
-            const body = await readBody(event);
+            const body = await readBody<Record<string, any>>(event);
 
             console.log("forgot")
 
@@ -79,18 +79,18 @@ export class UserAuthenticationController {
         //    const user = await userMapper.getUserBasedOnPassword(body);
 
             if (typeof user !== "object") {
-                setResponseStatus(event, 400);
+                event.res.status = 400;
                 return useResponseError("BadRequestException", "Username and/or Password incorrect");
             }
 */
             return useResponseSuccess({ user, token: await userMapper.generateJWTToken() });
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });
 
-    public static apiResetPasswordToken = defineEventHandler(async (event) => {
+    public static apiResetPasswordToken = defineHandler(async (event) => {
         try {
             const { token } = getRouterParams(event);
             const options: paramsOptions = { token };
@@ -99,13 +99,13 @@ export class UserAuthenticationController {
             console.log("hello")
             console.log(user)
             if (typeof user !== "object") {
-                setResponseStatus(event, 400);
+                event.res.status = 400;
                 return useResponseError("BadRequestException", "Invalid or expired token");
             }
 
             return useResponseSuccess({ data: user, token: await userMapper.generateJWTToken() });
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });

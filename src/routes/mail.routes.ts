@@ -1,8 +1,8 @@
-import { createRouter, defineEventHandler } from "h3";
+import { H3 } from "h3";
 import { MailController } from "../controllers/mail.controller";
 
-const mailRouter = createRouter();
+const mailRouter = new H3();
 
-mailRouter.post("/", defineEventHandler(MailController.apiPostSendMail));
+mailRouter.post("/", MailController.apiPostSendMail);
 
 export { mailRouter };

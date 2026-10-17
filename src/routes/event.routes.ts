@@ -1,11 +1,11 @@
-import { createRouter, defineEventHandler } from "h3";
+import { H3 } from "h3";
 import { EventController } from "../controllers/event.controller";
 
-const eventRouter = createRouter();
+const eventRouter = new H3();
 
-eventRouter.post("/",              defineEventHandler(EventController.apiCreateEvent));
-eventRouter.get("/month/:month/year/:year", defineEventHandler(EventController.apiGetEventsMonthByDay));
-eventRouter.post("/month",         defineEventHandler(EventController.apiGetEventsMonthByDay));
-eventRouter.post("/publish",       defineEventHandler(EventController.apiPublishEvents));
+eventRouter.post("/",              EventController.apiCreateEvent);
+eventRouter.get("/month/:month/year/:year", EventController.apiGetEventsMonthByDay);
+eventRouter.post("/month",         EventController.apiGetEventsMonthByDay);
+eventRouter.post("/publish",       EventController.apiPublishEvents);
 
 export { eventRouter };

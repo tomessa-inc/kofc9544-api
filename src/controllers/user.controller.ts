@@ -1,4 +1,4 @@
-import { defineEventHandler, setResponseStatus, readBody, getRouterParams } from "h3";
+import { defineHandler, readBody, getRouterParams } from "h3";
 import { userMapper, accessMapper, paramsOptions } from "../mapper/";
 import { forbiddenResponse, useResponseError, useResponseSuccess } from "../utils/response";
 import { clearRefreshTokenCookie, setRefreshTokenCookie } from "../utils/cookie-utils";
@@ -6,9 +6,9 @@ import {user as userModel} from "../models/User"
 
 export class UserController {
 
-    public static apiPostSignIn = defineEventHandler(async (event) => {
+    public static apiPostSignIn = defineHandler(async (event) => {
         try {
-            const body = await readBody(event);
+            const body = await readBody<Record<string, any>>(event);
 
             if (body[userMapper.PARAMS_USERNAME] && body[userMapper.PARAMS_PASSWORD]) {
                 const user = (await userMapper.getUserBasedOnPassword(body))[0];
@@ -16,7 +16,7 @@ export class UserController {
                 console.log("the user")
                 console.log(user);
                 if (typeof user !== "object") {
-                    setResponseStatus(event, 400);
+                    event.res.status = 400;
                     return useResponseError("BadRequestException", "Username and/or Password incorrect");
                 }
 
@@ -52,12 +52,12 @@ export class UserController {
                 return forbiddenResponse(event, "Username or password is incorrect.");
             }
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });
 
-    public static apiUserInfo = defineEventHandler(async (event) => {
+    public static apiUserInfo = defineHandler(async (event) => {
         let user: typeof userModel[];
         let userInfo
         try {
@@ -89,7 +89,7 @@ export class UserController {
                     await userMapper.cleanResetPasswordTokenOnly(token);
                     return useResponseSuccess("");
 
-               //     return setResponseStatus(event, 200);
+               //     return event.res.status = 200;
 
                 }
 //                console.log("the ussser")
@@ -98,13 +98,13 @@ export class UserController {
           //  }
 
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });
 
 
-    public static apiResetPassword = defineEventHandler(async (event) => {
+    public static apiResetPassword = defineHandler(async (event) => {
         let user;
         try {
             const token = await userMapper.getAuthToken(event);
@@ -128,66 +128,66 @@ export class UserController {
             console.log(user);
             return useResponseSuccess({...user, accessToken});
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });
 
-    public static apiPostSignOut = defineEventHandler(async (event) => {
+    public static apiPostSignOut = defineHandler(async (event) => {
         return useResponseSuccess("");
     });
 
-    public static apiGetCodes = defineEventHandler(async (event) => {
+    public static apiGetCodes = defineHandler(async (event) => {
         return useResponseSuccess(["AC_100010", "AC_100020", "AC_100030"]);
     });
 
-    public static apiPostSignUp = defineEventHandler(async (event) => {
+    public static apiPostSignUp = defineHandler(async (event) => {
         try {
-            const body = await readBody(event);
+            const body = await readBody<Record<string, any>>(event);
 
             if (body[userMapper.PARAMS_EMAIL] && body[userMapper.PARAMS_PASSWORD] && body[userMapper.PARAMS_USERNAME]) {
                 const user = await userMapper.apiSignUp(body);
 
                 if (!user) {
-                    setResponseStatus(event, 400);
+                    event.res.status = 400;
                     return useResponseError("BadRequestException", "Username already exists");
                 }
 
                 return useResponseSuccess({ message: "User has been created" });
             }
 
-            setResponseStatus(event, 400);
+            event.res.status = 400;
             return useResponseError("BadRequestException", "Missing required fields");
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });
 
-    public static patchUpdateUser = defineEventHandler(async (event) => {
+    public static patchUpdateUser = defineHandler(async (event) => {
         try {
-            const body = await readBody(event);
+            const body = await readBody<Record<string, any>>(event);
 
             if (body[userMapper.PARAMS_ID] && body[userMapper.PARAMS_USER]) {
                 const userUpdate = await userMapper.apiUpdateUser(body, body[userMapper.PARAMS_ID]);
 
                 if (!userUpdate) {
-                    setResponseStatus(event, 500);
+                    event.res.status = 500;
                     return useResponseError("InternalServerError", "User has not been successfully updated");
                 }
 
                 return useResponseSuccess({ message: "User has been successfully updated" });
             }
 
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("BadRequestException", "Missing parameters to access this function");
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });
 
-    public static getAllUsers = defineEventHandler(async (event) => {
+    public static getAllUsers = defineHandler(async (event) => {
         try {
             const params = getRouterParams(event);
             const options: paramsOptions = {
@@ -207,18 +207,18 @@ export class UserController {
             const users = await userMapper.getAllUsers(options);
 
             if (typeof users === "string") {
-                setResponseStatus(event, 500);
+                event.res.status = 500;
                 return useResponseError("InternalServerError", users);
             }
 
             return userMapper.prepareListResults(users, options);
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });
 
-    public static getUserById = defineEventHandler(async (event) => {
+    public static getUserById = defineHandler(async (event) => {
         try {
             const params = getRouterParams(event);
             const options: paramsOptions = { id: params.id };
@@ -226,21 +226,21 @@ export class UserController {
             const user = await userMapper.getUserById(options);
 
             if (typeof user === "string") {
-                setResponseStatus(event, 500);
+                event.res.status = 500;
                 return useResponseError("InternalServerError", user);
             }
 
             return user;
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });
 
-    public static apiUpdateUser = defineEventHandler(async (event) => {
+    public static apiUpdateUser = defineHandler(async (event) => {
         try {
             const params = getRouterParams(event);
-            const body = await readBody(event);
+            const body = await readBody<Record<string, any>>(event);
             const { id } = params;
 
           //  await accessMapper.apiDeleteAccess(id);
@@ -250,13 +250,13 @@ export class UserController {
             const result = await userMapper.apiUpdateUser(id, body);
 
             if (typeof result === "string") {
-                setResponseStatus(event, 500);
+                event.res.status = 500;
                 return useResponseError("InternalServerError", result);
             }
 
             return result;
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });

@@ -1,4 +1,4 @@
-import {defineEventHandler, readBody, getRouterParams, setResponseStatus, H3Event} from "h3";
+import { defineHandler, readBody, getRouterParams, type H3Event } from "h3";
 import { imageMapper, paramsOptions } from "../mapper";
 import { useResponseError, useResponseSuccess } from "../utils/response";
 
@@ -24,7 +24,7 @@ function getParams(event: H3Event, defaults: Record<string, any>) {
 
 export class ImageController {
 
-    public static apiUpdateOrderImage = defineEventHandler(async (event) => {
+    public static apiUpdateOrderImage = defineHandler(async (event) => {
         try {
             const { id, galleryId, order } = getParams(event, {
                 id: "",
@@ -35,24 +35,24 @@ export class ImageController {
             const result = await imageMapper.updateOrder(galleryId, id, order);
 
             if (typeof result === "string") {
-                setResponseStatus(event, 500);
+                event.res.status = 500;
                 return useResponseError("InternalServerError", result);
             }
 
             return useResponseSuccess(result);
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });
 
-    public static apiImagesOrder = defineEventHandler(async (event) => {
+    public static apiImagesOrder = defineHandler(async (event) => {
         try {
             const { id } = getRouterParams(event);
             const images = await imageMapper.reOrder(id);
 
             if (typeof images === "string") {
-                setResponseStatus(event, 500);
+                event.res.status = 500;
                 return useResponseError("InternalServerError", images);
             }
 
@@ -62,64 +62,64 @@ export class ImageController {
 
             return useResponseSuccess(images);
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });
 
-    public static apiDeleteImage = defineEventHandler(async (event) => {
+    public static apiDeleteImage = defineHandler(async (event) => {
         try {
             const { id } = getRouterParams(event);
             const result = await imageMapper.deleteImageById(id);
 
             if (typeof result === "string") {
-                setResponseStatus(event, 500);
+                event.res.status = 500;
                 return useResponseError("InternalServerError", result);
             }
 
             return useResponseSuccess(result);
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });
 
-    public static apiGetImage = defineEventHandler(async (event) => {
+    public static apiGetImage = defineHandler(async (event) => {
         try {
             const { id } = getRouterParams(event);
             const images = await imageMapper.getImageById(id);
 
             if (typeof images === "string") {
-                setResponseStatus(event, 500);
+                event.res.status = 500;
                 return useResponseError("InternalServerError", images);
             }
 
             return useResponseSuccess(images[0]);
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });
 
-    public static apiUpdateImage = defineEventHandler(async (event) => {
+    public static apiUpdateImage = defineHandler(async (event) => {
         try {
             const { id } = getRouterParams(event);
-            const body = await readBody(event);
+            const body = await readBody<Record<string, any>>(event);
             const result = await imageMapper.updateImageById(id, body);
 
             if (typeof result === "string") {
-                setResponseStatus(event, 500);
+                event.res.status = 500;
                 return useResponseError("InternalServerError", result);
             }
 
             return useResponseSuccess(result);
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });
 
-    public static apiGetAllImages = defineEventHandler(async (event) => {
+    public static apiGetAllImages = defineHandler(async (event) => {
         try {
             const options: paramsOptions = parseParams(getRouterParams(event), {
                 pageIndex: 1, pageSize: 10, filterQuery: "",
@@ -129,7 +129,7 @@ export class ImageController {
             const images = await imageMapper.getAllImages(options);
 
             if (typeof images === "string") {
-                setResponseStatus(event, 500);
+                event.res.status = 500;
                 return useResponseError("InternalServerError", images);
             }
 
@@ -137,12 +137,12 @@ export class ImageController {
 
             return imageMapper.prepareListResults(images, options);
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });
 
-    public static apiGetAllPrimaryImages = defineEventHandler(async (event) => {
+    public static apiGetAllPrimaryImages = defineHandler(async (event) => {
         try {
             const options: paramsOptions = parseParams(getRouterParams(event), {
                 logged: false,
@@ -151,18 +151,18 @@ export class ImageController {
             const images = await imageMapper.getAllPrimaryImages(options);
 
             if (typeof images === "string") {
-                setResponseStatus(event, 500);
+                event.res.status = 500;
                 return useResponseError("InternalServerError", images);
             }
 
             return useResponseSuccess({ images });
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });
 
-    public static apiGetAllImagesByGallery = defineEventHandler(async (event) => {
+    public static apiGetAllImagesByGallery = defineHandler(async (event) => {
         try {
             const options: paramsOptions = parseParams(getRouterParams(event), {
                 imagesByGalleryId: "",
@@ -177,7 +177,7 @@ export class ImageController {
             const images = await imageMapper.getImagesByGallery(options);
 
             if (typeof images === "string") {
-                setResponseStatus(event, 500);
+                event.res.status = 500;
                 return useResponseError("InternalServerError", images);
             }
 
@@ -185,7 +185,7 @@ export class ImageController {
 
             return imageMapper.prepareListResults(images, options);
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });

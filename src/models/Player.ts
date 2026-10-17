@@ -8,6 +8,8 @@ import {DataTypes} from "../db";
 export const player = mysqlTable('player', {
     id: serial('id').primaryKey(),
     name: varchar('name', {length: 255}).notNull(),
+    firstName: varchar('firstName', {length: 255}),
+    lastName: varchar('lastName', {length: 255}),
     email: varchar('email', {length: 255}).notNull(),
     phone: varchar('phone', {length: 255}).notNull(),
     individual: varchar('individual', {length: 255}),

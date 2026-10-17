@@ -4,7 +4,6 @@ import * as uuid from 'uuid';
 import { s3Mapper } from './s3.mapper';
 //import {SequelizeApi} from "../db/Sequelize";
 import process from "process";
-import {Promise, Schema} from "mongoose";
 import {DrizzleAPI} from "../db/Drizzle";
 import * as console from "node:console";
 import {size} from "lodash-es";
@@ -318,7 +317,7 @@ export class BaseMapper {
     }
 
     protected TakeUniqueOrThrow(values) {
-        if (values.lenght !== 1) throw new Error("Found non unique or inexistent value")
+        if (values.length !== 1) throw new Error("Found non unique or inexistent value")
         return values[0]!
     }
 

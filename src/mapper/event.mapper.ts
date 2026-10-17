@@ -231,11 +231,14 @@ export class EventMapper extends BaseMapper {
             minuteEnd: endDate.time.minute,
             text: data.text,
             description: data.description,
-            public: data.viewing
+            viewing: data.viewing
 
         })
 
-        return  await this.getSQLData(eventSQL.toSQL())
+        // Calendar rows reference the event by id, so return the id (undefined if the insert failed).
+        const result = await this.getSQLData(eventSQL.toSQL())
+
+        return result ? id : undefined
 //        await Event2.findOrCreate({where: {id: id}, defaults: eventDefaults})
 
             //      return id;

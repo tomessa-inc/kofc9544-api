@@ -1,11 +1,4 @@
-import {
-  createApp,
-  createRouter,
-  defineEventHandler, getRequestHeader,
-  handleCors,
-  setHeader,
-  useBase
-} from "h3";
+import { H3, handleCors } from "h3";
 import {
   mailRouter,
   mediaRouter,
@@ -16,8 +9,7 @@ import {
   authRouter
 } from "./routes";
 
-const app = createApp();
-//const router = createRouter();
+const app = new H3();
 
 const allowedOrigins = [
   "https://member-stage.kofc9544.ca",
@@ -29,42 +21,30 @@ const allowedOrigins = [
   "http://localhost:5555",
   "http://localhost:4200",
 ];
-console.log("sd")
 
-// ✅ Bug 1 fixed: CORS middleware registered BEFORE the router
-app.use(defineEventHandler((event) => {
-  const isPreflight = handleCors(event, {
+// CORS middleware registered BEFORE the routes. handleCors returns the preflight response
+// for OPTIONS requests (which must be returned), or false for everything else.
+app.use((event) => {
+  const preflight = handleCors(event, {
     origin: (origin) => allowedOrigins.includes(origin),
     methods: "*",
     allowHeaders: "*",
     credentials: true,
   });
 
-  // ✅ Bug 2 fixed: return early on OPTIONS preflight requests
-  if (isPreflight) return;
+  if (preflight !== false) return preflight;
 
-  setHeader(event, "Content-Type", "application/json");
-}));
+  event.res.headers.set("Content-Type", "application/json");
+  return undefined;
+});
 
-//app.use(router);
-/*
-const mediaRouter = createRouter();
-mediaRouter.get("/id/:id/image/:pageIndex?/:pageSize?/:sort?/:order?", defineEventHandler((event) => {
-  console.log("HIT on original mediaRouter");
-  return "hit";
-}));
-app.use("/media", mediaRouter.handler);
-*/
-//export { app };
-
-// Mount sub-routers
-app.use("/mail", mailRouter.handler);
-app.use("/user", userRouter.handler);
-
-app.use("/media", mediaRouter.handler); //mediaRouter.handler);
-app.use("/auth",  authRouter.handler)
-app.use("/event",  eventRouter.handler)
-app.use("/access", accessRouter.handler)
-app.use("/golf",   golfRouter.handler)
+// Mount sub-apps
+app.mount("/mail", mailRouter);
+app.mount("/user", userRouter);
+app.mount("/media", mediaRouter);
+app.mount("/auth", authRouter);
+app.mount("/event", eventRouter);
+app.mount("/access", accessRouter);
+app.mount("/golf", golfRouter);
 
 export { app };

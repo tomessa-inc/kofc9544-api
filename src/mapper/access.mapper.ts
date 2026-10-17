@@ -156,7 +156,7 @@ export class AccessMapper extends BaseMapper {
 
         try {
 
-            const offset = ((check.pageIndex - 1) * check.pageSize) ?? 0
+            const offset = ((check.pageIndex - 1) * check.pageSize)
 
 
 

@@ -1,7 +1,5 @@
 import type { EventHandlerRequest, H3Event } from 'h3';
 
-import { setResponseStatus } from 'h3';
-
 export function useResponseSuccess<T = any>(data: T) {
   return {
     code: 0,
@@ -45,12 +43,12 @@ export function forbiddenResponse(
   event: H3Event<EventHandlerRequest>,
   message = 'Forbidden Exception',
 ) {
-  setResponseStatus(event, 403);
+  event.res.status = 403;
   return useResponseError(message, message);
 }
 
 export function unAuthorizedResponse(event: H3Event<EventHandlerRequest>) {
-  setResponseStatus(event, 401);
+  event.res.status = 401;
   return useResponseError('Unauthorized Exception', 'Unauthorized Exception');
 }
 

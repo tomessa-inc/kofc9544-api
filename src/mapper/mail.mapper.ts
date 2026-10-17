@@ -6,7 +6,7 @@ import { emailHeader } from '../data/email.header';
 import { emailFooter } from '../data/email.footer';
 import util, {format, inspect} from 'util';
 import { EmailMessaging } from '../models/EmailMessaging';
-import { imageService } from '../service';
+import { imageService } from '../service/image.service';
 import bodyParser from "body-parser";
 
 export interface Params {
@@ -119,7 +119,9 @@ export class MailMapper {
      * @param body
      */
     async prepareEmail(body) {
-        this._params = emailParams;
+        // Fresh copy per email: emailParams is a shared module object, and pushing recipients onto it
+        // made To/Bcc addresses accumulate across sends (including across warm Lambda invocations).
+        this._params = structuredClone(emailParams);
         this._params.Source = 'KOFC Golf Registrations <registrations@kofc9544.ca>';
         this._params.ReplyToAddresses = [];
         this._params.Template = 'DefaultEmailTemplate';
@@ -130,11 +132,13 @@ export class MailMapper {
                 this._params.Destination.ToAddresses.push(body.email);
                 this._SUBJECT_CONTENT = EmailMessaging.CALENDER_EVENT_SUBJECT;
                 await this.formatBody(body);
+                // Event text is free-form member input; escape it so quotes/newlines can't break the template JSON.
+                this._PARAMS_CONTENT = this.jsonEscape(this._PARAMS_CONTENT)
                 this._HTML_CONTENT = this._PARAMS_CONTENT
                // this._HTML_CONTENT = format( this._PARAMS_CONTENT, `http://localhost:5173/reset-password/${body.token}`)
                // this._HTML_CONTENT = this._PARAMS_CONTENT.concat(format(EmailMessaging.FORGOTPASSWORD_CONTENT_HTML, key, this.checkObject(body[key])));
                 this._TEXT_CONTENT = EmailMessaging.CALENDER_EVENT_CONTENT_TEXT;
-                this._TO_PERSON = body.firstName;
+                this._TO_PERSON = this.jsonEscape(body.firstName);
                 this._EMAIL_LOGO = imageService.loadImage100x100("kofc-logo100x100.png")
                 this._EMAIL_BANNER = imageService.loadImage600x300("holy-redeemer-kanata.png")
 
@@ -261,6 +265,13 @@ export class MailMapper {
             this._PARAMS_CONTENT = this._PARAMS_CONTENT.concat(format(EmailMessaging.PARAMS_CONTENT, key, this.checkObject(body[key])));
 
         });
+    }
+
+    /**
+     * Escape a value for embedding inside a JSON string literal (TemplateData is built by interpolation).
+     */
+    jsonEscape(value: unknown): string {
+        return JSON.stringify(String(value ?? '')).slice(1, -1);
     }
 
     checkObject(data) {

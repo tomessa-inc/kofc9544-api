@@ -47,7 +47,7 @@ export class GalleryMapper extends BaseMapper {
         try {
             console.log(params);
 
-            const offset = ((params.pageIndex - 1) * params.pageSize) ?? 1
+            const offset = ((params.pageIndex - 1) * params.pageSize)
 
             console.log("offset")
 

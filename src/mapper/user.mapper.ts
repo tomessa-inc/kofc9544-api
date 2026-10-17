@@ -49,11 +49,12 @@ export class UserMapper extends BaseMapper {
            // const teams = userUpdate['teams'];
             console.log("params")
             console.log(params);
+            // No phone: the `user` table has no phone column (see models/User.ts). Add a column + migration
+            // before accepting it here.
             const userObject  = {
                 firstName: body.firstName,
                 lastName: body.lastName,
                 email: body.email,
-                phone: body.phone,
                 password: body.password,
 
 //                    createdAt: moment().format('YYYY-MM-DD'),
@@ -186,7 +187,7 @@ export class UserMapper extends BaseMapper {
 
     async getAuthToken (event:  H3Event) {
 
-        const authHeader = event.headers.get('authorization');
+        const authHeader = event.req.headers.get('authorization');
 
         if (!authHeader) return null;
 
@@ -450,7 +451,7 @@ export class UserMapper extends BaseMapper {
 
 
             if (check.filterQuery) {
-                userSQL.where(or(like(user.firstName, `%${check.filterQuery}%`)), like(user.lastName, `%${check.filterQuery}%`))
+                userSQL.where(or(like(user.firstName, `%${check.filterQuery}%`), like(user.lastName, `%${check.filterQuery}%`)))
             }
             userSQL.offset(offset);
             userSQL.limit(check.pageSize)

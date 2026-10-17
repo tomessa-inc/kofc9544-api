@@ -1,4 +1,4 @@
-import {defineEventHandler, readBody, getRouterParams, setResponseStatus, H3Event} from "h3";
+import { defineHandler, readBody, getRouterParams, type H3Event } from "h3";
 import { accessMapper, paramsOptions, userMapper } from "../mapper/";
 import { useResponseError, useResponseSuccess } from "../utils/response";
 
@@ -24,34 +24,34 @@ export class AccessController {
         return AccessController.parseParams(getRouterParams(event), defaults);
     }
 
-    public static apiCreateAccess = defineEventHandler(async (event) => {
+    public static apiCreateAccess = defineHandler(async (event) => {
         try {
-            const body = await readBody(event);
+            const body = await readBody<Record<string, any>>(event);
 
             if (!body[accessMapper.PARAMS_NAME] || !body[accessMapper.PARAMS_DESCRIPTION]) {
-                setResponseStatus(event, 400);
+                event.res.status = 400;
                 return useResponseError("BadRequestException", "Missing required fields");
             }
 
             const access = await accessMapper.apiCreateAccess(body);
 
             if (!access) {
-                setResponseStatus(event, 400);
+                event.res.status = 400;
                 return useResponseError("BadRequestException", "Access already exists");
             }
 
             return useResponseSuccess({ message: "Access has been created" });
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });
 
-    public static apiDeleteAccess = defineEventHandler(async (event) => {
+    public static apiDeleteAccess = defineHandler(async (event) => {
         return useResponseSuccess({ "sign-out": true });
     });
 
-    public static getAllAccess = defineEventHandler(async (event) => {
+    public static getAllAccess = defineHandler(async (event) => {
         try {
             const options: paramsOptions = AccessController.getParams(event, {
                 pageIndex: 1, pageSize: 10, filterQuery: "",
@@ -61,18 +61,18 @@ export class AccessController {
             const access = await accessMapper.getAllAccess(options);
 
             if (typeof access === "string") {
-                setResponseStatus(event, 500);
+                event.res.status = 500;
                 return useResponseError("InternalServerError", access);
             }
 
             return userMapper.prepareListResults(access, options);
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });
 
-    public static apiGetAllAccessAsLabelValues = defineEventHandler(async (event) => {
+    public static apiGetAllAccessAsLabelValues = defineHandler(async (event) => {
         try {
             const options: paramsOptions = AccessController.getParams(event, {
                 pageIndex: 1, pageSize: 10, filterQuery: "",
@@ -82,7 +82,7 @@ export class AccessController {
             const access = await accessMapper.getAllAccess(options);
 
             if (typeof access === "string") {
-                setResponseStatus(event, 500);
+                event.res.status = 500;
                 return useResponseError("InternalServerError", access);
             }
 
@@ -90,7 +90,7 @@ export class AccessController {
 
             return useResponseSuccess(accessList);
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });

@@ -1,4 +1,4 @@
-import { defineEventHandler, readBody, getRouterParams, setResponseStatus } from "h3";
+import { defineHandler, readBody, getRouterParams } from "h3";
 import { paramsOptions, tagMapper } from "../mapper";
 import { useResponseError, useResponseSuccess } from "../utils/response";
 
@@ -14,30 +14,30 @@ function parseParams(params: Record<string, string>, defaults: Record<string, an
 
 export class TagController {
 
-    public static apiCreateTag = defineEventHandler(async (event) => {
+    public static apiCreateTag = defineHandler(async (event) => {
         try {
-            const body = await readBody(event);
+            const body = await readBody<Record<string, any>>(event);
             const tag = await tagMapper.createTag(body);
 
             if (typeof tag === "string") {
-                setResponseStatus(event, 500);
+                event.res.status = 500;
                 return useResponseError("InternalServerError", tag);
             }
 
             return useResponseSuccess(tag);
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });
 
-    public static apiGetAllTagsAsLabelValues = defineEventHandler(async (event) => {
+    public static apiGetAllTagsAsLabelValues = defineHandler(async (event) => {
         try {
-            const body = await readBody(event);
+            const body = await readBody<Record<string, any>>(event);
             const tags = await tagMapper.getAllTags(body);
 
             if (typeof tags === "string") {
-                setResponseStatus(event, 500);
+                event.res.status = 500;
                 return useResponseError("InternalServerError", tags);
             }
 
@@ -45,12 +45,12 @@ export class TagController {
 
             return useResponseSuccess(tagList);
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });
 
-    public static apiGetAllTags = defineEventHandler(async (event) => {
+    public static apiGetAllTags = defineHandler(async (event) => {
         try {
             const params = getRouterParams(event);
             const options: paramsOptions = parseParams(params, {
@@ -61,13 +61,13 @@ export class TagController {
             const tags = await tagMapper.getAllTags(options);
 
             if (typeof tags === "string") {
-                setResponseStatus(event, 500);
+                event.res.status = 500;
                 return useResponseError("InternalServerError", tags);
             }
 
             return tagMapper.prepareListResults(tags, options);
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });

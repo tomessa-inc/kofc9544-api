@@ -1,4 +1,4 @@
-import { defineEventHandler, readBody, getRouterParams, setResponseStatus } from "h3";
+import { defineHandler, readBody, getRouterParams } from "h3";
 import { galleryMapper, paramsOptions } from "../mapper/";
 import { useResponseError, useResponseSuccess } from "../utils/response";
 
@@ -14,7 +14,7 @@ function parseParams(params: Record<string, string>, defaults: Record<string, an
 
 export class GalleryController {
 
-    public static apiGetAllGalleries = defineEventHandler(async (event) => {
+    public static apiGetAllGalleries = defineHandler(async (event) => {
         try {
             const params = getRouterParams(event);
             const options: paramsOptions = parseParams(params, {
@@ -25,54 +25,54 @@ export class GalleryController {
             const galleries = await galleryMapper.getAllGalleries(options);
 
             if (typeof galleries === "string") {
-                setResponseStatus(event, 500);
+                event.res.status = 500;
                 return useResponseError("InternalServerError", galleries);
             }
 
             return galleryMapper.prepareListResults(galleries, options);
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });
 
-    public static apiPublishGallery = defineEventHandler(async (event) => {
+    public static apiPublishGallery = defineHandler(async (event) => {
         try {
             await galleryMapper.publishGallery();
             return useResponseSuccess({ result: "success" });
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });
 
-    public static apiUpdateGalleryById = defineEventHandler(async (event) => {
+    public static apiUpdateGalleryById = defineHandler(async (event) => {
         try {
             const { id } = getRouterParams(event);
-            const body = await readBody(event);
+            const body = await readBody<Record<string, any>>(event);
 
             const gallery = await galleryMapper.updateGallery({ id }, body);
 
             if (typeof gallery === "string") {
-                setResponseStatus(event, 500);
+                event.res.status = 500;
                 return useResponseError("InternalServerError", gallery);
             }
 
             return useResponseSuccess(gallery);
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });
 
-    public static apiGetGalleryById = defineEventHandler(async (event) => {
+    public static apiGetGalleryById = defineHandler(async (event) => {
         try {
             const { id } = getRouterParams(event);
 
             const gallery = (await galleryMapper.getGalleryById({ id }))[0];
 
             if (typeof gallery === "string") {
-                setResponseStatus(event, 500);
+                event.res.status = 500;
                 return useResponseError("InternalServerError", gallery);
             }
 
@@ -83,7 +83,7 @@ export class GalleryController {
 
             return useResponseSuccess(gallery);
         } catch (error) {
-            setResponseStatus(event, 500);
+            event.res.status = 500;
             return useResponseError("InternalServerError", error.toString());
         }
     });

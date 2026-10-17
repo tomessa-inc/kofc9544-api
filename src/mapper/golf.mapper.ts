@@ -56,7 +56,28 @@ export class GolfMapper extends BaseMapper {
      //   Player2.initialize(this.SEQUELIZE, team);
     }
 
+    public async checkIfPlayerExists(name: string, email: string) {
+        const playerSQL = this.DRIZZLE.select().from(player).where(and(eq(player.name, name), eq(player.email, email)))
+        console.log(playerSQL.toSQL())
+       return await this.getSQLData(playerSQL.toSQL())
 
+    }
+
+    public async insertPlayer(name: string, email: string, firstName: string, lastName: string, phone: string, team:string) {
+        const playerSQL = this.DRIZZLE.insert(player).values({
+            name: name,
+            email: email,
+            firstName: firstName,
+            lastName: lastName,
+            phone: phone,
+            TeamId: team,
+        })
+
+        console.log(playerSQL.toSQL())
+        const retval = await this.getSQLData(playerSQL.toSQL())
+
+
+    }
 
     public async createPlayerRegistration(params: OptionsPlayer) {
         let retval;
@@ -128,7 +149,7 @@ export class GolfMapper extends BaseMapper {
            // console.log(test);
           //  test.email_type = EmailMessaging.EMAIL_TYPE_SEND_ID
 
-
+            return undefined;
         } catch (error) {
             return error
         } finally {
@@ -256,7 +277,7 @@ export class GolfMapper extends BaseMapper {
         try {
             console.log(params);
 
-            const offset = ((params.pageIndex - 1) * params.pageSize) ?? 1
+            const offset = ((params.pageIndex - 1) * params.pageSize)
 
             console.log("offset")
             console.log(offset);
@@ -286,7 +307,7 @@ export class GolfMapper extends BaseMapper {
         try {
 /*            console.log(params);
 
-            const offset = ((params.pageIndex - 1) * params.pageSize) ?? 1
+            const offset = ((params.pageIndex - 1) * params.pageSize)
 
             console.log("offset")
 
@@ -368,15 +389,25 @@ export class GolfMapper extends BaseMapper {
             const playerSQL = this.DRIZZLE.select({
                 id:    player.id,
                 name:  player.name,
+                email: player.email,
+                team: player.TeamId,
+                hole: sql<string>`(SELECT hole.name
+                                  from hole
+                                           inner join team as sub_team on sub_team.hole = hole.id
+                                           inner join player as sub_player on sub_player.Teamid = sub_team.id
+                                  WHERE sub_player.id = player.id)`.as('hole'),
+                lastName: player.lastName,
+                firstName: player.firstName,
                 total: sql<number>`(SELECT COUNT(*) FROM player)`.as('total')
+
                  })
                 .from(player)
 
 
                 if (options.order == "asc") {
-                    playerSQL.orderBy(asc(player.name));
+                    playerSQL.orderBy(asc(player.lastName));
                 } else {
-                    playerSQL.orderBy(desc(player.name));
+                    playerSQL.orderBy(desc(player.lastName));
 
                 }
 
@@ -433,12 +464,16 @@ export class GolfMapper extends BaseMapper {
             return error.toString();
         }
     }
+
+    public async importPlayers(players) {
+        console.log(players)
+    }
 /*
     public async getAllPlayersWithoutTeams(params: paramsOptions) { //: Promise<string[] | string> {
         try {
             console.log(params);
 
-            const offset = ((params.pageIndex - 1) * params.pageSize) ?? 1
+            const offset = ((params.pageIndex - 1) * params.pageSize)
 
             console.log("offset")
 

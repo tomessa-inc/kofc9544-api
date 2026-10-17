@@ -112,7 +112,7 @@ export class HoleMapper extends BaseMapper {
             // console.log(test);
             //  test.email_type = EmailMessaging.EMAIL_TYPE_SEND_ID
 
-
+            return undefined;
         } catch (error) {
             return error
         } finally {
@@ -123,7 +123,12 @@ export class HoleMapper extends BaseMapper {
 
     }
 
+    public async getHoleIdByHoleName(name: string){
+        const playerSQL = this.DRIZZLE.select().from(hole).where(eq(hole.name, name))
+         console.log(playerSQL.toSQL())
 
+        return await this.getSQLData(playerSQL.toSQL())
+    }
     /**
      *
      * @param playerObject
@@ -290,7 +295,7 @@ export class HoleMapper extends BaseMapper {
         try {
             console.log(params);
 
-            const offset = ((params.pageIndex - 1) * params.pageSize) ?? 1
+            const offset = ((params.pageIndex - 1) * params.pageSize)
 
             console.log("offset")
             console.log(offset);
@@ -322,7 +327,7 @@ export class HoleMapper extends BaseMapper {
             try {
     /*            console.log(params);
 
-                const offset = ((params.pageIndex - 1) * params.pageSize) ?? 1
+                const offset = ((params.pageIndex - 1) * params.pageSize)
 
                 console.log("offset")
 
@@ -396,7 +401,7 @@ export class HoleMapper extends BaseMapper {
             try {
                 console.log(params);
 
-                const offset = ((params.pageIndex - 1) * params.pageSize) ?? 1
+                const offset = ((params.pageIndex - 1) * params.pageSize)
 
                 console.log("offset")
 

@@ -9,7 +9,7 @@ import {OptionsPlayer} from "../controllers/golf.controller";
 import {team} from "../models/Team";
 import {image} from "../models/Image";
 import {gallery} from "../models/Gallery";
-import {sql, gt, lt, eq, SQL, count} from "drizzle-orm";
+import {sql, gt, lt, eq, SQL, count, and, or} from "drizzle-orm";
 import {galleryTag} from "../models/GalleryTag";
 import {MySqlSelectBase} from "drizzle-orm/mysql-core/query-builders/select";
 
@@ -40,6 +40,24 @@ export class TeamMapper extends BaseMapper {
     }
 
 
+    public async insertTeam(id: string, name:string, captain: string, hole: string) {
+        const teamSQL =  this.DRIZZLE.insert(team).values({
+            id: id,
+            name: name,
+            captain: captain,
+            hole: hole
+
+        })
+        return await this.getSQLData(teamSQL.toSQL())
+    }
+
+
+    public async doesTeamExist(id: string) {
+
+        const teamSQL =  this.DRIZZLE.select().from(team).where(or(eq(team.id, id), eq(team.name, id)))
+
+        return await this.getSQLData(teamSQL.toSQL())
+    }
 
     public async createTeamRegistration(params: OptionsPlayer) {
         try {
@@ -83,7 +101,7 @@ export class TeamMapper extends BaseMapper {
     }
 
 
-    public async createTeam(params) {
+    public async createTeamFromCSV(params) {
         try {
 
 
@@ -244,7 +262,7 @@ export class TeamMapper extends BaseMapper {
 
     public async getAllTeams(params: paramsOptions) {
         try {
-            const offset = ((params.pageIndex - 1) * params.pageSize) ?? 1
+            const offset = ((params.pageIndex - 1) * params.pageSize)
 
             const teamsSQL = this.DRIZZLE.select({
                 id: team.id,
