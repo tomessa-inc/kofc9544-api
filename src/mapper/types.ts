@@ -20,11 +20,3 @@ export interface LabelValue {
     value: string | number;
 }
 
-/**
- * TEMPORARY (removed when strictNullChecks is enabled at the end of the refactor): with strictNullChecks
- * off, Drizzle's insert/update types drop every nullable column, so mappers hand their typed values to
- * Drizzle through this.
- */
-export function driverValues<T extends object>(values: T): any {
-    return values;
-}

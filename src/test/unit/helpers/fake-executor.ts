@@ -1,5 +1,5 @@
 import type { QueryExecutor, SqlQuery } from "../../../db/executor";
-import type { CapturedQuery } from "./sql-stub";
+import type { CapturedQuery } from "./stubs";
 
 type Result = unknown | ((query: CapturedQuery, callIndex: number) => unknown);
 

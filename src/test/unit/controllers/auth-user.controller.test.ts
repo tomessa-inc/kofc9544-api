@@ -9,7 +9,7 @@ import { accessService } from "../../../service/access.service";
 import { authService } from "../../../service/auth.service";
 import { userService } from "../../../service/user.service";
 import { api, mount } from "../helpers/http";
-import { stubMethod } from "../helpers/sql-stub";
+import { stubMethod } from "../helpers/stubs";
 
 describe("Auth / User / Access controllers (HTTP contract)", () => {
     const stubs: { restore: () => void }[] = [];

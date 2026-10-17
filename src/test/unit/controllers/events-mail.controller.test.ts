@@ -5,7 +5,7 @@ import { authService } from "../../../service/auth.service";
 import { eventService } from "../../../service/event.service";
 import { mailService } from "../../../service/mail.service";
 import { api } from "../helpers/http";
-import { stubMethod } from "../helpers/sql-stub";
+import { stubMethod } from "../helpers/stubs";
 
 describe("Event / Mail controllers (HTTP contract)", () => {
     const stubs: { restore: () => void }[] = [];

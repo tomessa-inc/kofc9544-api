@@ -3,7 +3,7 @@ import { QueryExecutor, sqlExecutor } from "../db/executor";
 import { db } from "../db/query-builder";
 import { hole } from "../models/Hole";
 import { team } from "../models/Team";
-import { driverValues, type InsertResult, type LabelValue, type Page, type WriteResult } from "./types";
+import type { InsertResult, LabelValue, Page, WriteResult } from "./types";
 
 export type Hole = typeof hole.$inferSelect;
 export interface NewHole {
@@ -23,7 +23,7 @@ export class HoleMapper {
     constructor(private readonly executor: QueryExecutor = sqlExecutor) {}
 
     public insert(values: NewHole): Promise<InsertResult> {
-        return this.executor.run(db.insert(hole).values(driverValues(values)));
+        return this.executor.run(db.insert(hole).values(values));
     }
 
     public findByName(name: string): Promise<Hole[]> {
@@ -31,7 +31,7 @@ export class HoleMapper {
     }
 
     public update(id: string, changes: HoleChanges): Promise<WriteResult> {
-        return this.executor.run(db.update(hole).set(driverValues(changes)).where(eq(hole.id, id)));
+        return this.executor.run(db.update(hole).set(changes).where(eq(hole.id, id)));
     }
 
     /** One page of holes ordered by name; every row carries the overall `total`. */

@@ -2,7 +2,7 @@ import { asc, eq, sql } from "drizzle-orm";
 import { QueryExecutor, sqlExecutor } from "../db/executor";
 import { db } from "../db/query-builder";
 import { tag } from "../models/Tag";
-import { driverValues, type Page, type WriteResult } from "./types";
+import type { Page, WriteResult } from "./types";
 
 export interface Tag {
     id: string;
@@ -33,7 +33,7 @@ export class TagMapper {
     }
 
     public insert(values: Tag): Promise<WriteResult> {
-        return this.executor.run(db.insert(tag).values(driverValues({ ...values, createdAt: sql`NOW()`, updatedAt: sql`NOW()` })));
+        return this.executor.run(db.insert(tag).values({ ...values, createdAt: sql`NOW()`, updatedAt: sql`NOW()` }));
     }
 }
 

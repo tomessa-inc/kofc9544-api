@@ -16,7 +16,7 @@ type HttpPost = (url: string, body: unknown) => Promise<{ data: any }>;
 /**
  * Runs queries through the RDS SQL proxy over HTTP: the proxy receives the prepared statement as a
  * JSON string under `sql` and answers with mysql2's `[rows, fields]` tuple under `data`.
- * Unlike the legacy BaseMapper.getSQLData, failures are thrown, never swallowed.
+ * Failures are thrown, never swallowed.
  */
 export class RdsProxyExecutor implements QueryExecutor {
     constructor(

@@ -100,7 +100,7 @@ export function usePagedListResponse<T extends Record<string, any>>(list: T[], o
   }
 
   const total = items.length === 0 ? 0 : items[0].total;
-  const lastPage = Math.max(Math.ceil(options.listLength / size), 1);
+  const lastPage = Math.max(Math.ceil((options.listLength ?? items.length) / size), 1);
 
   return JSON.parse(JSON.stringify({
     code: 0,

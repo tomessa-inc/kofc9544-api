@@ -7,7 +7,7 @@ import { galleryService } from "../../../service/gallery.service";
 import { imageService } from "../../../service/image.service";
 import { tagService } from "../../../service/tag.service";
 import { api, mount } from "../helpers/http";
-import { stubMethod } from "../helpers/sql-stub";
+import { stubMethod } from "../helpers/stubs";
 
 describe("Gallery / Image / Tag controllers (HTTP contract)", () => {
     const stubs: { restore: () => void }[] = [];

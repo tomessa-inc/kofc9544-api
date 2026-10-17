@@ -2,7 +2,7 @@ import { and, eq, like, or, sql } from "drizzle-orm";
 import { QueryExecutor, sqlExecutor } from "../db/executor";
 import { db } from "../db/query-builder";
 import { user } from "../models/User";
-import { driverValues, type Page, type WriteResult } from "./types";
+import type { Page, WriteResult } from "./types";
 
 /** A member as returned to clients: never includes the password or token columns. */
 export interface UserProfile {
@@ -102,11 +102,11 @@ export class UserMapper {
 
     public insert(values: NewUser): Promise<WriteResult> {
         const { userName, ...rest } = values;
-        return this.executor.run(db.insert(user).values(driverValues({ ...rest, username: userName, token: "" })));
+        return this.executor.run(db.insert(user).values({ ...rest, username: userName, token: "" }));
     }
 
     public update(id: string, changes: UserChanges): Promise<WriteResult> {
-        return this.executor.run(db.update(user).set(driverValues(changes)).where(eq(user.id, id)));
+        return this.executor.run(db.update(user).set(changes).where(eq(user.id, id)));
     }
 }
 

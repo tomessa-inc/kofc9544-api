@@ -3,7 +3,7 @@ import { QueryExecutor, sqlExecutor } from "../db/executor";
 import { db } from "../db/query-builder";
 import { gallery } from "../models/Gallery";
 import { image } from "../models/Image";
-import { driverValues, type Page, type WriteResult } from "./types";
+import type { Page, WriteResult } from "./types";
 
 export type Image = typeof image.$inferSelect;
 export interface ImageChanges {
@@ -34,12 +34,12 @@ export class ImageMapper {
     }
 
     public update(id: string, changes: ImageChanges): Promise<WriteResult> {
-        return this.executor.run(db.update(image).set(driverValues(changes)).where(eq(image.id, id)));
+        return this.executor.run(db.update(image).set(changes).where(eq(image.id, id)));
     }
 
     /** Set an image's position within its gallery. */
     public setOrder(galleryId: string, id: string, order: number): Promise<WriteResult> {
-        return this.executor.run(db.update(image).set(driverValues({ order })).where(and(eq(image.id, id), eq(image.GalleryId, galleryId))));
+        return this.executor.run(db.update(image).set({ order }).where(and(eq(image.id, id), eq(image.GalleryId, galleryId))));
     }
 
     /** A gallery's active images in display order (ties broken by id so renumbering is stable). */
@@ -52,7 +52,7 @@ export class ImageMapper {
     }
 
     public deactivate(id: string): Promise<WriteResult> {
-        return this.executor.run(db.update(image).set(driverValues({ active: 0 })).where(eq(image.id, id)));
+        return this.executor.run(db.update(image).set({ active: 0 }).where(eq(image.id, id)));
     }
 
     /** One page of active images; every row carries the active-image `total`. */

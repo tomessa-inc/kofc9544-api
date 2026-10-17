@@ -3,7 +3,7 @@ import { QueryExecutor, sqlExecutor } from "../db/executor";
 import { db } from "../db/query-builder";
 import { player } from "../models/Player";
 import { team } from "../models/Team";
-import { driverValues, type LabelValue, type Page, type WriteResult } from "./types";
+import type { LabelValue, Page, WriteResult } from "./types";
 
 export type Team = typeof team.$inferSelect;
 export interface NewTeam {
@@ -32,11 +32,11 @@ export class TeamMapper {
     }
 
     public insert(values: NewTeam): Promise<WriteResult> {
-        return this.executor.run(db.insert(team).values(driverValues(values)));
+        return this.executor.run(db.insert(team).values(values));
     }
 
     public update(id: string, changes: TeamChanges): Promise<WriteResult> {
-        return this.executor.run(db.update(team).set(driverValues(changes)).where(eq(team.id, id)));
+        return this.executor.run(db.update(team).set(changes).where(eq(team.id, id)));
     }
 
     public delete(id: string): Promise<WriteResult> {

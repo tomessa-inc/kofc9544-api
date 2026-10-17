@@ -2,7 +2,7 @@ import { and, asc, desc, eq, isNull, sql } from "drizzle-orm";
 import { QueryExecutor, sqlExecutor } from "../db/executor";
 import { db } from "../db/query-builder";
 import { player } from "../models/Player";
-import { driverValues, type InsertResult, type LabelValue, type Page, type WriteResult } from "./types";
+import type { InsertResult, LabelValue, Page, WriteResult } from "./types";
 
 export type Player = typeof player.$inferSelect;
 export interface NewPlayer {
@@ -28,11 +28,11 @@ export class PlayerMapper {
     }
 
     public insert(values: NewPlayer): Promise<InsertResult> {
-        return this.executor.run(db.insert(player).values(driverValues(values)));
+        return this.executor.run(db.insert(player).values(values));
     }
 
     public update(id: number, changes: PlayerChanges): Promise<WriteResult> {
-        return this.executor.run(db.update(player).set(driverValues(changes)).where(eq(player.id, id)));
+        return this.executor.run(db.update(player).set(changes).where(eq(player.id, id)));
     }
 
     public delete(id: number): Promise<WriteResult> {

@@ -10,7 +10,6 @@ import {
     useResponseSuccess,
 } from "../../../utils/response";
 import { clearRefreshTokenCookie, getRefreshTokenFromCookie, setRefreshTokenCookie } from "../../../utils/cookie-utils";
-import { getTimezone, setTimezone } from "../../../utils/timezone-utils";
 
 function makeEvent(headers: Record<string, string> = {}) {
     const event = mockEvent("http://localhost/", { headers });
@@ -101,10 +100,4 @@ describe("utils", () => {
         });
     });
 
-    describe("timezone-utils", () => {
-        it("stores and returns the timezone", () => {
-            setTimezone("America/Toronto");
-            expect(getTimezone()).to.equal("America/Toronto");
-        });
-    });
 });

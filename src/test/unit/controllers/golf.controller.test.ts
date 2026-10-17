@@ -8,7 +8,7 @@ import { playerService } from "../../../service/player.service";
 import { registrationService } from "../../../service/registration.service";
 import { teamService } from "../../../service/team.service";
 import { api } from "../helpers/http";
-import { stubMethod } from "../helpers/sql-stub";
+import { stubMethod } from "../helpers/stubs";
 
 describe("GolfController (HTTP contract)", () => {
     const stubs: { restore: () => void }[] = [];

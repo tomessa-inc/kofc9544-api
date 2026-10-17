@@ -3,7 +3,7 @@ import { QueryExecutor, sqlExecutor } from "../db/executor";
 import { db } from "../db/query-builder";
 import { calendar } from "../models/Calendar";
 import { event } from "../models/Event";
-import { driverValues, type WriteResult } from "./types";
+import type { WriteResult } from "./types";
 
 export interface NewOccurrence {
     id: string;
@@ -21,7 +21,7 @@ export class CalendarMapper {
     /** Add an occurrence; one that already exists (same id) is left as it is. */
     public insertOccurrence(values: NewOccurrence): Promise<WriteResult> {
         return this.executor.run(
-            db.insert(calendar).ignore().values(driverValues({ ...values, createdAt: sql`CURDATE()`, updatedAt: sql`CURDATE()` })),
+            db.insert(calendar).ignore().values({ ...values, createdAt: sql`CURDATE()`, updatedAt: sql`CURDATE()` }),
         );
     }
 

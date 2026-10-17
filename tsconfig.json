@@ -17,7 +17,7 @@
     "removeComments": true,
     "skipLibCheck": true,
     "strict": true,
-    "strictNullChecks": false,
+    "strictNullChecks": true,
     "target": "ES2022",
     "typeRoots": ["node_modules/@types"],
     "types": ["node", "mocha"],
