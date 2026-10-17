@@ -227,6 +227,24 @@ describe("GolfController (HTTP contract)", () => {
 
             expect(update.calls[0]).to.deep.equal(["hole-1", { name: "Hole 1", par: "4" }]);
         });
+
+        it("POST /golf/hole/undefined falls back to the body id", async () => {
+            const update = stub(holeService, "update", async () => ({ affectedRows: 1 }));
+
+            await api().post("/golf/hole/undefined").send({ id: "hole-1", name: "Hole 1" });
+
+            expect(update.calls[0][0]).to.equal("hole-1");
+        });
+
+        it("POST /golf/hole/undefined without a body id returns 400 without updating", async () => {
+            const update = stub(holeService, "update");
+
+            const res = await api().post("/golf/hole/undefined").send({ name: "Hole 1" });
+
+            expect(res.status).to.equal(400);
+            expect(res.body.error).to.equal("Missing hole id");
+            expect(update.calls).to.have.length(0);
+        });
     });
 
     describe("POST /golf/player/import", () => {
