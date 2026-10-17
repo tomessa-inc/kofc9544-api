@@ -14,11 +14,11 @@ const golfNight: EventInput = {
 };
 
 function fakes(overrides: { eventId?: string; users?: unknown; prepareEmail?: () => Promise<void>; apiSendMail?: () => Promise<unknown> } = {}) {
-    const calls = { createEvent: [] as any[], createCalendar: [] as any[], getUserByToken: [] as any[], prepareEmail: [] as any[], apiSendMail: 0 };
+    const calls = { createEvent: [] as any[], createCalendar: [] as any[], currentUser: [] as any[], prepareEmail: [] as any[], apiSendMail: 0 };
     const service = new EventService(
         { createEvent: async (data) => (calls.createEvent.push(data), "eventId" in overrides ? overrides.eventId : "15-6-2026-18-20") },
         { createCalendar: async (data) => (calls.createCalendar.push(data), true) },
-        { getUserByToken: async (token) => (calls.getUserByToken.push(token), (overrides.users ?? [{ email: "tom@x.ca", firstName: "Tom" }]) as any) },
+        { currentUser: async (token) => (calls.currentUser.push(token), ("users" in overrides ? overrides.users : { email: "tom@x.ca", firstName: "Tom" }) as any) },
         {
             prepareEmail: async (body) => { calls.prepareEmail.push(body); await overrides.prepareEmail?.(); },
             apiSendMail: async () => { calls.apiSendMail++; return overrides.apiSendMail?.(); },
@@ -35,7 +35,7 @@ describe("EventService.createEvent", () => {
 
         expect(result).to.deep.equal({ eventId: "15-6-2026-18-20", emailSent: true });
         expect(calls.createCalendar[0]).to.deep.equal({ ...golfNight, eventId: "15-6-2026-18-20" });
-        expect(calls.getUserByToken).to.deep.equal(["tok"]);
+        expect(calls.currentUser).to.deep.equal(["tok"]);
         expect(calls.prepareEmail[0]).to.deep.equal({
             email_type: EmailMessaging.EMAIL_TYPE_CALENDER_EVENT,
             email: "tom@x.ca",
@@ -62,18 +62,18 @@ describe("EventService.createEvent", () => {
 
         expect(await service.createEvent(golfNight, null)).to.deep.equal({ eventId: "15-6-2026-18-20", emailSent: false });
         expect(calls.createCalendar).to.have.length(1);
-        expect(calls.getUserByToken).to.have.length(0);
+        expect(calls.currentUser).to.have.length(0);
     });
 
     it("skips the email when the token matches no member", async () => {
-        const { service, calls } = fakes({ users: [] });
+        const { service, calls } = fakes({ users: null });
 
         expect((await service.createEvent(golfNight, "tok")).emailSent).to.equal(false);
         expect(calls.prepareEmail).to.have.length(0);
     });
 
-    it("skips the email when the user lookup returns an error string", async () => {
-        const { service, calls } = fakes({ users: "Error: db down" });
+    it("skips the email when the session lookup fails", async () => {
+        const { service, calls } = fakes({ users: Promise.reject(new Error("db down")) });
 
         expect((await service.createEvent(golfNight, "tok")).emailSent).to.equal(false);
         expect(calls.prepareEmail).to.have.length(0);

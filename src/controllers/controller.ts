@@ -27,3 +27,9 @@ export function routeOrBodyId(routeId: string | undefined, body: Record<string, 
     const bodyId = body?.id;
     return typeof bodyId === "string" || typeof bodyId === "number" ? String(bodyId) : undefined;
 }
+
+/** The bearer token from the Authorization header, or null. */
+export function bearerToken(event: H3Event): string | null {
+    const header = event.req.headers.get("authorization");
+    return header?.startsWith("Bearer ") ? header.substring(7) : null;
+}

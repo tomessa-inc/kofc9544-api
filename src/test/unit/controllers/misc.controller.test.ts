@@ -1,12 +1,12 @@
 import { expect } from "chai";
-import { accessMapper, eventMapper, mailMapper, userMapper } from "../../../mapper";
+import { eventMapper, mailMapper } from "../../../mapper";
+import { authService } from "../../../service/auth.service";
 import { calendarMapper } from "../../../mapper/calendar.mapper";
-import { AccessController } from "../../../controllers/access.controller";
 import { eventService } from "../../../service/event.service";
 import { api, mount } from "../helpers/http";
 import { stubMethod } from "../helpers/sql-stub";
 
-describe("Event / Mail / Access controllers", () => {
+describe("Event / Mail controllers", () => {
     const stubs: { restore: () => void }[] = [];
     const stub = <T extends object, K extends keyof T>(target: T, key: K, impl?: (...args: any[]) => any) => {
         const s = stubMethod(target, key, impl);
@@ -41,7 +41,7 @@ describe("Event / Mail / Access controllers", () => {
             const record = async (q: any) => (db.push(q), { affectedRows: 1 });
             stub(eventMapper, "getSQLData", record);
             stub(calendarMapper, "getSQLData", record);
-            stub(userMapper, "getUserByToken", async () => [{ email: "tom@x.ca", firstName: "Tom" }]);
+            stub(authService, "currentUser", async () => ({ id: "u1", email: "tom@x.ca", firstName: "Tom", lastName: "C", roles: null, realName: "Tom C" }));
             const ses = stub((mailMapper as any)._sesClient, "send", async () => ({ $metadata: { httpStatusCode: 200 } }));
 
             const res = await api().post("/event").set("Authorization", "Bearer tok").send({
@@ -142,69 +142,5 @@ describe("Event / Mail / Access controllers", () => {
 
             expect((await api().post("/mail").send({})).status).to.equal(500);
         });
-    });
-
-    describe("AccessController", () => {
-        describe("parseParams", () => {
-            it("coerces values to the type of their default", () => {
-                const result = AccessController.parseParams(
-                    { logged: "true", pageSize: "5", sort: "name", id: "42" },
-                    { logged: false, pageSize: 10, sort: "" },
-                );
-
-                expect(result).to.deep.equal({ logged: true, pageSize: 5, sort: "name", id: 42 });
-            });
-
-            it("ignores the literal string 'undefined'", () => {
-                expect(AccessController.parseParams({ pageSize: "undefined" }, { pageSize: 10 })).to.deep.equal({ pageSize: 10 });
-            });
-        });
-
-        it("apiCreateAccess creates access when name and description are present", async () => {
-            stub(accessMapper, "apiCreateAccess", async () => [{}, true]);
-
-            const res = await mount(AccessController.apiCreateAccess).post("/").send({ name: "admin", description: "Admins" });
-
-            expect(res.body.data).to.deep.equal({ message: "Access has been created" });
-        });
-
-        it("apiCreateAccess returns 400 for missing fields", async () => {
-            expect((await mount(AccessController.apiCreateAccess).post("/").send({ name: "admin" })).status).to.equal(400);
-        });
-
-        it("apiCreateAccess returns 400 when the mapper creates nothing", async () => {
-            stub(accessMapper, "apiCreateAccess", async () => undefined);
-
-            expect((await mount(AccessController.apiCreateAccess).post("/").send({ name: "a", description: "b" })).status).to.equal(400);
-        });
-
-        it("apiDeleteAccess responds with sign-out", async () => {
-            expect((await mount(AccessController.apiDeleteAccess).post("/")).body.data).to.deep.equal({ "sign-out": true });
-        });
-
-        it("getAllAccess lists access with parsed params", async () => {
-            const list = stub(accessMapper, "getAllAccess", async () => [{ username: "a", total: 1 }]);
-
-            const res = await mount(AccessController.getAllAccess, "post", "/:pageIndex/:pageSize").post("/2/5");
-
-            expect(res.body.data.items).to.have.length(1);
-            expect(list.calls[0][0]).to.include({ pageIndex: 2, pageSize: 5 });
-        });
-
-        it("apiGetAllAccessAsLabelValues maps access to label/value pairs", async () => {
-            stub(accessMapper, "getAllAccess", async () => [{ id: "admin", name: "Admin" }]);
-
-            const res = await mount(AccessController.apiGetAllAccessAsLabelValues).post("/");
-
-            expect(res.body.data).to.deep.equal([{ label: "Admin", value: "admin" }]);
-        });
-
-        for (const name of ["getAllAccess", "apiGetAllAccessAsLabelValues"] as const) {
-            it(`${name} returns 500 on an error string`, async () => {
-                stub(accessMapper, "getAllAccess", async () => "Error: boom");
-
-                expect((await mount(AccessController[name]).post("/")).status).to.equal(500);
-            });
-        }
     });
 });

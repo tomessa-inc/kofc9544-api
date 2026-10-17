@@ -9,12 +9,11 @@ import { useResponseSuccess } from "../utils/response";
 import {
     validateHole,
     validateNewPlayer,
-    validateNumericId,
     validatePlayerUpdate,
     validateRegistration,
     validateTeamUpdate,
-    validateTextId,
 } from "../validators/golf.validator";
+import { validateNumericId, validateTextId } from "../validators/id.validator";
 import { parseListParams } from "../validators/list.validator";
 import { controller, pagedList, routeOrBodyId } from "./controller";
 

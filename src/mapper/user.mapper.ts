@@ -1,505 +1,112 @@
-"use strict";
-import {BaseMapper, paramsOptions} from "./base.mapper";
-import {user} from "../models/User"
-import dotenv from 'dotenv';
-import * as uuid from 'uuid';
-import moment from "moment";
-import { get } from "lodash";
-import {UserAccess2} from "../models/UserAccess2";
-import  crypto from "crypto";
-import {Access2} from "../models/Access2";
-import {User2} from "../models/User2";
-const algorithm = 'aes-256-cbc'; //Using AES encryption
-const key = crypto.randomBytes(32);
-const iv = crypto.randomBytes(16);
-import {sql, gt, lt, eq, SQL, like, and, or} from "drizzle-orm";
-import {access} from "../models/Access";
-import {userAuthentication} from "../models/UserAuthentication";
-import {userAccess} from "../models/UserAccess";
-import { Request } from 'express';
-import {player} from "../models/Player";
-import {H3Event} from "h3";
-import {gallery} from "../models/Gallery";
-import {image} from "../models/Image";
-import {galleryTag} from "../models/GalleryTag";
+import { and, eq, like, or, sql } from "drizzle-orm";
+import { QueryExecutor, sqlExecutor } from "../db/executor";
+import { db } from "../db/query-builder";
+import { user } from "../models/User";
+import { driverValues, type Page, type WriteResult } from "./types";
 
+/** A member as returned to clients: never includes the password or token columns. */
+export interface UserProfile {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    roles: string[] | null;
+}
 
-export class UserMapper extends BaseMapper {
-    private _PARAMS_ID: string = 'id';
-    private _PARAMS_EMAIL: string = 'email';
-    private _PARAMS_PASSWORD: string = 'password';
-    private _PARAMS_USERNAME: string = 'username';
-    private _PARAMS_USER: string = 'user';
-    private _LIST_NAME: string = 'users';
-    private _DEFAULT_SORT: string = 'firstName';
+export interface NewUser {
+    id: string;
+    userName: string;
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+}
 
+export interface UserChanges {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    password?: string;
+}
 
+// Correlated subqueries name the outer `user` row literally (see TeamMapper for why).
+export const roleIds = sql<string[] | null>`(SELECT JSON_ARRAYAGG(access.id) FROM access INNER JOIN user_access ON access.id = user_access.AccessId WHERE user_access.UserId = user.id)`;
+const roleObjects = sql<{ id: string; name: string }[] | null>`(SELECT JSON_ARRAYAGG(JSON_OBJECT('id', access.id, 'name', access.name)) FROM access INNER JOIN user_access ON access.id = user_access.AccessId WHERE user_access.UserId = user.id)`;
 
-    constructor() {
-        super();
-        this.initializeDrizzle();
-    }
+/** Profile columns shared by the lookups below. */
+export const profileColumns = {
+    id: user.id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    roles: roleIds.as("roles"),
+};
 
-    public async apiUpdateUser(params, body) {
-        try {
-            //const userUpdate = params['user'];
-            const id = params
-
-           // const teams = userUpdate['teams'];
-            console.log("params")
-            console.log(params);
-            // No phone: the `user` table has no phone column (see models/User.ts). Add a column + migration
-            // before accepting it here.
-            const userObject  = {
-                firstName: body.firstName,
-                lastName: body.lastName,
-                email: body.email,
-                password: body.password,
-
-//                    createdAt: moment().format('YYYY-MM-DD'),
-                //                  updatedAt: moment().format('YYYY-MM-DD'),
-            };
-            console.log(userObject)
-            //            console.log("playe")
-            //          console.log(playerObject);
-            /*
-            console.log("before player")
-            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
-            console.log("playerObject")
-            console.log(playerObject)
-            console.log("Player")
-*/
-
-            const userSQL = this.DRIZZLE.update(user).set(userObject).where(eq(user.id, id))
-
-            return await this.getSQLData(userSQL.toSQL())
-
-        } catch (error) {
-            console.log('catch');
-            console.log(error);
-            return error;
-        }
-    }
-
-    public async apiSignUp(params) {
-        try {
-            const userDefaults = {
-                id: uuid.v4(),
-                userName: params.userName,
-                email: params.email,
-                password: params.password,
-                createdAt: moment().format('YYYY-MM-DD'),
-                updatedAt: moment().format('YYYY-MM-DD')
-            }
-
-          //  console.log('the params');
-          //  console.log(params);
-            console.log(userDefaults);
-            return await User2.findOrCreate({ where: { userName: params.username },  defaults: userDefaults })
-            //const result = await User.findOrCreate(user, defaults: userDefaults
-            .then(data => {
-
-                return data;
-
-            }).catch(data => {
-
-                return data;
-            });
-        } catch (error) {
-            return error.toString;
-        }
-    }
-
-    async updateUserToken(users, token, type= "LOGGED") {
-        try {
-            console.log("hee")
-            const userSQL = this.DRIZZLE.update(userAuthentication).set({
-                token: token,
-                eventType: type
-            }).where(eq(userAuthentication.UserId, users.id));
-            console.log("the update")
-            console.log(userSQL.toSQL())
-            await this.getSQLData(userSQL.toSQL())
-
-            return await true;
-
-        } catch(error) {
-            console.log(error.toString())
-            return error.toString;
-        }
-    }
-
-
-    async insertUserToken(user, token, type= "RESET_PASSWORD") {
-        try {
-            console.log("hee")
-            const userSQL = this.DRIZZLE.insert(userAuthentication).values({
-                UserId:user.id,
-                token: token,
-                eventType: type
-            })
-            console.log("the update")
-            console.log(userSQL.toSQL())
-            await this.getSQLData(userSQL.toSQL())
-
-            return await true;
-
-        } catch(error) {
-            console.log(error.toString())
-            return error.toString;
-        }
-    }
-
-
-    async cleanResetPasswordToken(users, type= "PASSWORD_RESET") {
-        try {
-            const userSQL = this.DRIZZLE.delete(userAuthentication)
-                .where(and(eq(userAuthentication.UserId, users.id),eq(userAuthentication.eventType, type)));
-            console.log("the update")
-            console.log(userSQL.toSQL())
-            await this.getSQLData(userSQL.toSQL())
-
-            return await true;
-
-        } catch(error) {
-            console.log(error.toString())
-            return error.toString;
-        }
-    }
-
-
-    async cleanResetPasswordTokenOnly(token) {
-        try {
-            const userSQL = this.DRIZZLE.delete(userAuthentication)
-                .where(eq(userAuthentication.token, token));
-            console.log("the update")
-            console.log(userSQL.toSQL())
-            await this.getSQLData(userSQL.toSQL())
-
-            return await true;
-
-        } catch(error) {
-            console.log(error.toString())
-            return error.toString;
-        }
-    }
-
-    async getAuthToken (event:  H3Event) {
-
-        const authHeader = event.req.headers.get('authorization');
-
-        if (!authHeader) return null;
-
-        if (!authHeader.startsWith('Bearer ')) return null;
-
-        return authHeader.substring(7); // remove "Bearer "
-    }
-
+/** Data access for the `user` table. */
+export class UserMapper {
+    constructor(private readonly executor: QueryExecutor = sqlExecutor) {}
 
     /**
-     *
-     * @param token
+     * The member whose email or id is `login` and whose password matches.
+     * NOTE: passwords are stored and compared in plain text; see the security note in the refactor summary.
      */
-    async getUserByToken(token, type= "LOGGED")  {
-        try {
-            // get config vars
-            dotenv.config();
-            console.log("here2")
-            const userSQL = this.DRIZZLE.select({
-                id: user.id,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                realName: sql<string>`concat(${user.firstName}, ' ', ${user.lastName})`.as ('realName'),
-                email: user.email,
-                //   username: user.email,
-                roles: sql<string>`(SELECT JSON_ARRAYAGG(access.id)
-                                     from ${access}
-                                    inner join user_access on access.id = user_access.AccessId
-                                    where user_access.UserId = user.id)`.as('roles'),
-            //    homePath: "/user"
-            }).from(user)
-                .innerJoin(userAuthentication, eq(user.id, userAuthentication.UserId)).where(and(eq(userAuthentication.token, token), (eq(userAuthentication.eventType, type))));
-
-             //   .where(eq(user.token, token));
-            console.log("arrivied ader here")
-         //   userSQL.where(eq(user.token, token));
-            //     console.log(userSQL.toSQL())
-            ///console.log(params.userName);
-            ///    userSQL.where(or(eq(user.userName, params.userName), eq(user.id, params.userName)));
-            console.log(userSQL.toSQL())
-            console.log("right before")
-            //  or(eq(user.userName, params.userName)), eq(user.id), params.userName)));
-
-            console.log("the results")
-            console.log(await this.getSQLData(userSQL.toSQL()));
-            return await this.getSQLData(userSQL.toSQL())
-        } catch (error) {
-            return error.toString();
-        }
+    public async findByCredentials(login: string, password: string): Promise<UserProfile | undefined> {
+        const rows: UserProfile[] = await this.executor.run(
+            db.select(profileColumns).from(user)
+                .where(and(eq(user.password, password), or(eq(user.email, login), eq(user.id, login))))
+                .limit(1),
+        );
+        return rows[0];
     }
 
-    /**
-     *
-     * @param token
-     */
-    async getUserByTokenReset(token, type= "LOGGED") {
-        try {
-            // get config vars
-            dotenv.config();
-            console.log("here2")
-            const userSQL = this.DRIZZLE.select({
-                id: user.id,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                realName: sql<string>`concat(${user.firstName}, ' ', ${user.lastName})`.as ('realName'),
-                email: user.email,
-                //   username: user.email,
-                roles: sql<string>`(SELECT JSON_ARRAYAGG(access.id)
-                                     from ${access}
-                                    inner join user_access on access.id = user_access.AccessId
-                                    where user_access.UserId = user.id)`.as('roles'),
-                //    homePath: "/user"
-            }).from(user)
-                .innerJoin(userAuthentication, eq(user.id, userAuthentication.UserId)).where(and(eq(userAuthentication.token, token), (eq(userAuthentication.eventType, type))));
-
-            //   .where(eq(user.token, token));
-            console.log("arrivied ader here")
-            //   userSQL.where(eq(user.token, token));
-            //     console.log(userSQL.toSQL())
-            ///console.log(params.userName);
-            ///    userSQL.where(or(eq(user.userName, params.userName), eq(user.id, params.userName)));
-            console.log(userSQL.toSQL())
-            console.log("right before")
-            //  or(eq(user.userName, params.userName)), eq(user.id), params.userName)));
-
-            console.log("the results")
-            console.log(await this.getSQLData(userSQL.toSQL()));
-            return await this.getSQLData(userSQL.toSQL())
-        } catch (error) {
-            return error.toString();
-        }
+    public async findByEmail(email: string): Promise<UserProfile | undefined> {
+        const rows: UserProfile[] = await this.executor.run(db.select(profileColumns).from(user).where(eq(user.email, email)));
+        return rows[0];
     }
 
-    /**
-     *
-     * @param params
-     */
-    async getUserWithEmail(params) {
-        try {
-            const userSQL = this.DRIZZLE.select({
+    /** A member with their access roles as {id, name} objects. */
+    public async findById(id: string) {
+        const rows = await this.executor.run(
+            db.select({
                 id: user.id,
                 firstName: user.firstName,
                 lastName: user.lastName,
                 email: user.email,
-                roles: sql<string>`(SELECT JSON_ARRAYAGG(access.id)
-                                    from ${access}
-                                             inner join user_access on access.id = user_access.AccessId
-                                    where user_access.UserId = user.id)`.as('roles')
-            }).from(user)
+                access: roleObjects.as("access"),
+            }).from(user).where(eq(user.id, id)),
+        );
+        return rows[0];
+    }
 
-            userSQL.where(eq(user.email, params.email))
+    public findByUserNameOrEmail(userName: string, email: string) {
+        return this.executor.run<{ id: string }[]>(
+            db.select({ id: user.id }).from(user).where(or(eq(user.username, userName), eq(user.email, email))),
+        );
+    }
 
-            return (await this.getSQLData(userSQL.toSQL()))[0]
+    /** One page of members, optionally filtered by first or last name; every row carries the overall `total`. */
+    public findPage({ offset, limit }: Page, nameFilter?: string) {
+        const query = db.select({
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            total: sql<number>`(SELECT count(*) FROM user)`.as("total"),
+        }).from(user);
 
-            /*
-                        const userParams = {
-                            include: [
-                                {
-                                    Model: User2,
-                                    association: UserAuthentication2.User,
-                                    required: true,
-                                    include: [
-                                        {
-                                            Model: Access2,
-                                            association: User2.Access,
-                                            required: false,
-                                            as: 'Access'
-                                        },
-                                    ],
-                                },
-                            ],
-                            where: {token: params.token},
-                            attributes: {exclude: ['ImageId', 'GalleryTagTagId']},
-                        }
-
-                        console.log(userParams);
-                        return await UserAuthentication2.findAll(userParams).then(data => {
-                            console.log(data)
-                            return data[0];
-            //                data[0].accessToken = this.generateJWTToken();
-                        }).catch(data => {
-                            return data;
-                        }); */
-        } catch (error) {
-            console.log(`Could not fetch users ${error}`)
+        if (nameFilter) {
+            query.where(or(like(user.firstName, `%${nameFilter}%`), like(user.lastName, `%${nameFilter}%`)));
         }
+        return this.executor.run(query.offset(offset).limit(limit));
     }
 
-    /**
-     *
-     * @param params
-     */
-    async getUserBasedOnPassword(params)  {
-        try {
-            // get config vars
-            dotenv.config();
-            console.log("here")
-            const userSQL = this.DRIZZLE.select({
-                id: user.id,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                email: user.email,
-                roles: sql<string>`(SELECT JSON_ARRAYAGG(access.id)
-                                    from ${access}
-                                             inner join user_access on access.id = user_access.AccessId
-                                    where user_access.UserId = user.id)`.as('roles')
-            }).from(user)
-
-            userSQL.where(and(eq(user.password, params.password), or(eq(user.email, params.username), eq(user.id, params.userName)))).limit(1);
-            //     console.log(userSQL.toSQL())
-            ///console.log(params.userName);
-            ///    userSQL.where(or(eq(user.userName, params.userName), eq(user.id, params.userName)));
-            console.log(userSQL.toSQL())
-
-            //  or(eq(user.userName, params.userName)), eq(user.id), params.userName)));
-
-            return this.getSQLData(userSQL.toSQL())
-        } catch (error) {
-            return error.toString();
-        }
+    public insert(values: NewUser): Promise<WriteResult> {
+        const { userName, ...rest } = values;
+        return this.executor.run(db.insert(user).values(driverValues({ ...rest, username: userName, token: "" })));
     }
 
-    /**
-     *
-     * @param options
-     * @returns
-     */
-    public async getUserById(options: paramsOptions) {
-        try {
-            console.log('get user');
-
-            const userSQL = this.DRIZZLE.select({
-                    id: user.id,
-                    firstName: user.firstName,
-                    lastName: user.lastName,
-                    email: user.email,
-                    access: sql<string>`(SELECT JSON_ARRAYAGG(JSON_OBJECT('id', access.id,'name', access.name, 'name', access.name))
-                                     from ${access}
-                                    inner join user_access on access.id = user_access.AccessId
-                                    where user_access.UserId = user.id)`.as('access')
-                }).from(user).where(eq(user.id, options.id))
-
-
-            return (await this.getSQLData(userSQL.toSQL()))[0]
-/*
-            const userParams = {
-                include: [
-                    {
-                        Model: Access2,
-                        association: User2.Access,
-                        required: false,
-                        as: 'access'
-                    },
-                ],
-                where: {id: options.id},
-                attributes: {exclude: ['ImageId', 'GalleryTagTagId']},
-            }
-
-            return await User2.findOrCreate(userParams).then(data => {
-              //  return this.processArray(data, User)
-                console.log('data')
-                console.log(data);
-                return data[0];
-            }).catch(err => {
-
-                return err;
-            }) */
-        } catch (error) {
-            return error.toString();
-        }
-    }
-    /**
-     *
-     * @param email
-     * @returns User2
-     */
-    public async getUserByEmail(email:string) {
-        try {
-
-            const userSQL = this.DRIZZLE.select(user).from(user).where(eq(user.email, email))
-
-            return (await this.getSQLData(userSQL.toSQL()))[0];
-        } catch (error) {
-            return error.toString();
-        }
-    }
-
-    public async getAllUsers(params:  paramsOptions) : Promise <string[] | string> {
-       const check = params;
-
-        try {
-            const offset = ((check.pageIndex - 1) * check.pageSize);
-            const userSQL = this.DRIZZLE.select({
-                id: user.id,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                email: user.email,
-                password: user.password,
-                total: sql<string>`(SELECT count('id') from ${user})`.as('total')
-            }).from(user)
-
-
-            if (check.filterQuery) {
-                userSQL.where(or(like(user.firstName, `%${check.filterQuery}%`), like(user.lastName, `%${check.filterQuery}%`)))
-            }
-            userSQL.offset(offset);
-            userSQL.limit(check.pageSize)
-
-            return this.getSQLData(userSQL.toSQL());
-        } catch (error) {
-            return error.toString() //["error" => error.toString()];
-        }
-    }
-
-
-
-    //Encrypting text
-    encrypt(text) {
-        let cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(key), iv);
-        console.log("the cypher is ");
-        console.log(cipher);
-        let encrypted = cipher.update(text);
-        encrypted = Buffer.concat([encrypted, cipher.final()]);
-        console.log(encrypted.toString('hex'))
-        return encrypted.toString('hex')
-    }
-
-    get PARAMS_ID(): string {
-        return this._PARAMS_ID;
-    }
-
-    get PARAMS_EMAIL(): string {
-        return this._PARAMS_EMAIL;
-    }
-
-    get PARAMS_PASSWORD(): string {
-        return this._PARAMS_PASSWORD;
-    }
-
-    get PARAMS_USERNAME(): string {
-        return this._PARAMS_USERNAME;
-    }
-
-    get PARAMS_USER(): string {
-        return this._PARAMS_USER;
-    }
-
-    get LIST_NAME(): string {
-        return this._LIST_NAME;
-    }
-
-    get DEFAULT_SORT(): string {
-        return this._DEFAULT_SORT;
+    public update(id: string, changes: UserChanges): Promise<WriteResult> {
+        return this.executor.run(db.update(user).set(driverValues(changes)).where(eq(user.id, id)));
     }
 }
 

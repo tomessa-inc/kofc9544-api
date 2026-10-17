@@ -1,97 +1,25 @@
-import { defineHandler, readBody, getRouterParams, type H3Event } from "h3";
-import { accessMapper, paramsOptions, userMapper } from "../mapper/";
-import { useResponseError, useResponseSuccess } from "../utils/response";
+import { getRouterParams, readBody } from "h3";
+import { accessService } from "../service/access.service";
+import { useResponseSuccess } from "../utils/response";
+import { parseListParams } from "../validators/list.validator";
+import { validateAccess } from "../validators/user.validator";
+import { controller, pagedList } from "./controller";
 
+type Body = Record<string, unknown> | undefined;
+
+/** Access-role administration (none of these are routed yet). */
 export class AccessController {
-
-    static parsers = {
-        boolean: (v: string) => v === "true",
-        number:  (v: string) => Number(v),
-        string:  (v: string) => isNaN(Number(v)) ? v : Number(v),
-    };
-
-    public static parseParams(params: Record<string, string>, defaults: Record<string, any>) {
-        return Object.entries(params).reduce((options, [key, value]) => {
-            if (value !== "undefined") {
-                const type = typeof defaults[key] as keyof typeof AccessController.parsers;
-                options[key] = (AccessController.parsers[type] ?? AccessController.parsers.string)(value);
-            }
-            return options;
-        }, { ...defaults });
-    }
-
-    public static getParams(event: H3Event, defaults: Record<string, any>) {
-        return AccessController.parseParams(getRouterParams(event), defaults);
-    }
-
-    public static apiCreateAccess = defineHandler(async (event) => {
-        try {
-            const body = await readBody<Record<string, any>>(event);
-
-            if (!body[accessMapper.PARAMS_NAME] || !body[accessMapper.PARAMS_DESCRIPTION]) {
-                event.res.status = 400;
-                return useResponseError("BadRequestException", "Missing required fields");
-            }
-
-            const access = await accessMapper.apiCreateAccess(body);
-
-            if (!access) {
-                event.res.status = 400;
-                return useResponseError("BadRequestException", "Access already exists");
-            }
-
-            return useResponseSuccess({ message: "Access has been created" });
-        } catch (error) {
-            event.res.status = 500;
-            return useResponseError("InternalServerError", error.toString());
-        }
+    public static apiCreateAccess = controller(async (event) => {
+        await accessService.create(validateAccess(await readBody<Body>(event)));
+        return useResponseSuccess({ message: "Access has been created" });
     });
 
-    public static apiDeleteAccess = defineHandler(async (event) => {
-        return useResponseSuccess({ "sign-out": true });
+    public static getAllAccess = controller(async (event) => {
+        const params = parseListParams(getRouterParams(event));
+        return pagedList(await accessService.list(params), params, "name");
     });
 
-    public static getAllAccess = defineHandler(async (event) => {
-        try {
-            const options: paramsOptions = AccessController.getParams(event, {
-                pageIndex: 1, pageSize: 10, filterQuery: "",
-                sort: accessMapper.DEFAULT_SORT, order: accessMapper.DEFAULT_ORDER,
-            });
-
-            const access = await accessMapper.getAllAccess(options);
-
-            if (typeof access === "string") {
-                event.res.status = 500;
-                return useResponseError("InternalServerError", access);
-            }
-
-            return userMapper.prepareListResults(access, options);
-        } catch (error) {
-            event.res.status = 500;
-            return useResponseError("InternalServerError", error.toString());
-        }
-    });
-
-    public static apiGetAllAccessAsLabelValues = defineHandler(async (event) => {
-        try {
-            const options: paramsOptions = AccessController.getParams(event, {
-                pageIndex: 1, pageSize: 10, filterQuery: "",
-                sort: accessMapper.DEFAULT_SORT, order: accessMapper.DEFAULT_ORDER,
-            });
-
-            const access = await accessMapper.getAllAccess(options);
-
-            if (typeof access === "string") {
-                event.res.status = 500;
-                return useResponseError("InternalServerError", access);
-            }
-
-            const accessList = access.map((item) => ({ label: item.name, value: item.id }));
-
-            return useResponseSuccess(accessList);
-        } catch (error) {
-            event.res.status = 500;
-            return useResponseError("InternalServerError", error.toString());
-        }
+    public static apiGetAllAccessAsLabelValues = controller(async (event) => {
+        return useResponseSuccess(await accessService.listAsOptions(parseListParams(getRouterParams(event))));
     });
 }

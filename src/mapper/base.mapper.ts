@@ -1,4 +1,3 @@
-import nJwt from 'njwt';
 import dotenv from "dotenv";
 import * as uuid from 'uuid';
 import { s3Mapper } from './s3.mapper';
@@ -9,7 +8,6 @@ import * as console from "node:console";
 import {size} from "lodash-es";
 import axios from "axios";
 import {response} from "express";
-import jwt from 'jsonwebtoken';
 import {isTypedArray} from "node:util/types";
 import {isArray} from "node:util";
 
@@ -291,49 +289,6 @@ export class BaseMapper {
         }
         console.log(`{ "code": 0, "error": null,"message": "ok", "data": {"items":${JSON.stringify(list)}, "total": ${total}}, "total":"${total}","pageSize":"${size}", "pageIndex":"${page}", "lastpage":"${lastPage}"}`)
         return JSON.parse(`{ "code": 0, "error": null,"message": "ok", "data": {"items":${JSON.stringify(list)}, "total": ${total}}, "total":"${total}","pageSize":"${size}", "pageIndex":"${page}", "lastpage":"${lastPage}"}`);
-    }
-
-    public generateAccessToken(user) {
-        return jwt.sign({id: user.id}, 'sdsdfsdfsf', { expiresIn: '7d' });
-    }
-
-    public generateRefreshToken(user) {
-        return jwt.sign({id: user.id}, 'sdsdfsdfsf', {
-            expiresIn: '30d',
-        });
-    }
-
-    public generateJWTToken() {
-        const token = nJwt.create({
-            iss: "https://kofc9544.ca/",  // The URL of your service
-            sub: uuid.v4(),    // The UID of the user in your system
-            scope: "self"
-        },process.env.TOKEN_SECRET);
-
-        token.setExpiration(new Date().getTime() + 60*1000)
-
-        return token.compact();
-    }
-
-    protected TakeUniqueOrThrow(values) {
-        if (values.length !== 1) throw new Error("Found non unique or inexistent value")
-        return values[0]!
-    }
-
-    public checkAuthenication(tokenHeader = undefined) {
-        if (!tokenHeader) {
-            return undefined
-        }
-
-        try {
-            const token = tokenHeader.replace(/^Bearer\s/, '');
-
-            const verified = nJwt.verify(token, process.env.TOKEN_SECRET);
-
-            return (verified.body['exp'] < Date.now());
-        } catch (error) {
-            return error.toString();
-        }
     }
 
     public generateId(data:string) {

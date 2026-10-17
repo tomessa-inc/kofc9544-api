@@ -1,5 +1,6 @@
 import { defineHandler, readBody, getRouterParams } from "h3";
-import { eventMapper, paramsOptions, userMapper } from "../mapper/";
+import { eventMapper, paramsOptions } from "../mapper/";
+import { bearerToken } from "./controller";
 import { calendarMapper } from "../mapper/calendar.mapper";
 import { eventService, EventInput } from "../service/event.service";
 import { useResponseError, useResponseSuccess } from "../utils/response";
@@ -51,7 +52,7 @@ export class EventController {
                 event.res.status = 400;
                 return useResponseError("BadRequest", "Missing event data");
             }
-            const token = await userMapper.getAuthToken(event);
+            const token = bearerToken(event);
 
             const { eventId, emailSent } = await eventService.createEvent(body.data, token);
             if (!eventId) {

@@ -1,8 +1,8 @@
 import { calendarMapper } from "../mapper/calendar.mapper";
 import { eventMapper } from "../mapper/event.mapper";
 import { mailMapper } from "../mapper/mail.mapper";
-import { userMapper } from "../mapper/user.mapper";
 import { EmailMessaging } from "../models/EmailMessaging";
+import { authService } from "./auth.service";
 
 export interface EventInput {
     id: string;
@@ -29,8 +29,9 @@ export interface CalendarWriter {
     createCalendar(data: EventInput & { eventId: string }): Promise<boolean>;
 }
 
+/** Resolves a session token to the signed-in member (AuthService). */
 export interface CreatorLookup {
-    getUserByToken(token: string): Promise<EventCreator[] | string>;
+    currentUser(token: string): Promise<EventCreator | null>;
 }
 
 export interface Mailer {
@@ -78,8 +79,7 @@ export class EventService {
         if (!token) return false;
 
         try {
-            const users = await this.users.getUserByToken(token);
-            const creator = Array.isArray(users) ? users[0] : undefined;
+            const creator = await this.users.currentUser(token);
             if (!creator?.email) return false;
 
             await this.mailer.prepareEmail({
@@ -101,4 +101,4 @@ export class EventService {
     }
 }
 
-export const eventService = new EventService(eventMapper, calendarMapper, userMapper, mailMapper);
+export const eventService = new EventService(eventMapper, calendarMapper, authService, mailMapper);

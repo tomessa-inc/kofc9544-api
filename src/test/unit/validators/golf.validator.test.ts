@@ -3,12 +3,11 @@ import { BadRequestError } from "../../../errors";
 import {
     validateHole,
     validateNewPlayer,
-    validateNumericId,
     validatePlayerUpdate,
     validateRegistration,
     validateTeamUpdate,
-    validateTextId,
 } from "../../../validators/golf.validator";
+import { validateNumericId, validateTextId } from "../../../validators/id.validator";
 import { parseListParams, sortDirection, toPage } from "../../../validators/list.validator";
 
 const badRequest = (fn: () => unknown, message: string) => {

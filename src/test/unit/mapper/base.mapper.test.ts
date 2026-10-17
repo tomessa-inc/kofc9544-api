@@ -1,15 +1,10 @@
 import { expect } from "chai";
 import axios from "axios";
-import jwt from "jsonwebtoken";
 import { BaseMapper } from "../../../mapper";
 import { stubMethod } from "../helpers/sql-stub";
 
 class TestMapper extends BaseMapper {
     public DEFAULT_SORT = "name";
-
-    public takeUnique(values: unknown[]) {
-        return this.TakeUniqueOrThrow(values);
-    }
 }
 
 describe("BaseMapper", () => {
@@ -133,64 +128,6 @@ describe("BaseMapper", () => {
             track(stubMethod(axios, "post", async () => { throw new Error("ECONNREFUSED"); }));
 
             expect(await mapper.getSQLData({ sql: "select 1", params: [] })).to.equal(undefined);
-        });
-    });
-
-    describe("tokens", () => {
-        const secret = process.env.TOKEN_SECRET;
-
-        before(() => {
-            process.env.TOKEN_SECRET = process.env.TOKEN_SECRET || "unit-test-secret";
-        });
-
-        after(() => {
-            process.env.TOKEN_SECRET = secret;
-        });
-
-        it("generateAccessToken signs the user id with a 7 day expiry", () => {
-            const decoded: any = jwt.decode(mapper.generateAccessToken({ id: "u1" }));
-
-            expect(decoded.id).to.equal("u1");
-            expect(decoded.exp - decoded.iat).to.equal(7 * 24 * 60 * 60);
-        });
-
-        it("generateRefreshToken signs the user id with a 30 day expiry", () => {
-            const decoded: any = jwt.decode(mapper.generateRefreshToken({ id: "u1" }));
-
-            expect(decoded.exp - decoded.iat).to.equal(30 * 24 * 60 * 60);
-        });
-
-        it("generateJWTToken issues a kofc9544 token", () => {
-            const decoded: any = jwt.decode(mapper.generateJWTToken());
-
-            expect(decoded.iss).to.equal("https://kofc9544.ca/");
-            expect(decoded.scope).to.equal("self");
-        });
-
-        it("checkAuthenication returns undefined with no header", () => {
-            expect(mapper.checkAuthenication()).to.equal(undefined);
-        });
-
-        it("checkAuthenication accepts a valid bearer token", () => {
-            expect(mapper.checkAuthenication(`Bearer ${mapper.generateJWTToken()}`)).to.equal(true);
-        });
-
-        it("checkAuthenication returns the error string for an invalid token", () => {
-            expect(mapper.checkAuthenication("Bearer not-a-token")).to.be.a("string").that.includes("Jwt");
-        });
-    });
-
-    describe("TakeUniqueOrThrow", () => {
-        it("returns the value when exactly one exists", () => {
-            expect(mapper.takeUnique(["only"])).to.equal("only");
-        });
-
-        it("throws when more than one value exists", () => {
-            expect(() => mapper.takeUnique(["a", "b"])).to.throw("Found non unique or inexistent value");
-        });
-
-        it("throws for an empty list", () => {
-            expect(() => mapper.takeUnique([])).to.throw("Found non unique or inexistent value");
         });
     });
 

@@ -1,263 +1,41 @@
-import { defineHandler, readBody, getRouterParams } from "h3";
-import { userMapper, accessMapper, paramsOptions } from "../mapper/";
-import { forbiddenResponse, useResponseError, useResponseSuccess } from "../utils/response";
-import { clearRefreshTokenCookie, setRefreshTokenCookie } from "../utils/cookie-utils";
-import {user as userModel} from "../models/User"
+import { getRouterParams, readBody } from "h3";
+import { userService } from "../service/user.service";
+import { useResponseSuccess } from "../utils/response";
+import { parseListParams } from "../validators/list.validator";
+import { validateTextId } from "../validators/id.validator";
+import { validateSignUp, validateUserPatch, validateUserUpdate } from "../validators/user.validator";
+import { controller, pagedList } from "./controller";
 
+type Body = Record<string, unknown> | undefined;
+
+/** Member administration. Sign-in and sessions are in AuthController. */
 export class UserController {
-
-    public static apiPostSignIn = defineHandler(async (event) => {
-        try {
-            const body = await readBody<Record<string, any>>(event);
-
-            if (body[userMapper.PARAMS_USERNAME] && body[userMapper.PARAMS_PASSWORD]) {
-                const user = (await userMapper.getUserBasedOnPassword(body))[0];
-
-                console.log("the user")
-                console.log(user);
-                if (typeof user !== "object") {
-                    event.res.status = 400;
-                    return useResponseError("BadRequestException", "Username and/or Password incorrect");
-                }
-
-                const accessToken = await userMapper.generateAccessToken(user);
-                console.log("the access token")
-                console.log(accessToken)
-                const refreshToken = await userMapper.generateRefreshToken(user);
-
-                setRefreshTokenCookie(event, refreshToken);
-                console.log("about to update")
-                await userMapper.cleanResetPasswordToken(user);
-                await userMapper.cleanResetPasswordToken(user, "LOGGED");
-                await userMapper.insertUserToken(user, accessToken, "LOGGED");
-                console.log("about to clean")
-                await userMapper.cleanResetPasswordToken(user);
-
-                const result = userMapper.prepareResults(user);
-                result.data.accessToken = accessToken;
-
-
-
-                setRefreshTokenCookie(event, refreshToken);
-/*
-                return useResponseSuccess({
-                    ...findUser,
-                    accessToken,
-                }); */
-
-                return useResponseSuccess({ user, accessToken });
-
-            } else {
-                clearRefreshTokenCookie(event);
-                return forbiddenResponse(event, "Username or password is incorrect.");
-            }
-        } catch (error) {
-            event.res.status = 500;
-            return useResponseError("InternalServerError", error.toString());
-        }
+    public static getAllUsers = controller(async (event) => {
+        const params = parseListParams(getRouterParams(event), { sort: "firstName" });
+        return pagedList(await userService.list(params), params, "firstName");
     });
 
-    public static apiUserInfo = defineHandler(async (event) => {
-        let user: typeof userModel[];
-        let userInfo
-        try {
-            const token = await userMapper.getAuthToken(event);
-            console.log("the token")
-            console.log(token);
-          /*  if (token == null) {
-                console.log("not found")
-                const resetTokenParam = getRouterParams(event);
-                const {resetToken} = resetTokenParam
-                user = (await userMapper.getUserByToken(resetToken))[0];
-                const accessToken = await userMapper.generateAccessToken(user);
-                const refreshToken = await userMapper.generateRefreshToken(user);
-
-                setRefreshTokenCookie(event, refreshToken);
-                console.log("about to update")
-
-                await userMapper.updateUserToken(user, accessToken);
-
-            } else { */
-                user = await userMapper.getUserByToken(token);
-                if (user.length > 0) {
-                    userInfo = user[0]
-                    await userMapper.cleanResetPasswordToken(user);
-                    console.log("the user 1")
-                    console.log(userInfo);
-                    return useResponseSuccess(userInfo);
-                } else {
-                    await userMapper.cleanResetPasswordTokenOnly(token);
-                    return useResponseSuccess("");
-
-               //     return event.res.status = 200;
-
-                }
-//                console.log("the ussser")
-
-  //              console.log(user);
-          //  }
-
-        } catch (error) {
-            event.res.status = 500;
-            return useResponseError("InternalServerError", error.toString());
-        }
+    /** The member with their access roles (a plain object, not the envelope). */
+    public static getUserById = controller(async (event) => {
+        return userService.get(validateTextId(getRouterParams(event).id, "user id"));
     });
 
-
-    public static apiResetPassword = defineHandler(async (event) => {
-        let user;
-        try {
-            const token = await userMapper.getAuthToken(event);
-            console.log("the token")
-            console.log(token);
-            user = (await userMapper.getUserByTokenReset(token, "RESET_PASSWORD"))[0];
-            console.log("the user")
-            console.log(user);
-            const accessToken = await userMapper.generateAccessToken(user);
-            const refreshToken = await userMapper.generateRefreshToken(user);
-
-            setRefreshTokenCookie(event, refreshToken);
-            console.log("about to update")
-
-            await userMapper.cleanResetPasswordToken(user);
-            await userMapper.cleanResetPasswordToken(user, "LOGGED");
-            await userMapper.insertUserToken(user, accessToken, "LOGGED");
-
-       //     await userMapper.cleanResetPasswordToken(user);
-            console.log("the user reset")
-            console.log(user);
-            return useResponseSuccess({...user, accessToken});
-        } catch (error) {
-            event.res.status = 500;
-            return useResponseError("InternalServerError", error.toString());
-        }
+    /** PATCH /user with `{ id, user: { ...fields } }`. */
+    public static patchUpdateUser = controller(async (event) => {
+        const { id, changes } = validateUserPatch(await readBody<Body>(event));
+        await userService.update(id, changes);
+        return useResponseSuccess({ message: "User has been successfully updated" });
     });
 
-    public static apiPostSignOut = defineHandler(async (event) => {
-        return useResponseSuccess("");
+    /** PUT /user/id/:id (not routed). */
+    public static apiUpdateUser = controller(async (event) => {
+        const id = validateTextId(getRouterParams(event).id, "user id");
+        return useResponseSuccess(await userService.update(id, validateUserUpdate(await readBody<Body>(event))));
     });
 
-    public static apiGetCodes = defineHandler(async (event) => {
-        return useResponseSuccess(["AC_100010", "AC_100020", "AC_100030"]);
-    });
-
-    public static apiPostSignUp = defineHandler(async (event) => {
-        try {
-            const body = await readBody<Record<string, any>>(event);
-
-            if (body[userMapper.PARAMS_EMAIL] && body[userMapper.PARAMS_PASSWORD] && body[userMapper.PARAMS_USERNAME]) {
-                const user = await userMapper.apiSignUp(body);
-
-                if (!user) {
-                    event.res.status = 400;
-                    return useResponseError("BadRequestException", "Username already exists");
-                }
-
-                return useResponseSuccess({ message: "User has been created" });
-            }
-
-            event.res.status = 400;
-            return useResponseError("BadRequestException", "Missing required fields");
-        } catch (error) {
-            event.res.status = 500;
-            return useResponseError("InternalServerError", error.toString());
-        }
-    });
-
-    public static patchUpdateUser = defineHandler(async (event) => {
-        try {
-            const body = await readBody<Record<string, any>>(event);
-
-            if (body[userMapper.PARAMS_ID] && body[userMapper.PARAMS_USER]) {
-                const userUpdate = await userMapper.apiUpdateUser(body, body[userMapper.PARAMS_ID]);
-
-                if (!userUpdate) {
-                    event.res.status = 500;
-                    return useResponseError("InternalServerError", "User has not been successfully updated");
-                }
-
-                return useResponseSuccess({ message: "User has been successfully updated" });
-            }
-
-            event.res.status = 500;
-            return useResponseError("BadRequestException", "Missing parameters to access this function");
-        } catch (error) {
-            event.res.status = 500;
-            return useResponseError("InternalServerError", error.toString());
-        }
-    });
-
-    public static getAllUsers = defineHandler(async (event) => {
-        try {
-            const params = getRouterParams(event);
-            const options: paramsOptions = {
-                pageIndex: 1,
-                pageSize: 10,
-                filterQuery: "",
-                sort: userMapper.DEFAULT_SORT,
-                order: userMapper.DEFAULT_ORDER,
-            };
-
-            Object.entries(params).forEach(([key, value]) => {
-                if (value !== "undefined") {
-                    options[key] = isNaN(Number(value)) ? value : Number(value);
-                }
-            });
-
-            const users = await userMapper.getAllUsers(options);
-
-            if (typeof users === "string") {
-                event.res.status = 500;
-                return useResponseError("InternalServerError", users);
-            }
-
-            return userMapper.prepareListResults(users, options);
-        } catch (error) {
-            event.res.status = 500;
-            return useResponseError("InternalServerError", error.toString());
-        }
-    });
-
-    public static getUserById = defineHandler(async (event) => {
-        try {
-            const params = getRouterParams(event);
-            const options: paramsOptions = { id: params.id };
-
-            const user = await userMapper.getUserById(options);
-
-            if (typeof user === "string") {
-                event.res.status = 500;
-                return useResponseError("InternalServerError", user);
-            }
-
-            return user;
-        } catch (error) {
-            event.res.status = 500;
-            return useResponseError("InternalServerError", error.toString());
-        }
-    });
-
-    public static apiUpdateUser = defineHandler(async (event) => {
-        try {
-            const params = getRouterParams(event);
-            const body = await readBody<Record<string, any>>(event);
-            const { id } = params;
-
-          //  await accessMapper.apiDeleteAccess(id);
-            //await Promise.all(body.access.map((access) => accessMapper.apiAddAccess(id, access)));
-
-            console.log(body)
-            const result = await userMapper.apiUpdateUser(id, body);
-
-            if (typeof result === "string") {
-                event.res.status = 500;
-                return useResponseError("InternalServerError", result);
-            }
-
-            return result;
-        } catch (error) {
-            event.res.status = 500;
-            return useResponseError("InternalServerError", error.toString());
-        }
+    /** Sign-up (not routed). */
+    public static apiPostSignUp = controller(async (event) => {
+        await userService.signUp(validateSignUp(await readBody<Body>(event)));
+        return useResponseSuccess({ message: "User has been created" });
     });
 }
