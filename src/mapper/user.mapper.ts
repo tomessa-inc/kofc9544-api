@@ -22,7 +22,6 @@ import {H3Event} from "h3";
 import {gallery} from "../models/Gallery";
 import {image} from "../models/Image";
 import {galleryTag} from "../models/GalleryTag";
-import {PlayerObject} from "./golf.mapper";
 
 
 export class UserMapper extends BaseMapper {

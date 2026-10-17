@@ -8,7 +8,6 @@ import {DrizzleAPI} from "../db/Drizzle";
 import * as console from "node:console";
 import {size} from "lodash-es";
 import axios from "axios";
-import {PlayerObject} from "./golf.mapper";
 import {response} from "express";
 import jwt from 'jsonwebtoken';
 import {isTypedArray} from "node:util/types";

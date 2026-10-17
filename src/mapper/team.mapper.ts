@@ -1,528 +1,89 @@
-import {BaseMapper, paramsOptions} from ".";
-import moment from "moment";
-import * as uuid from 'uuid';
-import {player} from "../models/Player";
-import {GalleryTag2} from "../models/GalleryTag2";
-import {OptionsPlayer} from "../controllers/golf.controller";
+import { eq, lt, or, sql } from "drizzle-orm";
+import { QueryExecutor, sqlExecutor } from "../db/executor";
+import { db } from "../db/query-builder";
+import { player } from "../models/Player";
+import { team } from "../models/Team";
+import { driverValues, type LabelValue, type Page, type WriteResult } from "./types";
 
-
-import {team} from "../models/Team";
-import {image} from "../models/Image";
-import {gallery} from "../models/Gallery";
-import {sql, gt, lt, eq, SQL, count, and, or} from "drizzle-orm";
-import {galleryTag} from "../models/GalleryTag";
-import {MySqlSelectBase} from "drizzle-orm/mysql-core/query-builders/select";
-
-export interface TeamObject {
-    id?:number,
-    name:string,
-    email: string,
-    phone: string
-    individual: boolean
-    teamId: string,
-    allergies: string
-    payment: number,
-    member: string,
-    total?:number,
-//                    createdAt: moment().format('YYYY-MM-DD'),
-    //                  updatedAt: moment().format('YYYY-MM-DD'),
+export type Team = typeof team.$inferSelect;
+export interface NewTeam {
+    id: string;
+    name: string;
+    captain: string;
+    hole?: string;
 }
+export type TeamChanges = Pick<Partial<NewTeam>, "name" | "captain" | "hole">;
 
+/** A team has room for players until it has this many. */
+export const MAX_TEAM_SIZE = 4;
 
-export class TeamMapper extends BaseMapper {
-    private _PARAMS_NAME: string = 'name';
-    private _DEFAULT_SORT: string = 'name';
+const playerCount = sql<number>`count(${player.id})`;
+// Correlated subqueries name the outer columns literally: Drizzle renders ${team.x} unqualified in a
+// single-table select, and an unqualified `id` inside the subquery would bind to the subquery's table.
+const holeName = sql<string>`(SELECT hole.name FROM hole WHERE hole.id = team.hole)`;
 
+/** Data access for the `team` table. */
+export class TeamMapper {
+    constructor(private readonly executor: QueryExecutor = sqlExecutor) {}
 
-    constructor() {
-        super();
-        this.initializeDrizzle()
+    /** Teams whose id or name matches (used to detect an existing team before creating one). */
+    public findByIdOrName(id: string, name: string = id): Promise<Team[]> {
+        return this.executor.run(db.select().from(team).where(or(eq(team.id, id), eq(team.name, name))));
     }
 
-
-    public async insertTeam(id: string, name:string, captain: string, hole: string) {
-        const teamSQL =  this.DRIZZLE.insert(team).values({
-            id: id,
-            name: name,
-            captain: captain,
-            hole: hole
-
-        })
-        return await this.getSQLData(teamSQL.toSQL())
+    public insert(values: NewTeam): Promise<WriteResult> {
+        return this.executor.run(db.insert(team).values(driverValues(values)));
     }
 
-
-    public async doesTeamExist(id: string) {
-
-        const teamSQL =  this.DRIZZLE.select().from(team).where(or(eq(team.id, id), eq(team.name, id)))
-
-        return await this.getSQLData(teamSQL.toSQL())
+    public update(id: string, changes: TeamChanges): Promise<WriteResult> {
+        return this.executor.run(db.update(team).set(driverValues(changes)).where(eq(team.id, id)));
     }
 
-    public async createTeamRegistration(params: OptionsPlayer) {
-        try {
-
-
-            var teamName = params.team_name
-
-            if (teamName === "") {
-                teamName = params.players[0].player
-            }
-
-            const teamObject = {
-                id: teamName.replace(/\s+/g, '-').toLowerCase(),
-                name: teamName,
-                captain: params.players[0].player,
-            };
-            console.log("before")
-            console.log(teamObject)
-            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
-            const teamSQL =  this.DRIZZLE.insert(team).values(teamObject).$returningId();
-            console.log("the team")
-
-
-            console.log(teamSQL.toSQL())
-            const retval = await this.getSQLData(teamSQL.toSQL())
-
-
-            console.log(retval);
-
-
-
-           // const retval = await this.getSQLData(sqlPrepared.toSQL())
-
-            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
-
-            return {success: true, data: {id: teamName.replace(/\s+/g, '-').toLowerCase(), affectedRows: retval.affectedRows}}
-        } catch (error) {
-            console.log(error);
-            return {success: false, message: `Team name "${teamName}" already exists`};
-        }
+    public delete(id: string): Promise<WriteResult> {
+        return this.executor.run(db.delete(team).where(eq(team.id, id)));
     }
 
-
-    public async createTeamFromCSV(params) {
-        try {
-
-
-            var teamName = params.team_name
-
-            
-            if (teamName === "") {
-                teamName = params.players[0].player
-            }
-
-            const teamObject = {
-                id: teamName.replace(/\s+/g, '-').toLowerCase(),
-                name: teamName,
-                captain: params.players[0].player,
-            };
-            console.log("before")
-            console.log(teamObject)
-            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
-            const teamSQL =  this.DRIZZLE.insert(team).values(teamObject).$returningId();
-            console.log("the team")
-
-
-            console.log(teamSQL.toSQL())
-            const retval = await this.getSQLData(teamSQL.toSQL())
-
-
-            console.log(retval);
-
-
-
-            // const retval = await this.getSQLData(sqlPrepared.toSQL())
-
-            console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
-
-            return {success: true, data: {id: teamName.replace(/\s+/g, '-').toLowerCase(), affectedRows: retval.affectedRows}}
-        } catch (error) {
-            console.log(error);
-            return {success: false, message: `Team name "${teamName}" already exists`};
-        }
-    }
-
-    public async getAllTeamsNeedingPlayersLabelValue(params) {
-
-        try {
-          //  this.DRIZZLE.select().count().from(team).where(eq(team.id, ${team.id}));
-            const countPlayers = sql<number>`count(${player.id})`.as('countPlayers');
-            let teamsNeedingPlayersSQL = this.DRIZZLE.select({
-                value: sql<string>`${team.id}`.as("value"),
-             //   label: sql<string>`${team.name}`.as("label"),
-                label: sql<string>`CONCAT(${team.name}, '-', (
-                SELECT hole.name
-                FROM hole
-                INNER JOIN team AS sub_team ON sub_team.hole = hole.id
-                WHERE sub_team.id = ${team.id}
-                ))`.as('label'),
-                countPlayers: countPlayers,
-                total: sql<string>`(SELECT count('id') from team)`.as('total'),
-                hole: sql<string>`(SELECT hole.name
-                                  from hole
-                                           inner join team as sub_team on team.hole = hole.id
-                                  WHERE sub_team.id = team.id)`.as('hole'),
-            }).from(team)
-                .innerJoin(player, eq(team.id, player.TeamId))
-                .groupBy(team.id, team.name)
-                .having(lt(countPlayers, 4));
-           // const test = teamsNeedingPlayersSQL.config.fields.countPlayers.fieldAlias;
-          //  console.log(test);
-          //  console.log("test")
-          //  console.log( teamsNeedingPlayersSQL.config.fields)
-         //   teamsNeedingPlayersSQL = teamsNeedingPlayersSQL.innerJoin(player, eq(team.id, player.TeamId)).having(lt(teamsNeedingPlayersSQL.config.fields.countPlayers, 4)).groupBy(team.id, team.name)
-
-
-
-
-        //    teamsNeedingPlayersSQL = teamsNeedingPlayersSQL.where(lt(teamsNeedingPlayersSQL.config.fields.countPlayers.fieldAlias, 3));
-            console.log(teamsNeedingPlayersSQL.toSQL())
-            /* SELECT count(*)
-
-                                         FROM ${player}
-                                         left join team on player.teamId = team.id)`, 3)); */
-            //return true;
-            return this.getSQLData(teamsNeedingPlayersSQL.toSQL());
-        } catch (error) {
-            return error.toString()
-        }
-    }
-
-       /*     const team = {
-                attributes: {
-                    include: [
-                        [
-                            this.SEQUELIZE.literal(`(
-                        SELECT count(\`player\`.\`id\`) FROM player LEFT JOIN team ON player.teamId = team.id)`),
-                            'count',
-                        ]
-                    ],
-                    where: {
-                    //    'count' > 3,
-                    },
-                firstName:
-                    {
-                        [Op.like]: `%${check.filterQuery}%`
-                    }
-                } 8/
-            }
-            return await Team.findAll(team).then(data => {
-                return data;
-            }).catch(err => {
-                return err;
-            })
-        } catch (error) {
-            console.log(`Could not fetch gallery ${error}`)
-        }
-    }
-*/
-
-
-    public async getAllTeamsNeedingPlayers(params) {
-
-        try {
-            //  this.DRIZZLE.select().count().from(team).where(eq(team.id, ${team.id}));
-
-            console.log("before")
-            let teamsNeedingPlayersSQL = this.DRIZZLE.select({
-                id: team.id,
-                name: team.name,
-                countPlayers: sql<number> `count(${player.id})`.as("countPlayers"),
-                /*
-                                sql<bigint>`(SELECT count(player.id)
-                                                    from ${player}
-                                                    inner join team as subteam on player.teamId = subteam.id
-                                                    where subteam.id = value
-                                                    GROUP BY subteam.id
-
-                                                    )`.as('countPlayers') */
-            }).from(team);
-            // const test = teamsNeedingPlayersSQL.config.fields.countPlayers.fieldAlias;
-            //  console.log(test);
-            //  console.log("test")
-            //  console.log( teamsNeedingPlayersSQL.config.fields)
-            teamsNeedingPlayersSQL = teamsNeedingPlayersSQL.innerJoin(player, eq(team.id, player.TeamId)).having(lt(teamsNeedingPlayersSQL.config.fields.countPlayers, 4)).groupBy(team.id, team.name)
-
-
-
-
-            //    teamsNeedingPlayersSQL = teamsNeedingPlayersSQL.where(lt(teamsNeedingPlayersSQL.config.fields.countPlayers.fieldAlias, 3));
-            console.log(teamsNeedingPlayersSQL.toSQL())
-            /* SELECT count(*)
-
-                                         FROM ${player}
-                                         left join team on player.teamId = team.id)`, 3)); */
-            //return true;
-            return this.getSQLData(teamsNeedingPlayersSQL.toSQL());
-        } catch (error) {
-            return error.toString()
-        }
-    }
-
-    public async getAllTeams(params: paramsOptions) {
-        try {
-            const offset = ((params.pageIndex - 1) * params.pageSize)
-
-            const teamsSQL = this.DRIZZLE.select({
+    /** One page of teams with player count, hole and par; every row carries the overall `total`. */
+    public findPage({ offset, limit }: Page) {
+        return this.executor.run(
+            db.select({
                 id: team.id,
                 name: team.name,
                 captain: team.captain,
-                countPlayers: sql<string>`(SELECT count(player.id)
-                                    from player
-                                    inner join team as subteam on player.TeamId = subteam.id
-                                    where player.TeamId = team.id
-                                    GROUP BY subteam.id
-                                         )`.as('countPlayers'),
-                hole: sql<string>`(SELECT hole.name
-                                           from hole
-                                                    inner join team as sub_team on sub_team.hole = hole.id 
-                                           WHERE sub_team.id = team.id)`.as('hole'),
-                par: sql<string>`(SELECT hole.par
-                                  from hole
-                                           inner join team as sub_team on team.hole = hole.id
-                                  WHERE sub_team.id = team.id
-                                  )`.as('par'),
-                total: sql<string>`(SELECT count('id') from team)`.as('total')
-
-
-            }).from(team).offset(offset).limit(params.pageSize)
-
-            return this.getSQLData(teamsSQL.toSQL());
-/*            const team = {
-                attributes: {
-                    include: [
-                        [
-                            this.SEQUELIZE.literal(`(
-                        SELECT count(\`player\`.\`id\`) FROM player LEFT JOIN team ON player.teamId = team.id)`),
-                            'count',
-                        ]
-                    ]
-                }
-            }
-            return await Team2.findAll(team).then(data => {
-                return data;
-            }).catch(err => {
-                return err;
-            }) */
-        } catch (error) {
-            return error.toString()
-        }
+                countPlayers: sql<number>`(SELECT count(*) FROM player WHERE player.TeamId = team.id)`.as("countPlayers"),
+                hole: holeName.as("hole"),
+                par: sql<string>`(SELECT hole.par FROM hole WHERE hole.id = team.hole)`.as("par"),
+                total: sql<number>`(SELECT count(*) FROM team)`.as("total"),
+            }).from(team).offset(offset).limit(limit),
+        );
     }
 
+    /** Teams with fewer than MAX_TEAM_SIZE players, including empty teams. */
+    public findNeedingPlayers() {
+        return this.executor.run(
+            db.select({ id: team.id, name: team.name, countPlayers: playerCount.as("countPlayers") })
+                .from(team)
+                .leftJoin(player, eq(team.id, player.TeamId))
+                .groupBy(team.id, team.name)
+                .having(lt(playerCount, MAX_TEAM_SIZE)),
+        );
+    }
 
-    public async getPlayersByTeamId(params) {
-      /*  try {
-            const team = {
-                attributes: {
-                    include: [
-                        [
-                            this.SEQUELIZE.literal(`(
-                        SELECT count(\`player\`.\`id\`) FROM player LEFT JOIN team ON player.teamId = team.id)`),
-                            'count',
-                        ]
-                    ]
-                }
-            }
-            return await Team2.findAll(team).then(data => {
-                return data;
-            }).catch(err => {
-                return err;
+    /** Teams with room for players, as select options labelled "<team>-<hole>". */
+    public findNeedingPlayersAsOptions(): Promise<(LabelValue & { countPlayers: number; hole: string; total: number })[]> {
+        return this.executor.run(
+            db.select({
+                value: sql<string>`${team.id}`.as("value"),
+                label: sql<string>`CONCAT(${team.name}, '-', ${holeName})`.as("label"),
+                countPlayers: playerCount.as("countPlayers"),
+                total: sql<number>`(SELECT count(*) FROM team)`.as("total"),
+                hole: holeName.as("hole"),
             })
-        } catch (error) {
-            console.log(`Could not fetch gallery ${error}`)
-        }  */
-    }
-
-
-
-
-    /*
-
-        public async createPlayerRegistration(params: OptionsPlayer) {
-            console.log("the registration")
-            console.log(params)
-
-            const test = params.players.map((player) => {
-                const playerObject = {
-                    id: player.player.replace(/\s+/g, '-').toLowerCase(),
-                    name: player.player,
-                    email: player.email,
-                    phone: player.phone,
-                    createdAt: moment().format('YYYY-MM-DD'),
-                    updatedAt: moment().format('YYYY-MM-DD'),
-                };
-
-                return await Player2.findOrCreate({ where: { name: player.player, email: player.email }, defaults: playerObject });
-
-            })
-
-
-            const player = {
-                id: params.players.replace(/\s+/g, '-').toLowerCase(),
-                name: params.name,
-                email: params.email,
-                phone: params.phone,
-                createdAt: moment().format('YYYY-MM-DD'),
-                updatedAt: moment().format('YYYY-MM-DD'),
-            };
-        }
-        if (params.players.length === 1) {
-        const player = {
-            id: params.id,
-            name: params.name,
-            email: params.email,
-            phone: params.phone,
-            createdAt: moment().format('YYYY-MM-DD'),
-            updatedAt: moment().format('YYYY-MM-DD'),
-        };
-    }
-    if (params.players.length === 1) {
-        const player = {
-            id: params.id,
-            name: params.name,
-            email: params.email,
-            phone: params.phone,
-            createdAt: moment().format('YYYY-MM-DD'),
-            updatedAt: moment().format('YYYY-MM-DD'),
-        };
-        ``````
-    } else {
-
-    }
-    }
-
-    public async createTag(params) { //: Promise<string[] | string> {
-
-        try {
-            const tag = {
-                id: params.id,
-                name: params.name,
-                description: params.description,
-                createdAt: moment().format('YYYY-MM-DD'),
-                updatedAt: moment().format('YYYY-MM-DD'),
-            };
-
-            return await Tag.findOrCreate({ where: { name: params.name }, defaults: tag });
-        } catch (error) {
-            console.log(error);
-            return error.toString();
-        }
-    }
-
-    /**
-     *
-     * @param options
-     * @returns
-     */ /*
-public async getAllTagsForGallery(options) {
-    try {
-
-
-        const gallery = {
-            include: [{
-                model: GalleryTag,
-                association: GalleryTag.Tag,
-                required: true
-            }],
-            where: {
-                '$gallery_tag.gallery_id$': options.gallery_id
-            },
-            //  'gallery_tag.gallery': '975f63c6-8a0f-4536-a126-ffdde09c217c'
-            //  group: ['gallery_tag.tag_id']
-
-        }
-        //            console.log('the gallery');
-        //          console.log(gallery);
-
-        return await Tag.findAll(gallery).then(data => {
-            return data[0];
-        }).catch(err => {
-            return err;
-        })
-    } catch (error) {
-        console.log(`Could not fetch gallery ${error}`)
-    }
-}
-
-public async getAllTags(params) { //: Promise<string[] | string> {
-    let offset;
-
-    try {
-
-        const offset = ((params.pageIndex - 1) * params.pageSize)
-
-        const tagConfig = {
-            offset: offset,
-            limit: params.pageSize,
-
-        }
-
-        return await Tag.findAll(tagConfig).then(images => {
-            return this.processArray(images);
-        }).catch(err => {
-            return err;
-        })
-    } catch (error) {
-        console.log(error);
-        return error.toString();
-    } */
-
-    /**
-     *
-     * @param playerObject
-     * @param id
-     * @returns
-     */
-    public async updateTeamById(teamObject, id) {
-        try {
-
-            const teamSQL = this.DRIZZLE.update(team).set({
-                name: teamObject.name,
-                captain: teamObject.captain,
-                hole: teamObject.hole,
-            }).where(eq(team.id, id))
-            console.log("eoot")
-            console.log(teamSQL.toSQL())
-
-            return await this.getSQLData(teamSQL.toSQL())
-            /*
-                        const offset = ((options.pageIndex - 1) * options.pageSize)
-                        const players = {
-                            include: [
-                                {
-                                    Model: Team2,
-                                    association: Player2.Team,
-                                    required: false
-                                },
-                            ],
-                            where: [{ TeamId: options.id }],
-                            offset: offset,
-                            limit: options.pageSize,
-
-                        }
-
-                        console.log("players")
-                        console.log(players)
-
-                        return await Player2.findAll(players).then(data => {
-                            console.log("the players")
-                            console.log(data);
-                            return this.processArray(data);
-                        }).catch(err => {
-                            return err;
-                        }) */
-        } catch (error) {
-            return error.toString()
-        }
-    }
-
-    get DEFAULT_SORT(): string {
-        return this._DEFAULT_SORT;
-    }
-
-    get PARAMS_NAME(): string {
-        return this._PARAMS_NAME;
+                .from(team)
+                .leftJoin(player, eq(team.id, player.TeamId))
+                .groupBy(team.id, team.name)
+                .having(lt(playerCount, MAX_TEAM_SIZE)),
+        );
     }
 }
 

@@ -1,322 +1,235 @@
 import { expect } from "chai";
-import { golfMapper, holeMapper, mailMapper, teamMapper } from "../../../mapper";
-import { EmailMessaging } from "../../../models/EmailMessaging";
+import { sqlExecutor } from "../../../db/executor";
+import { ConflictError } from "../../../errors";
+import { mailMapper } from "../../../mapper/mail.mapper";
+import { holeService } from "../../../service/hole.service";
+import { playerImportService } from "../../../service/player-import.service";
+import { playerService } from "../../../service/player.service";
+import { registrationService } from "../../../service/registration.service";
+import { teamService } from "../../../service/team.service";
 import { api } from "../helpers/http";
 import { stubMethod } from "../helpers/sql-stub";
 
-describe("GolfController", () => {
+describe("GolfController (HTTP contract)", () => {
     const stubs: { restore: () => void }[] = [];
     const stub = <T extends object, K extends keyof T>(target: T, key: K, impl?: (...args: any[]) => any) => {
         const s = stubMethod(target, key, impl);
         stubs.push(s);
         return s;
     };
-
     afterEach(() => stubs.splice(0).reverse().forEach((s) => s.restore()));
 
+    const players = [{ player: "John Smith", email: "j@x.ca", phone: "555" }];
+
     describe("POST /golf/register", () => {
-        const players = [
-            { player: "John Smith", email: "j@x.ca", phone: "555" },
-            { player: "Jane Doe", email: "jd@x.ca", phone: "556" },
-        ];
+        it("validates the body and returns the success envelope", async () => {
+            const register = stub(registrationService, "register", async () => ({ teamId: undefined, playerIds: [1], emailSent: true }));
 
-        it("registers a team when 2+ players are sent, then the players, then emails the organizers", async () => {
-            const createTeam = stub(teamMapper, "createTeamRegistration", async () => ({ success: true, data: { id: "eagles", affectedRows: 1 } }));
-            const createPlayers = stub(golfMapper, "createPlayerRegistration", async () => undefined);
-            const mail = stub(mailMapper, "setupEmail", async () => ({ success: true }));
-
-            const res = await api().post("/golf/register").send({ team_name: "Eagles", players });
+            const res = await api().post("/golf/register").send({ team_name: "", players });
 
             expect(res.status).to.equal(200);
-            expect(res.body).to.deep.equal({ code: 0, data: { message: "Registration successful" }, error: null, message: "ok" });
-            expect(createTeam.calls).to.have.length(1);
-            expect(createPlayers.calls[0][0]).to.include({ TeamId: "eagles", individual: false });
-            expect(mail.calls[0][0].email_type).to.equal(EmailMessaging.EMAIL_TYPE_REGISTER);
+            expect(res.body).to.deep.equal({ code: 0, data: { message: "Registration successful", emailSent: true }, error: null, message: "ok" });
+            expect(register.calls[0][0]).to.deep.equal({ team_name: "", players });
         });
 
-        it("registers a single player as an individual without creating a team", async () => {
-            const createTeam = stub(teamMapper, "createTeamRegistration");
-            const createPlayers = stub(golfMapper, "createPlayerRegistration", async () => undefined);
-            stub(mailMapper, "setupEmail", async () => ({}));
+        it("returns 400 for an invalid body without calling the service", async () => {
+            const register = stub(registrationService, "register");
 
-            const res = await api().post("/golf/register").send({ players: [players[0]] });
+            const res = await api().post("/golf/register").send({ players: [] });
 
-            expect(res.status).to.equal(200);
-            expect(createTeam.calls).to.have.length(0);
-            expect(createPlayers.calls[0][0]).to.include({ individual: true });
+            expect(res.status).to.equal(400);
+            expect(res.body).to.deep.equal({ code: -1, data: null, error: "At least one player is required", message: "BadRequest" });
+            expect(register.calls).to.have.length(0);
         });
 
-        it("returns 409 when the team name is taken", async () => {
-            stub(teamMapper, "createTeamRegistration", async () => ({ success: false, message: 'Team name "Eagles" already exists' }));
-            const createPlayers = stub(golfMapper, "createPlayerRegistration");
+        it("returns 409 Conflict for a taken team name", async () => {
+            stub(registrationService, "register", async () => {
+                throw new ConflictError('Team name "Eagles" already exists');
+            });
 
             const res = await api().post("/golf/register").send({ team_name: "Eagles", players });
 
             expect(res.status).to.equal(409);
-            expect(res.body).to.include({ code: -1, message: "Conflict", error: 'Team name "Eagles" already exists' });
-            expect(createPlayers.calls).to.have.length(0);
+            expect(res.body).to.include({ message: "Conflict", error: 'Team name "Eagles" already exists' });
         });
 
-        it("returns 500 when the team insert affects no rows", async () => {
-            stub(teamMapper, "createTeamRegistration", async () => ({ success: true, data: { id: "eagles", affectedRows: 0 } }));
+        it("returns a generic 500 without leaking the internal error", async () => {
+            stub(registrationService, "register", async () => {
+                throw new Error("ER_DUP_ENTRY: secret details");
+            });
 
-            const res = await api().post("/golf/register").send({ team_name: "Eagles", players });
-
-            expect(res.status).to.equal(500);
-        });
-
-        it("returns 500 when a mapper throws", async () => {
-            stub(golfMapper, "createPlayerRegistration", async () => { throw new Error("db down"); });
-
-            const res = await api().post("/golf/register").send({ players: [players[0]] });
+            const res = await api().post("/golf/register").send({ players });
 
             expect(res.status).to.equal(500);
-            expect(res.body.error).to.equal("Error: db down");
+            expect(res.body).to.deep.equal({ code: -1, data: null, error: "Internal server error", message: "InternalServerError" });
         });
     });
 
-    describe("paginated list endpoints", () => {
+    describe("paged list endpoints", () => {
+        const rows = [{ name: "b", label: "b", value: "b", total: 25 }, { name: "a", label: "a", value: "a", total: 25 }];
         const cases = [
-            ["/golf/hole/page-index/2/page-size/5/name/asc", holeMapper, "getAllHoles"],
-            ["/golf/holes-missing-teams-label-value/page-index/1/page-size/5/value/asc", holeMapper, "getAllHolesNeedingTeamsLabelValue"],
-            ["/golf/teams-missing-players-label-value/page-index/1/page-size/5/label/asc", teamMapper, "getAllTeamsNeedingPlayersLabelValue"],
-            ["/golf/teams-missing-players/page-index/1/page-size/5/name/asc", teamMapper, "getAllTeamsNeedingPlayers"],
-            ["/golf/page-index/2/page-size/5/name/asc", golfMapper, "getAllPlayers"],
-            ["/golf/team/page-index/2/page-size/5/name/asc", teamMapper, "getAllTeams"],
-            ["/golf/team/id/eagles/page-index/1/page-size/5/name/asc", golfMapper, "getPlayersByTeamId"],
-            ["/golf/player-csv/name/asc", golfMapper, "getPlayersCSV"],
+            ["/golf/page-index/3/page-size/10/name/asc", playerService, "list"],
+            ["/golf/team/page-index/3/page-size/10/name/asc", teamService, "list"],
+            ["/golf/hole/page-index/3/page-size/10/name/asc", holeService, "list"],
+            ["/golf/teams-missing-players/page-index/3/page-size/10/name/asc", teamService, "listNeedingPlayers"],
+            ["/golf/teams-missing-players-label-value/page-index/3/page-size/10/label/asc", teamService, "listNeedingPlayersAsOptions"],
+            ["/golf/holes-missing-teams-label-value/page-index/3/page-size/10/value/asc", holeService, "listNeedingTeamsAsOptions"],
+            ["/golf/team/id/eagles/page-index/3/page-size/10/name/asc", playerService, "listByTeam"],
+            ["/golf/player-csv/name/asc", playerService, "listForExport"],
         ] as const;
 
-        for (const [url, mapper, method] of cases) {
-            describe(`POST ${url}`, () => {
-                it(`passes parsed route params to ${method} and returns a paginated envelope`, async () => {
-                    const call = stub(mapper as any, method, async () => [{ name: "a", value: "a", label: "a", total: 1 }]);
+        for (const [url, service, method] of cases) {
+            it(`POST ${url} returns the sorted paged envelope from ${method}`, async () => {
+                stub(service as any, method, async () => rows.map((r) => ({ ...r })));
 
-                    const res = await api().post(url);
+                const res = await api().post(url);
 
-                    expect(res.status).to.equal(200);
-                    expect(res.body.code).to.equal(0);
-                    expect(res.body.data.items).to.have.length(1);
-                    expect(call.calls[0][0]).to.include({ sort: url.split("/").at(-2), order: "asc" });
-                    if (url.includes("page-size/5")) expect(call.calls[0][0].pageSize).to.equal(5);
+                expect(res.status).to.equal(200);
+                expect(res.body).to.include({ code: 0, message: "ok", total: "25" });
+                expect(res.body.data.items.map((r) => r.name)).to.deep.equal(["a", "b"]);
+                expect(res.body.data.total).to.equal(25);
+            });
+
+            it(`POST ${url} returns a generic 500 when ${method} fails`, async () => {
+                stub(service as any, method, async () => {
+                    throw new Error("db down");
                 });
 
-                it(`returns 500 when ${method} returns an error string`, async () => {
-                    stub(mapper as any, method, async () => "Error: boom");
-
-                    const res = await api().post(url);
-
-                    expect(res.status).to.equal(500);
-                    expect(res.body.error).to.equal("Error: boom");
-                });
-
-                it(`returns 500 when ${method} throws`, async () => {
-                    stub(mapper as any, method, async () => { throw new Error("boom"); });
-
-                    expect((await api().post(url)).status).to.equal(500);
-                });
+                expect((await api().post(url)).status).to.equal(500);
             });
         }
 
-        it("POST /golf/team/id/:id passes the team id through", async () => {
-            const call = stub(golfMapper, "getPlayersByTeamId", async () => []);
+        it("derives lastpage from total", async () => {
+            stub(playerService, "list", async () => rows);
 
-            await api().post("/golf/team/id/eagles/page-index/1/page-size/5/name/asc");
+            expect((await api().post("/golf/page-index/1/page-size/10/name/asc")).body).to.include({ lastpage: "3", pageSize: "10", pageIndex: "1" });
+        });
 
-            expect(call.calls[0][0].id).to.equal("eagles");
+        it("passes parsed paging to the service", async () => {
+            const list = stub(playerService, "list", async () => []);
+
+            await api().post("/golf/page-index/3/page-size/10/name/asc");
+
+            expect(list.calls[0][0]).to.include({ pageIndex: 3, pageSize: 10, sort: "name", order: "asc" });
+        });
+
+        it("passes the team id from the route", async () => {
+            const list = stub(playerService, "listByTeam", async () => []);
+
+            await api().post("/golf/team/id/eagles/page-index/1/page-size/10/name/asc");
+
+            expect(list.calls[0]).to.deep.equal(["eagles"]);
         });
     });
 
     describe("POST /golf/players-missing-teams-label-value/...", () => {
-        const url = "/golf/players-missing-teams-label-value/page-index/1/page-size/5/label/asc";
+        it("returns the options as a plain array", async () => {
+            stub(playerService, "listWithoutTeamAsOptions", async () => [{ label: "Jo", value: 7 }]);
 
-        it("returns the mapper rows as-is", async () => {
-            stub(golfMapper, "getAllPlayersNeedingTeamsLabelValue", async () => [{ label: "a", value: "a" }]);
+            const res = await api().post("/golf/players-missing-teams-label-value/page-index/1/page-size/10/label/asc");
 
-            const res = await api().post(url);
-
-            expect(res.body).to.deep.equal([{ label: "a", value: "a" }]);
-        });
-
-        it("returns 500 on an error string", async () => {
-            stub(golfMapper, "getAllPlayersNeedingTeamsLabelValue", async () => "Error: boom");
-
-            expect((await api().post(url)).status).to.equal(500);
+            expect(res.body).to.deep.equal([{ label: "Jo", value: 7 }]);
         });
     });
 
-    describe("PUT /golf/player-update/:id", () => {
-        it("updates the player from the body using the route id", async () => {
-            const update = stub(golfMapper, "updatePlayerById", async () => ({ affectedRows: 1 }));
+    describe("players", () => {
+        it("POST /golf/player-new validates and creates", async () => {
+            const create = stub(playerService, "create", async () => ({ id: 7, emailSent: true }));
 
-            const res = await api().put("/golf/player-update/7").send({ name: "John" });
+            const res = await api().post("/golf/player-new").send({ TeamId: "eagles", name: "Jo", email: "jo@x.ca" });
 
-            expect(res.status).to.equal(200);
+            expect(res.body.data).to.deep.equal({ id: 7, emailSent: true });
+            expect(create.calls[0][0]).to.deep.equal({ TeamId: "eagles", name: "Jo", email: "jo@x.ca", phone: "" });
+        });
+
+        it("POST /golf/player-new returns 400 without a name", async () => {
+            expect((await api().post("/golf/player-new").send({ email: "jo@x.ca" })).status).to.equal(400);
+        });
+
+        it("PUT /golf/player-update/:id updates by numeric id with only editable fields", async () => {
+            const update = stub(playerService, "update", async () => ({ affectedRows: 1 }));
+
+            const res = await api().put("/golf/player-update/7").send({ name: "Jo", payment: "free" });
+
             expect(res.body.data).to.deep.equal({ affectedRows: 1 });
-            expect(update.calls[0]).to.deep.equal([{ name: "John" }, "7"]);
+            expect(update.calls[0]).to.deep.equal([7, { name: "Jo" }]);
         });
 
-        it("returns 500 on an error string", async () => {
-            stub(golfMapper, "updatePlayerById", async () => "Error: boom");
-
-            expect((await api().put("/golf/player-update/7").send({})).status).to.equal(500);
-        });
-    });
-
-    describe("POST /golf/player-new", () => {
-        it("wraps the single player as a non-individual registration", async () => {
-            const create = stub(golfMapper, "createPlayerRegistration", async () => undefined);
-
-            const res = await api().post("/golf/player-new").send({ TeamId: "eagles", name: "Jo", email: "jo@x.ca", phone: "1", allergies: "none" });
-
-            expect(res.status).to.equal(200);
-            expect(create.calls[0][0]).to.deep.equal({
-                TeamId: "eagles",
-                players: [{ player: "Jo", email: "jo@x.ca", phone: "1", allergies: "none" }],
-                individual: false,
-                email_type: "register",
-            });
+        it("PUT /golf/player-update/:id rejects a non-numeric id", async () => {
+            expect((await api().put("/golf/player-update/abc").send({})).status).to.equal(400);
         });
 
-        it("returns 500 on an error string", async () => {
-            stub(golfMapper, "createPlayerRegistration", async () => "Error: boom");
+        it("DELETE /golf/player-delete/:playerId deletes by numeric id", async () => {
+            const del = stub(playerService, "delete", async () => ({ affectedRows: 1 }));
 
-            expect((await api().post("/golf/player-new").send({})).status).to.equal(500);
+            const res = await api().delete("/golf/player-delete/7");
+
+            expect(res.body.data).to.deep.equal({ affectedRows: 1 });
+            expect(del.calls[0]).to.deep.equal([7]);
         });
     });
 
-    describe("PUT /golf/team-new", () => {
-        it("is a placeholder that responds 200", async () => {
-            expect((await api().put("/golf/team-new").send({})).status).to.equal(200);
-        });
-    });
+    describe("teams", () => {
+        it("PUT /golf/team/:id updates the team named in the URL", async () => {
+            const update = stub(teamService, "update", async () => ({ affectedRows: 1 }));
 
-    describe("POST /golf/hole-new", () => {
-        it("creates the hole with an id slugified from its name", async () => {
-            const create = stub(holeMapper, "createHole", async () => undefined);
+            const res = await api().put("/golf/team/eagles").send({ id: "hawks", name: "Eagles", captain: "Jo", hole: "h1" });
 
-            const res = await api().post("/golf/hole-new").send({ name: "Hole 18", par: 5 });
-
-            expect(res.status).to.equal(200);
-            expect(create.calls[0][0]).to.deep.equal({ name: "Hole 18", par: 5, id: "hole-18" });
+            expect(res.body.data).to.deep.equal({ affectedRows: 1 });
+            expect(update.calls[0]).to.deep.equal(["eagles", { name: "Eagles", captain: "Jo", hole: "h1" }]);
         });
 
-        it("returns 500 when the name is missing", async () => {
-            stub(holeMapper, "createHole");
-
-            expect((await api().post("/golf/hole-new").send({})).status).to.equal(500);
-        });
-    });
-
-    describe("PUT /golf/team/:id", () => {
-        it("updates the team identified by the :id route param", async () => {
-            const update = stub(teamMapper, "updateTeamById", async () => ({ affectedRows: 1 }));
-
-            const res = await api().put("/golf/team/eagles").send({ name: "Eagles", captain: "Jo", hole: "h1" });
-
-            expect(res.status).to.equal(200);
-            expect(update.calls[0]).to.deep.equal([{ id: "eagles", name: "Eagles", captain: "Jo", hole: "h1" }, "eagles"]);
-        });
-
-        it("prefers the route id over a different id in the body", async () => {
-            const update = stub(teamMapper, "updateTeamById", async () => ({}));
-
-            await api().put("/golf/team/eagles").send({ id: "hawks", name: "Eagles" });
-
-            expect(update.calls[0][1]).to.equal("eagles");
-            expect(update.calls[0][0].id).to.equal("eagles");
-        });
-
-        it("falls back to the body id when the URL id is the literal 'undefined'", async () => {
-            const update = stub(teamMapper, "updateTeamById", async () => ({}));
+        it("PUT /golf/team/undefined falls back to the body id", async () => {
+            const update = stub(teamService, "update", async () => ({}));
 
             await api().put("/golf/team/undefined").send({ id: "eagles", name: "Eagles" });
 
-            expect(update.calls[0][1]).to.equal("eagles");
+            expect(update.calls[0][0]).to.equal("eagles");
         });
 
-        it("returns 400 without updating when no id is available", async () => {
-            const update = stub(teamMapper, "updateTeamById", async () => ({}));
-
+        it("PUT /golf/team/undefined without a body id returns 400", async () => {
             const res = await api().put("/golf/team/undefined").send({ name: "Eagles" });
 
             expect(res.status).to.equal(400);
             expect(res.body.error).to.equal("Missing team id");
-            expect(update.calls).to.have.length(0);
         });
 
-        it("returns 500 on an error string", async () => {
-            stub(teamMapper, "updateTeamById", async () => "Error: boom");
-
-            expect((await api().put("/golf/team/eagles").send({})).status).to.equal(500);
-        });
-    });
-
-    describe("POST /golf/hole/:id", () => {
-        it("updates the hole using the id from the body", async () => {
-            const update = stub(holeMapper, "updatHoleById", async () => ({ affectedRows: 1 }));
-
-            const res = await api().post("/golf/hole/h1").send({ id: "h1", name: "Hole 1", par: 4 });
-
-            expect(res.status).to.equal(200);
-            expect(update.calls[0][1]).to.equal("h1");
-        });
-
-        it("returns 500 on an error string", async () => {
-            stub(holeMapper, "updatHoleById", async () => "Error: boom");
-
-            expect((await api().post("/golf/hole/h1").send({})).status).to.equal(500);
-        });
-    });
-
-    describe("DELETE endpoints", () => {
         it("DELETE /golf/team-delete/:teamId deletes the team", async () => {
-            const del = stub(golfMapper, "deleteTeam", async () => ({ affectedRows: 1 }));
+            const del = stub(teamService, "delete", async () => ({ affectedRows: 1 }));
 
-            const res = await api().delete("/golf/team-delete/eagles");
-
-            expect(res.status).to.equal(200);
+            expect((await api().delete("/golf/team-delete/eagles")).status).to.equal(200);
             expect(del.calls[0]).to.deep.equal(["eagles"]);
         });
 
-        it("DELETE /golf/team-delete/:teamId returns 500 on an error string", async () => {
-            stub(golfMapper, "deleteTeam", async () => "Error: boom");
+        it("PUT /golf/team-new is a reserved no-op", async () => {
+            expect((await api().put("/golf/team-new").send({})).body).to.deep.include({ code: 0, data: null });
+        });
+    });
 
-            expect((await api().delete("/golf/team-delete/eagles")).status).to.equal(500);
+    describe("holes", () => {
+        it("POST /golf/hole-new creates the hole", async () => {
+            const create = stub(holeService, "create", async () => ({ id: "hole-18" }));
+
+            const res = await api().post("/golf/hole-new").send({ name: "Hole 18", par: 5 });
+
+            expect(res.body.data).to.deep.equal({ id: "hole-18" });
+            expect(create.calls[0][0]).to.deep.equal({ name: "Hole 18", par: "5" });
         });
 
-        it("DELETE /golf/player-delete/:playerId deletes the player", async () => {
-            const del = stub(golfMapper, "deletePlayer", async () => ({ affectedRows: 1 }));
-
-            const res = await api().delete("/golf/player-delete/7");
-
-            expect(res.status).to.equal(200);
-            expect(del.calls[0]).to.deep.equal(["7"]);
+        it("POST /golf/hole-new returns 400 without a name", async () => {
+            expect((await api().post("/golf/hole-new").send({})).status).to.equal(400);
         });
 
-        it("DELETE /golf/player-delete/:playerId returns 500 on an error string", async () => {
-            stub(golfMapper, "deletePlayer", async () => "Error: boom");
+        it("POST /golf/hole/:id updates the hole named in the URL", async () => {
+            const update = stub(holeService, "update", async () => ({ affectedRows: 1 }));
 
-            expect((await api().delete("/golf/player-delete/7")).status).to.equal(500);
+            await api().post("/golf/hole/hole-1").send({ id: "other", name: "Hole 1", par: "4" });
+
+            expect(update.calls[0]).to.deep.equal(["hole-1", { name: "Hole 1", par: "4" }]);
         });
     });
 
     describe("POST /golf/player/import", () => {
-        const csv = [
-            "PAR,TEAM NAME,HOLE,LAST NAME,FIRST NAME,EMAIL,REGISTERED,PAID,PHONE,NOTES",
-            "4,Eagles,Hole 1,Smith,John,j@x.ca,Y,Y,555,",
-            "4,,Hole 2,Doe,Jane,jd@x.ca,Y,N,556,",
-        ].join("\n");
-
-        function stubImport(overrides: { doesTeamExist?: (name: string) => any; insertPlayer?: () => any } = {}) {
-            stub(holeMapper, "getHoleIdByHoleName", async (name) => [{ id: name.toLowerCase().replace(/\s+/g, "-") }]);
-            const exists = stub(teamMapper, "doesTeamExist", overrides.doesTeamExist ?? (async () => []));
-            const insertTeam = stub(teamMapper, "insertTeam", async () => ({}));
-            stub(golfMapper, "checkIfPlayerExists", async () => []);
-            const insertPlayer = stub(golfMapper, "insertPlayer", overrides.insertPlayer ?? (async () => undefined));
-            return { exists, insertTeam, insertPlayer };
-        }
-
         it("returns 400 when no file is uploaded", async () => {
             const res = await api().post("/golf/player/import").field("other", "x");
 
@@ -324,102 +237,55 @@ describe("GolfController", () => {
             expect(res.body.error).to.equal("No file provided");
         });
 
-        it("creates named and solo teams and inserts each player", async () => {
-            const { insertTeam, insertPlayer } = stubImport();
+        it("imports the uploaded file's text", async () => {
+            const imp = stub(playerImportService, "import", async () => ({ teamsCreated: 1, playersCreated: 2 }));
 
-            await api().post("/golf/player/import").attach("file", Buffer.from(csv), "players.csv");
+            const res = await api().post("/golf/player/import").attach("file", Buffer.from("HOLE\nHole 1"), "players.csv");
 
-            expect(insertTeam.calls.map((c) => c.slice(0, 2))).to.deep.equal([["eagles", "Eagles"], ["jane-doe", "Jane Doe"]]);
-            expect(insertTeam.calls[0][3]).to.equal("hole-1");
-            expect(insertPlayer.calls.map((c) => [c[0], c[5]])).to.deep.equal([["John Smith", "eagles"], ["Jane Doe", "jane-doe"]]);
+            expect(res.body.data).to.deep.equal({ teamsCreated: 1, playersCreated: 2 });
+            expect(imp.calls[0]).to.deep.equal(["HOLE\nHole 1"]);
         });
+    });
 
-        it("responds 200 once every row is imported", async () => {
-            stubImport();
-
-            const res = await api().post("/golf/player/import").attach("file", Buffer.from(csv), "players.csv");
-
-            expect(res.status).to.equal(200);
-        });
-
-        it("skips rows with no first name", async () => {
-            const { insertPlayer } = stubImport();
-            const withBlank = `${csv}\n4,Eagles,Hole 1,Ghost,,g@x.ca,Y,Y,557,`;
-
-            const res = await api().post("/golf/player/import").attach("file", Buffer.from(withBlank), "players.csv");
-
-            expect(res.status).to.equal(200);
-            expect(insertPlayer.calls).to.have.length(2);
-        });
-
-        it("links players to an existing named team instead of the previous row's team", async () => {
-            const { insertTeam, insertPlayer } = stubImport({
-                doesTeamExist: async (name: string) => (name === "Birdies" ? [{ id: "birdies-2024" }] : []),
+    describe("end to end (only the SQL executor and SES are faked)", () => {
+        it("registration writes the team and players and emails each player and the organizers", async () => {
+            const queries: { sql: string; params: unknown[] }[] = [];
+            stub(sqlExecutor, "run", async (q) => {
+                const captured = q.toSQL();
+                queries.push(captured);
+                return captured.sql.startsWith("select") ? [] : { insertId: 100 + queries.length, affectedRows: 1 };
             });
-            const rows = [
-                csv.split("\n")[0],
-                "4,,Hole 2,Doe,Jane,jd@x.ca,Y,N,556,",
-                "4,Birdies,Hole 3,Lee,Sam,s@x.ca,Y,Y,558,",
-            ].join("\n");
+            const ses = stub((mailMapper as any)._sesClient, "send", async () => ({ $metadata: { httpStatusCode: 200 } }));
 
-            await api().post("/golf/player/import").attach("file", Buffer.from(rows), "players.csv");
+            const res = await api().post("/golf/register").send({
+                team_name: "Eagles",
+                players: [{ player: "John Smith", email: "j@x.ca", phone: "555" }, { player: "Jane Doe", email: "jd@x.ca", phone: "556" }],
+            });
 
-            expect(insertTeam.calls.map((c) => c[0])).to.deep.equal(["jane-doe"]);
-            expect(insertPlayer.calls.map((c) => [c[0], c[5]])).to.deep.equal([["Jane Doe", "jane-doe"], ["Sam Lee", "birdies-2024"]]);
+            expect(res.body.data).to.deep.equal({ message: "Registration successful", emailSent: true });
+            expect(queries.map((q) => q.sql.split(" (")[0].split(" where")[0])).to.deep.equal([
+                "select `id`, `name`, `captain`, `hole`, `createdAt`, `updatedAt` from `team`",
+                "insert into `team`",
+                "insert into `player`",
+                "insert into `player`",
+            ]);
+            expect(ses.calls.map((c) => c[0].input.Destination.ToAddresses)).to.deep.equal([
+                ["j@x.ca"],
+                ["jd@x.ca"],
+                ["tcruicksh@gmail.com", "registration@kofc9544.ca"],
+            ]);
         });
 
-        it("looks each hole up once and reuses it for named teams", async () => {
-            const { insertTeam } = stubImport();
-            const lookups = stub(holeMapper, "getHoleIdByHoleName", async (name) => [{ id: name.toLowerCase().replace(/\s+/g, "-") }]);
-            const sameHole = `${csv}\n4,Eagles,Hole 1,Smith,Ann,a@x.ca,Y,Y,559,`;
+        it("import rejects an unknown hole with 400 before any write", async () => {
+            const queries: string[] = [];
+            stub(sqlExecutor, "run", async (q) => (queries.push(q.toSQL().sql), []));
 
-            await api().post("/golf/player/import").attach("file", Buffer.from(sameHole), "players.csv");
-
-            expect(lookups.calls.map((c) => c[0])).to.deep.equal(["Hole 1", "Hole 2"]);
-            expect(insertTeam.calls[0]).to.deep.equal(["eagles", "Eagles", "John", "hole-1"]);
-        });
-
-        it("returns 400 naming every unknown hole and writes nothing", async () => {
-            const { insertTeam, insertPlayer } = stubImport();
-            stub(holeMapper, "getHoleIdByHoleName", async (name) => (name === "Hole 1" ? [{ id: "hole-1" }] : []));
-            const unknown = `${csv}\n4,,Hole 99,Lee,Sam,s@x.ca,Y,Y,558,`;
-
-            const res = await api().post("/golf/player/import").attach("file", Buffer.from(unknown), "players.csv");
-
-            expect(res.status).to.equal(400);
-            expect(res.body.error).to.equal('Unknown hole(s), nothing was imported: "Hole 2" (Jane Doe), "Hole 99" (Sam Lee)');
-            expect(insertTeam.calls).to.have.length(0);
-            expect(insertPlayer.calls).to.have.length(0);
-        });
-
-        it("treats a failed hole lookup as unknown instead of crashing", async () => {
-            stubImport();
-            stub(holeMapper, "getHoleIdByHoleName", async () => undefined);
-
+            const csv = "PAR,TEAM NAME,HOLE,LAST NAME,FIRST NAME,EMAIL\n4,Eagles,Hole 99,Smith,John,j@x.ca";
             const res = await api().post("/golf/player/import").attach("file", Buffer.from(csv), "players.csv");
 
             expect(res.status).to.equal(400);
-        });
-
-        it("ignores the hole on rows with no first name", async () => {
-            const { insertPlayer } = stubImport();
-            const lookups = stub(holeMapper, "getHoleIdByHoleName", async (name) => [{ id: name }]);
-            const blankRow = `${csv}\n4,,Hole 99,Ghost,,g@x.ca,Y,Y,557,`;
-
-            const res = await api().post("/golf/player/import").attach("file", Buffer.from(blankRow), "players.csv");
-
-            expect(res.status).to.equal(200);
-            expect(lookups.calls.map((c) => c[0])).to.not.include("Hole 99");
-            expect(insertPlayer.calls).to.have.length(2);
-        });
-
-        it("waits for player inserts and returns 500 when one fails", async () => {
-            stubImport({ insertPlayer: async () => { throw new Error("Duplicate entry"); } });
-
-            const res = await api().post("/golf/player/import").attach("file", Buffer.from(csv), "players.csv");
-
-            expect(res.status).to.equal(500);
-            expect(res.body.error).to.equal("Error: Duplicate entry");
+            expect(res.body.error).to.equal('Unknown hole(s), nothing was imported: "Hole 99" (John Smith)');
+            expect(queries.every((q) => q.startsWith("select"))).to.equal(true);
         });
     });
 });

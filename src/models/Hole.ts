@@ -1,15 +1,8 @@
-import { drizzle } from 'drizzle-orm/mysql2';
-import { mysqlTable, serial, varchar, int, boolean, DatetimeFsp, MySqlTimestamp, timestamp } from 'drizzle-orm/mysql-core';
-import mysql from 'mysql2/promise';
-import {DataTypes} from "../db";
+import { mysqlTable, varchar } from "drizzle-orm/mysql-core";
 
-
-// Define your schema
-export const hole = mysqlTable('hole', {
-    id: varchar('id', {length: 25}).primaryKey(),
-    name: varchar('name', {length: 255}).notNull(),
-    par: varchar('par', {length: 255}).notNull(),
-
-//    createdAt:timestamp().defaultNow(),
-    //  updatedAt: timestamp().defaultNow(),
-})
+/** Note: the table's primary key is `name`; `id` is the slug the rest of the schema references. */
+export const hole = mysqlTable("hole", {
+    name: varchar("name", { length: 45 }).primaryKey(),
+    par: varchar("par", { length: 45 }),
+    id: varchar("id", { length: 45 }),
+});
