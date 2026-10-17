@@ -1,265 +1,167 @@
 import { expect } from "chai";
-import { galleryMapper, imageMapper, tagMapper } from "../../../mapper";
+import { sqlExecutor } from "../../../db/executor";
+import { NotFoundError } from "../../../errors";
+import { cdnMapper } from "../../../mapper/cdn.mapper";
 import { ImageController } from "../../../controllers/image.controller";
-import { GalleryController } from "../../../controllers/gallery.controller";
+import { galleryService } from "../../../service/gallery.service";
+import { imageService } from "../../../service/image.service";
+import { tagService } from "../../../service/tag.service";
 import { api, mount } from "../helpers/http";
 import { stubMethod } from "../helpers/sql-stub";
 
-describe("Gallery / Image / Tag controllers", () => {
+describe("Gallery / Image / Tag controllers (HTTP contract)", () => {
     const stubs: { restore: () => void }[] = [];
     const stub = <T extends object, K extends keyof T>(target: T, key: K, impl?: (...args: any[]) => any) => {
         const s = stubMethod(target, key, impl);
         stubs.push(s);
         return s;
     };
-
     afterEach(() => stubs.splice(0).reverse().forEach((s) => s.restore()));
 
-    describe("GalleryController", () => {
-        it("POST /media/page-index/... lists galleries with parsed params", async () => {
-            const list = stub(galleryMapper, "getAllGalleries", async () => [{ name: "a", total: 1 }]);
+    const rows = [{ name: "b", total: 3 }, { name: "a", total: 3 }];
 
-            const res = await api().post("/media/page-index/2/page-size/5/name/asc");
+    describe("paged lists", () => {
+        for (const [url, service, method] of [
+            ["/media/page-index/1/page-size/2/name/asc", galleryService, "list"],
+            ["/media/image/page-index/1/page-size/2/name/asc", imageService, "list"],
+            ["/media/tag/page-index/1/page-size/2/name/q", tagService, "list"],
+        ] as const) {
+            it(`POST ${url} returns the sorted paged envelope with lastpage from total`, async () => {
+                stub(service as any, method, async () => rows.map((r) => ({ ...r })));
 
-            expect(res.body.data.items).to.have.length(1);
-            expect(list.calls[0][0]).to.include({ pageIndex: 2, pageSize: 5 });
+                const res = await api().post(url);
+
+                expect(res.body.data.items.map((r) => r.name)).to.deep.equal(["a", "b"]);
+                expect(res.body).to.include({ total: "3", lastpage: "2" });
+            });
+        }
+
+        it("GET /media/image/gallery/... passes the gallery id and paging", async () => {
+            const list = stub(imageService, "listByGallery", async () => []);
+
+            await api().get("/media/image/gallery/g1/2/20/name/asc");
+
+            expect(list.calls[0][0]).to.equal("g1");
+            expect(list.calls[0][1]).to.include({ pageIndex: 2, pageSize: 20 });
+        });
+    });
+
+    describe("galleries", () => {
+        it("POST /media/id/:id returns the gallery", async () => {
+            const get = stub(galleryService, "get", async () => ({ id: "g1", Tags: [] }));
+
+            expect((await api().post("/media/id/g1")).body.data).to.deep.equal({ id: "g1", Tags: [] });
+            expect(get.calls[0]).to.deep.equal(["g1"]);
         });
 
-        it("POST /media/page-index/... returns 500 on an error string", async () => {
-            stub(galleryMapper, "getAllGalleries", async () => "Error: boom");
+        it("POST /media/id/:id returns 404 for an unknown gallery", async () => {
+            stub(galleryService, "get", async () => {
+                throw new NotFoundError("Gallery not found");
+            });
 
-            expect((await api().post("/media/page-index/1/page-size/5/name/asc")).status).to.equal(500);
+            const res = await api().post("/media/id/nope");
+
+            expect(res.status).to.equal(404);
+            expect(res.body.error).to.equal("Gallery not found");
         });
 
-        it("POST /media/publish publishes the gallery", async () => {
-            const publish = stub(galleryMapper, "publishGallery", async () => true);
+        it("PATCH /media/id/:id validates and updates", async () => {
+            const update = stub(galleryService, "update", async () => undefined);
+
+            const res = await api().patch("/media/id/g1").send({ description: "Summer", tags: ["t1", 2] });
+
+            expect(res.body.data).to.equal(true);
+            expect(update.calls[0]).to.deep.equal(["g1", { description: "Summer", tags: ["t1", "2"] }]);
+            expect((await api().patch("/media/id/g1").send({ tags: "t1" })).status).to.equal(400);
+        });
+
+        it("POST /media/publish publishes", async () => {
+            const publish = stub(galleryService, "publish", async () => true);
 
             expect((await api().post("/media/publish")).body.data).to.deep.equal({ result: "success" });
             expect(publish.calls).to.have.length(1);
         });
-
-        it("POST /media/publish returns 500 when publishing throws", async () => {
-            stub(galleryMapper, "publishGallery", async () => { throw new Error("boom"); });
-
-            expect((await api().post("/media/publish")).status).to.equal(500);
-        });
-
-        it("apiGetGalleryById maps tags to label/value pairs", async () => {
-            stub(galleryMapper, "getGalleryById", async () => [{ id: "g1", Tags: [{ id: "t1", name: "Golf" }] }]);
-
-            const res = await mount(GalleryController.apiGetGalleryById, "post", "/:id").post("/g1");
-
-            expect(res.body.data).to.deep.equal({ id: "g1", Tags: [{ label: "Golf", value: "t1" }] });
-        });
-
-        it("apiUpdateGalleryById updates by id", async () => {
-            const update = stub(galleryMapper, "updateGallery", async () => true);
-
-            const res = await mount(GalleryController.apiUpdateGalleryById, "patch", "/:id").patch("/g1").send({ tags: [] });
-
-            expect(res.body.data).to.equal(true);
-            expect(update.calls[0]).to.deep.equal([{ id: "g1" }, { tags: [] }]);
-        });
-
-        it("apiUpdateGalleryById returns 500 on an error string", async () => {
-            stub(galleryMapper, "updateGallery", async () => "Error: boom");
-
-            expect((await mount(GalleryController.apiUpdateGalleryById, "patch", "/:id").patch("/g1").send({})).status).to.equal(500);
-        });
-
-        it("POST /media/id/:id looks the gallery up by the route id", async () => {
-            const lookup = stub(galleryMapper, "getGalleryById", async () => [{ id: "g1", Tags: [] }]);
-
-            const res = await api().post("/media/id/g1");
-
-            expect(res.status).to.equal(200);
-            expect(lookup.calls[0][0]).to.deep.equal({ id: "g1" });
-        });
-
-        it("PATCH /media/id/:id updates the gallery by the route id", async () => {
-            const update = stub(galleryMapper, "updateGallery", async () => true);
-
-            const res = await api().patch("/media/id/g1").send({ tags: ["t1"] });
-
-            expect(res.status).to.equal(200);
-            expect(update.calls[0]).to.deep.equal([{ id: "g1" }, { tags: ["t1"] }]);
-        });
     });
 
-    describe("ImageController", () => {
-        it("GET /media/image/gallery/... lists a gallery's images with its count", async () => {
-            const list = stub(imageMapper, "getImagesByGallery", async () => [{ name: "a", total: 1 }]);
-            const count = stub(imageMapper, "getListLength", async () => 1);
+    describe("images", () => {
+        it("GET /media/primary/logged/:logged reads the flag", async () => {
+            const list = stub(imageService, "listPrimary", async () => []);
 
-            const res = await api().get("/media/image/gallery/g1/1/20/name/asc");
-
-            expect(res.body.data.items).to.have.length(1);
-            expect(list.calls[0][0]).to.include({ imagesByGalleryId: "g1", pageIndex: 1, pageSize: 20 });
-            expect(count.calls[0][0].imagesByGalleryId).to.equal("g1");
-        });
-
-        it("GET /media/image/gallery/... returns 500 on an error string", async () => {
-            stub(imageMapper, "getImagesByGallery", async () => "Error: boom");
-
-            expect((await api().get("/media/image/gallery/g1/1/20/name/asc")).status).to.equal(500);
-        });
-
-        it("POST /media/id/:galleryId/update/:id/order/:order updates the order as a number", async () => {
-            const update = stub(imageMapper, "updateOrder", async () => undefined);
-
-            expect((await api().post("/media/id/g1/update/img1/order/3")).status).to.equal(200);
-            expect(update.calls[0]).to.deep.equal(["g1", "img1", 3]);
-        });
-
-        it("GET /media/primary/logged/:logged parses logged as a boolean", async () => {
-            const list = stub(imageMapper, "getAllPrimaryImages", async () => []);
-
-            const res = await api().get("/media/primary/logged/true");
-
-            expect(res.body.data).to.deep.equal({ images: [] });
-            expect(list.calls[0][0]).to.deep.equal({ logged: true });
-        });
-
-        it("GET /media/tag/list/frontend lists public primary images", async () => {
-            const list = stub(imageMapper, "getAllPrimaryImages", async () => []);
-
+            await api().get("/media/primary/logged/true");
+            await api().get("/media/primary/logged/false");
             await api().get("/media/tag/list/frontend");
 
-            expect(list.calls[0][0]).to.deep.equal({ logged: false });
+            expect(list.calls).to.deep.equal([[true], [false], [false]]);
         });
 
-        it("GET /media/primary/logged/:logged returns 500 on an error string", async () => {
-            stub(imageMapper, "getAllPrimaryImages", async () => "Error: boom");
+        it("GET/PUT/DELETE /media/image/id/:id", async () => {
+            stub(imageService, "get", async () => ({ id: "img1" }));
+            const update = stub(imageService, "update", async () => ({ affectedRows: 1 }));
+            const del = stub(imageService, "delete", async () => ({ affectedRows: 1 }));
 
-            expect((await api().get("/media/primary/logged/false")).status).to.equal(500);
-        });
-
-        it("POST /media/image/page-index/... lists images with the total count", async () => {
-            stub(imageMapper, "getAllImages", async () => [{ name: "a", total: 1 }]);
-            stub(imageMapper, "getListLength", async () => 1);
-
-            expect((await api().post("/media/image/page-index/1/page-size/10/name/asc")).body.data.items).to.have.length(1);
-        });
-
-        it("POST /media/image/page-index/... returns 500 on an error string", async () => {
-            stub(imageMapper, "getAllImages", async () => "Error: boom");
-
-            expect((await api().post("/media/image/page-index/1/page-size/10/name/asc")).status).to.equal(500);
-        });
-
-        it("apiGetImage returns the first image", async () => {
-            stub(imageMapper, "getImageById", async () => [{ id: "img1" }]);
-
-            expect((await mount(ImageController.apiGetImage, "get", "/:id").get("/img1")).body.data).to.deep.equal({ id: "img1" });
-        });
-
-        it("apiUpdateImage updates by id", async () => {
-            const update = stub(imageMapper, "updateImageById", async () => ({ affectedRows: 1 }));
-
-            await mount(ImageController.apiUpdateImage, "put", "/:id").put("/img1").send({ description: "x" });
-
-            expect(update.calls[0]).to.deep.equal(["img1", { description: "x" }]);
-        });
-
-        it("apiDeleteImage soft-deletes by id", async () => {
-            const del = stub(imageMapper, "deleteImageById", async () => true);
-
-            expect((await mount(ImageController.apiDeleteImage, "delete", "/:id").delete("/img1")).body.data).to.equal(true);
+            expect((await api().get("/media/image/id/img1")).body.data).to.deep.equal({ id: "img1" });
+            expect((await api().put("/media/image/id/img1").send({ primaryImage: "1" })).body.data).to.deep.equal({ affectedRows: 1 });
+            expect((await api().delete("/media/image/id/img1")).body.data).to.equal(true);
+            expect(update.calls[0]).to.deep.equal(["img1", { primaryImage: 1 }]);
             expect(del.calls[0]).to.deep.equal(["img1"]);
         });
 
-        it("apiImagesOrder renumbers images in order", async () => {
-            stub(imageMapper, "reOrder", async () => [{ id: "a" }, { id: "b" }]);
-            const reNum = stub(imageMapper, "reNum", async () => undefined);
-
-            await mount(ImageController.apiImagesOrder, "post", "/:id").post("/g1");
-
-            expect(reNum.calls).to.deep.equal([["a", 0], ["b", 1]]);
+        it("PUT /media/image/id/:id rejects an empty or invalid update", async () => {
+            expect((await api().put("/media/image/id/img1").send({})).status).to.equal(400);
+            expect((await api().put("/media/image/id/img1").send({ primaryImage: 7 })).status).to.equal(400);
         });
 
-        for (const [name, mapperMethod, method] of [
-            ["apiGetImage", "getImageById", "get"],
-            ["apiUpdateImage", "updateImageById", "put"],
-            ["apiDeleteImage", "deleteImageById", "delete"],
-            ["apiImagesOrder", "reOrder", "post"],
-            ["apiUpdateOrderImage", "updateOrder", "post"],
-        ] as const) {
-            it(`${name} returns 500 on an error string`, async () => {
-                stub(imageMapper, mapperMethod, async () => "Error: boom");
+        it("POST /media/id/:galleryId/update/:id/order/:order sets the order", async () => {
+            const setOrder = stub(imageService, "setOrder", async () => ({ affectedRows: 1 }));
 
-                const res = await (mount(ImageController[name], method, "/:id") as any)[method]("/x");
+            await api().post("/media/id/g1/update/img1/order/3");
 
-                expect(res.status).to.equal(500);
-            });
-        }
-
-        it("GET /media/image/id/:id gets the image by the route id", async () => {
-            const lookup = stub(imageMapper, "getImageById", async () => [{ id: "img1" }]);
-
-            const res = await api().get("/media/image/id/img1");
-
-            expect(res.body.data).to.deep.equal({ id: "img1" });
-            expect(lookup.calls[0][0]).to.equal("img1");
+            expect(setOrder.calls[0]).to.deep.equal(["g1", "img1", 3]);
+            expect((await api().post("/media/id/g1/update/img1/order/-1")).status).to.equal(400);
         });
 
-        it("PUT /media/image/id/:id updates the image by the route id", async () => {
-            const update = stub(imageMapper, "updateImageById", async () => ({ affectedRows: 1 }));
+        it("apiImagesOrder (not routed) renumbers", async () => {
+            stub(imageService, "renumber", async () => [{ id: "a", order: 0 }]);
 
-            const res = await api().put("/media/image/id/img1").send({ description: "Tee off" });
-
-            expect(res.status).to.equal(200);
-            expect(update.calls[0]).to.deep.equal(["img1", { description: "Tee off" }]);
-        });
-
-        it("DELETE /media/image/id/:id deletes the image by the route id", async () => {
-            const del = stub(imageMapper, "deleteImageById", async () => true);
-
-            const res = await api().delete("/media/image/id/img1");
-
-            expect(res.status).to.equal(200);
-            expect(del.calls[0]).to.deep.equal(["img1"]);
+            expect((await mount(ImageController.apiImagesOrder, "post", "/:id").post("/g1")).body.data).to.deep.equal([{ id: "a", order: 0 }]);
         });
     });
 
-    describe("TagController", () => {
-        it("POST /media/tag/new creates the tag", async () => {
-            const create = stub(tagMapper, "createTag", async () => [{ id: "t1" }, true]);
+    describe("tags", () => {
+        it("POST /media/tag/list returns every tag as options", async () => {
+            stub(tagService, "listAsOptions", async () => [{ label: "Golf", value: "golf" }]);
 
-            expect((await api().post("/media/tag/new").send({ name: "golf" })).body.data).to.deep.equal([{ id: "t1" }, true]);
-            expect(create.calls[0][0]).to.deep.equal({ name: "golf" });
+            expect((await api().post("/media/tag/list").send({})).body.data).to.deep.equal([{ label: "Golf", value: "golf" }]);
         });
 
-        it("POST /media/tag/new returns 500 on an error string", async () => {
-            stub(tagMapper, "createTag", async () => "Error: boom");
+        it("POST /media/tag/new validates and creates", async () => {
+            const create = stub(tagService, "create", async () => ({ id: "golf", name: "Golf", description: "", created: true }));
 
-            expect((await api().post("/media/tag/new").send({})).status).to.equal(500);
+            expect((await api().post("/media/tag/new").send({ name: "Golf" })).body.data).to.include({ id: "golf", created: true });
+            expect(create.calls[0][0]).to.deep.equal({ name: "Golf", description: "" });
+            expect((await api().post("/media/tag/new").send({})).status).to.equal(400);
+        });
+    });
+
+    describe("end to end (only the SQL executor and AWS clients are faked)", () => {
+        it("POST /media/publish invalidates /media/* on the tagged distribution", async () => {
+            const sent: any[] = [];
+            stub((cdnMapper as any).tagging, "send", async (c) => (sent.push(c), { ResourceTagMappingList: [{ ResourceARN: "arn:aws:cloudfront::1:distribution/EDIST" }] }));
+            stub((cdnMapper as any).cloudFront, "send", async (c) => (sent.push(c), { Invalidation: { Status: "InProgress" } }));
+
+            expect((await api().post("/media/publish")).status).to.equal(200);
+            expect(sent[1].input).to.deep.include({ DistributionId: "EDIST" });
+            expect(sent[1].input.InvalidationBatch.Paths.Items).to.deep.equal(["/media/*"]);
         });
 
-        it("POST /media/tag/list returns tags as label/value pairs", async () => {
-            stub(tagMapper, "getAllTags", async () => [{ id: "t1", name: "Golf" }]);
+        it("GET /media/primary/logged/false returns public primary images as thumbnail URLs", async () => {
+            const queries: string[] = [];
+            stub(sqlExecutor, "run", async (q) => (queries.push(q.toSQL().sql), [{ id: "img1", key: "g1/a.png" }]));
 
-            expect((await api().post("/media/tag/list").send({})).body.data).to.deep.equal([{ label: "Golf", value: "t1" }]);
-        });
+            const res = await api().get("/media/primary/logged/false");
 
-        it("POST /media/tag/list returns 500 on an error string", async () => {
-            stub(tagMapper, "getAllTags", async () => "Error: boom");
-
-            expect((await api().post("/media/tag/list").send({})).status).to.equal(500);
-        });
-
-        it("POST /media/tag/page-index/... lists tags", async () => {
-            const list = stub(tagMapper, "getAllTags", async () => [{ name: "a", total: 1 }]);
-
-            const res = await api().post("/media/tag/page-index/1/page-size/5/name/q");
-
-            expect(res.body.data.items).to.have.length(1);
-            expect(list.calls[0][0]).to.include({ pageSize: 5, sort: "name" });
-        });
-
-        it("POST /media/tag/page-index/... returns 500 on an error string", async () => {
-            stub(tagMapper, "getAllTags", async () => "Error: boom");
-
-            expect((await api().post("/media/tag/page-index/1/page-size/5/name/q")).status).to.equal(500);
+            expect(queries[0]).to.include("`gallery`.`viewing` = ?");
+            expect(res.body.data.images[0].key).to.match(/^https:\/\/images\.kofc9544\.ca\//);
         });
     });
 });

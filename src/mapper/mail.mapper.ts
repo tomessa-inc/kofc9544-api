@@ -6,7 +6,7 @@ import { emailHeader } from '../data/email.header';
 import { emailFooter } from '../data/email.footer';
 import util, {format, inspect} from 'util';
 import { EmailMessaging } from '../models/EmailMessaging';
-import { imageService } from '../service/image.service';
+import { emailImages } from '../views/email-images';
 import bodyParser from "body-parser";
 
 export interface Params {
@@ -139,8 +139,8 @@ export class MailMapper {
                // this._HTML_CONTENT = this._PARAMS_CONTENT.concat(format(EmailMessaging.FORGOTPASSWORD_CONTENT_HTML, key, this.checkObject(body[key])));
                 this._TEXT_CONTENT = EmailMessaging.CALENDER_EVENT_CONTENT_TEXT;
                 this._TO_PERSON = this.jsonEscape(body.firstName);
-                this._EMAIL_LOGO = imageService.loadImage100x100("kofc-logo100x100.png")
-                this._EMAIL_BANNER = imageService.loadImage600x300("holy-redeemer-kanata.png")
+                this._EMAIL_LOGO = emailImages.logo100("kofc-logo100x100.png")
+                this._EMAIL_BANNER = emailImages.banner("holy-redeemer-kanata.png")
 
                 this._params.TemplateData = `{\"NAME\":\"${this._TO_PERSON}\",\"EMAIL_LOGO\":\"${this._EMAIL_LOGO}\", \"EMAIL_BANNER\":\"${this._EMAIL_BANNER}\", \"SUBJECT_CONTENT\":\"${this._SUBJECT_CONTENT}\",\"HTML_CONTENT\":\"${this._HTML_CONTENT}\",\"PARAMS_CONTENT\":\"${this._PARAMS_CONTENT}\",  \"TEXT_CONTENT\":\"${this._TEXT_CONTENT}\"}`;
                 break;
@@ -170,9 +170,9 @@ export class MailMapper {
                 this._HTML_CONTENT = format(EmailMessaging.FORGOTPASSWORD_CONTENT_HTML, `${host}/#/auth/reset/${body.token}`)
                 this._TEXT_CONTENT = EmailMessaging.FORGOTPASSWORD_CONTENT_TEXT;
                 this._TO_PERSON = body.firstName;
-                this._EMAIL_LOGO = imageService.loadImage100x100("kofc-logo100x100.png")
-//                this._EMAIL_LOGO = imageService.loadImage200x200("tomvisions-logo-email.png")
-                this._EMAIL_BANNER = imageService.loadImage600x300("holy-redeemer-kanata.png")
+                this._EMAIL_LOGO = emailImages.logo100("kofc-logo100x100.png")
+//                this._EMAIL_LOGO = emailImages.logo200("tomvisions-logo-email.png")
+                this._EMAIL_BANNER = emailImages.banner("holy-redeemer-kanata.png")
 
                 this._params.TemplateData = `{\"NAME\":\"${this._TO_PERSON}\",\"EMAIL_LOGO\":\"${this._EMAIL_LOGO}\", \"EMAIL_BANNER\":\"${this._EMAIL_BANNER}\", \"SUBJECT_CONTENT\":\"${this._SUBJECT_CONTENT}\",\"HTML_CONTENT\":\"${this._HTML_CONTENT}\",\"PARAMS_CONTENT\":\"${this._PARAMS_CONTENT}\",  \"TEXT_CONTENT\":\"${this._TEXT_CONTENT}\"}`;
 
@@ -187,8 +187,8 @@ export class MailMapper {
                 this._HTML_CONTENT = EmailMessaging.CONTACTUS_CONTENT_HTML;
                 this._TEXT_CONTENT = EmailMessaging.CONTACTUS_CONTENT_TEXT;
                 this._TO_PERSON = "Marc";
-                this._EMAIL_LOGO = imageService.loadImage200x200("kofc-logo.png")
-                this._EMAIL_BANNER = imageService.loadImage600x300("loch-march-background.jpeg")
+                this._EMAIL_LOGO = emailImages.logo200("kofc-logo.png")
+                this._EMAIL_BANNER = emailImages.banner("loch-march-background.jpeg")
 
                 this._params.TemplateData = `{\"NAME\":\"${this._TO_PERSON}\",\"EMAIL_LOGO\":\"${this._EMAIL_LOGO}\", \"EMAIL_BANNER\":\"${this._EMAIL_BANNER}\", \"SUBJECT_CONTENT\":\"${this._SUBJECT_CONTENT}\",\"HTML_CONTENT\":\"${this._HTML_CONTENT}\",\"PARAMS_CONTENT\":\"${this._PARAMS_CONTENT}\",  \"TEXT_CONTENT\":\"${this._TEXT_CONTENT}\"}`;
                 break;
@@ -201,8 +201,8 @@ export class MailMapper {
                 this._HTML_CONTENT = EmailMessaging.REGISTER_CONTENT_HTML;
                 this._TEXT_CONTENT = EmailMessaging.REGISTER_CONTENT_TEXT;
                 this._TO_PERSON = "Richard";
-                this._EMAIL_LOGO = imageService.loadImage200x200("kofc-logo.png")
-                this._EMAIL_BANNER = imageService.loadImage600x300("loch-march-background.jpeg")
+                this._EMAIL_LOGO = emailImages.logo200("kofc-logo.png")
+                this._EMAIL_BANNER = emailImages.banner("loch-march-background.jpeg")
                 await this.formatBody(body);
                 this._params.TemplateData = `{\"NAME\":\"${this._TO_PERSON}\",\"EMAIL_LOGO\":\"${this._EMAIL_LOGO}\", \"EMAIL_BANNER\":\"${this._EMAIL_BANNER}\", \"SUBJECT_CONTENT\":\"${this._SUBJECT_CONTENT}\",\"HTML_CONTENT\":\"${this._HTML_CONTENT}\",\"PARAMS_CONTENT\":\"${this._PARAMS_CONTENT}\",  \"TEXT_CONTENT\":\"${this._TEXT_CONTENT}\"}`;
 
@@ -217,8 +217,8 @@ export class MailMapper {
                 this._HTML_CONTENT = util.format(EmailMessaging.REGISTERCONTACTSENDER_CONTENT_HTML, body.id);
                 this._TEXT_CONTENT = EmailMessaging.REGISTERCONTACTSENDER_CONTENT_TEXT;
                 this._TO_PERSON = body["name"];
-                this._EMAIL_LOGO = imageService.loadImage200x200("kofc-logo.png")
-                this._EMAIL_BANNER = imageService.loadImage600x300("loch-march-background.jpeg")
+                this._EMAIL_LOGO = emailImages.logo200("kofc-logo.png")
+                this._EMAIL_BANNER = emailImages.banner("loch-march-background.jpeg")
                 this._PARAMS_CONTENT = '';
                 this._params.TemplateData = `{\"NAME\":\"${this._TO_PERSON}\",\"EMAIL_LOGO\":\"${this._EMAIL_LOGO}\", \"EMAIL_BANNER\":\"${this._EMAIL_BANNER}\", \"SUBJECT_CONTENT\":\"${this._SUBJECT_CONTENT}\",\"HTML_CONTENT\":\"${this._HTML_CONTENT}\",\"PARAMS_CONTENT\":\"${this._PARAMS_CONTENT}\",  \"TEXT_CONTENT\":\"${this._TEXT_CONTENT}\"}`;
                 break;
@@ -232,8 +232,8 @@ export class MailMapper {
                 this._HTML_CONTENT = EmailMessaging.VOLUNTEER_CONTENT_HTML;
                 this._TEXT_CONTENT = EmailMessaging.VOLUNTEER_CONTENT_TEXT;
                 this._TO_PERSON = "Marc";
-                this._EMAIL_LOGO = imageService.loadImage200x200("kofc-logo.png")
-                this._EMAIL_BANNER = imageService.loadImage600x300("loch-march-background.jpeg")
+                this._EMAIL_LOGO = emailImages.logo200("kofc-logo.png")
+                this._EMAIL_BANNER = emailImages.banner("loch-march-background.jpeg")
 
                 this._params.TemplateData = `{\"NAME\":\"${this._TO_PERSON}\",\"EMAIL_LOGO\":\"${this._EMAIL_LOGO}\", \"EMAIL_BANNER\":\"${this._EMAIL_BANNER}\", \"SUBJECT_CONTENT\":\"${this._SUBJECT_CONTENT}\",\"HTML_CONTENT\":\"${this._HTML_CONTENT}\",\"PARAMS_CONTENT\":\"${this._PARAMS_CONTENT}\",  \"TEXT_CONTENT\":\"${this._TEXT_CONTENT}\"}`;
                 break;
@@ -248,8 +248,8 @@ export class MailMapper {
                 this._HTML_CONTENT = EmailMessaging.SPONSOR_CONTENT_HTML;
                 this._TEXT_CONTENT = EmailMessaging.SPONSOR_CONTENT_TEXT;
                 this._TO_PERSON = "Brian";
-                this._EMAIL_LOGO = imageService.loadImage200x200("kofc-logo.png")
-                this._EMAIL_BANNER = imageService.loadImage600x300("loch-march-background.jpeg")
+                this._EMAIL_LOGO = emailImages.logo200("kofc-logo.png")
+                this._EMAIL_BANNER = emailImages.banner("loch-march-background.jpeg")
                 
                 this._params.TemplateData = `{\"NAME\":\"${this._TO_PERSON}\",\"EMAIL_LOGO\":\"${this._EMAIL_LOGO}\", \"EMAIL_BANNER\":\"${this._EMAIL_BANNER}\", \"SUBJECT_CONTENT\":\"${this._SUBJECT_CONTENT}\",\"HTML_CONTENT\":\"${this._HTML_CONTENT}\",\"PARAMS_CONTENT\":\"${this._PARAMS_CONTENT}\",  \"TEXT_CONTENT\":\"${this._TEXT_CONTENT}\"}`;
 

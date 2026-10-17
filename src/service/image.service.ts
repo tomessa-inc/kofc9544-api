@@ -1,77 +1,57 @@
+import type { ImageUpdateDto } from "../dto/media.dto";
+import { NotFoundError } from "../errors";
+import { ImageMapper, imageMapper } from "../mapper/image.mapper";
+import type { WriteResult } from "../mapper/types";
+import { ListParams, toPage } from "../validators/list.validator";
+import { imageUrl, THUMBNAIL } from "../views/image-url";
 
-//declare var require: any
-//const Buffer = require('buffer').Buffer;
+type ImageStore = Pick<ImageMapper, "findById" | "update" | "setOrder" | "findActiveInGallery" | "deactivate" | "findPage" | "findPrimary" | "findByGallery">;
 
-class ImageService {
-  private _PARAM_LOCATION = 'email';
-  private _PARAM_FRONTCLOUD = 'https://images.kofc9544.ca';
+/** Gallery images. */
+export class ImageService {
+    constructor(private readonly images: ImageStore) {}
 
-  constructor() { }
-
-  loadImage600x300(image) {
-    const resizedImage = this.resizeWithInS3(image, {
-      "resize": {
-        "width": 600,
-        "height": 300,
-        "fit": "cover"
-      }
-    });
-
-    return `${this._PARAM_FRONTCLOUD}/${resizedImage}`;
-  }
-
-  loadImage200x200(image) {
-    const resizedImage = this.resizeWithInS3(image, {
-      "resize": {
-        "width": 200,
-        "height": 200,
-        "fit": "cover"
-      }
-    });
-
-    return `${this._PARAM_FRONTCLOUD}/${resizedImage}`;
-  }
-
-  loadImage100x100(image) {
-    const resizedImage = this.resizeWithInS3(image, {
-      "resize": {
-        "width": 100,
-        "height": 100,
-        "fit": "cover"
-      }
-    });
-
-    return `${this._PARAM_FRONTCLOUD}/${resizedImage}`;
-  }
-
-  /**
-   * Setup Signature so that a specific bucket and key are resized with the resized serverless app that is running along with the edits
-   * being applied
-   * @param key
-   * @param edits
-   */
-  public resizeWithInS3(key: string, edits: EditProperties) {
-
-    if (this._PARAM_LOCATION) {
-      key = `${this._PARAM_LOCATION}/${key}`;
+    public list(params: ListParams) {
+        return this.images.findPage(toPage(params));
     }
 
-    const imageRequest = JSON.stringify({
-      bucket: "images.kofc9544.ca",
-      key: key,
-      edits: edits
-    })
+    public listByGallery(galleryId: string, params: ListParams) {
+        return this.images.findByGallery(galleryId, toPage(params));
+    }
 
-    return `${Buffer.from(imageRequest).toString('base64')}`;
-}
+    /** Each gallery's primary image with a thumbnail URL; private galleries only for signed-in members. */
+    public async listPrimary(signedIn: boolean) {
+        const images = await this.images.findPrimary({ includePrivate: signedIn });
+        return images.map((row) => ({ ...row, key: imageUrl(row.key, THUMBNAIL) }));
+    }
+
+    public async get(id: string) {
+        const found = await this.images.findById(id);
+        if (!found) throw new NotFoundError("Image not found");
+        return found;
+    }
+
+    public update(id: string, changes: ImageUpdateDto): Promise<WriteResult> {
+        return this.images.update(id, changes);
+    }
+
+    public setOrder(galleryId: string, id: string, order: number): Promise<WriteResult> {
+        return this.images.setOrder(galleryId, id, order);
+    }
+
+    /** Renumber a gallery's active images 0..n-1 in their current order, closing any gaps. */
+    public async renumber(galleryId: string) {
+        const images = await this.images.findActiveInGallery(galleryId);
+        for (const [index, { id }] of images.entries()) {
+            await this.images.setOrder(galleryId, id, index);
+        }
+        return images.map(({ id }, index) => ({ id, order: index }));
+    }
+
+    /** Hide an image (it stays in storage and the database). */
+    public delete(id: string): Promise<WriteResult> {
+        return this.images.deactivate(id);
+    }
 }
 
-export interface EditProperties {
-  "resize": {
-    width?: number,
-    height?: number,
-    fit?: string
-  }
-}
-
-export const imageService = new ImageService();
+export const imageService = new ImageService(imageMapper);

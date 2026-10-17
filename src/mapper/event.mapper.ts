@@ -1,6 +1,7 @@
 "use strict";
 //import {gallery as Gallery, image as Image} from "../models/";
-import {BaseMapper, paramsOptions, resourceGroupTaggingApiMapper, cloudFrontMapper} from '.';
+import {BaseMapper, paramsOptions} from '.';
+import { cdnService } from '../service/cdn.service';
 import moment from "moment";
 import {hasSubscribers} from "diagnostics_channel";
 import * as uuid from 'uuid';
@@ -179,28 +180,9 @@ export class EventMapper extends BaseMapper {
         return dateTime;
     }
 
+    /** Clear the CDN cache for the /event/month pages. */
     public async publishEvents() {
-        const resources = (await resourceGroupTaggingApiMapper.getResourceByTag({key: "Environment", value:process.env.NODE_ENV}))['ResourceTagMappingList'][0];
-        const id = resources['ResourceARN'].split("/").pop();
-        const checkValidation = await cloudFrontMapper.createInvalidation("/event/month", id)
-        if (checkValidation['Invalidation'].Status === "InProgress") {
-            return true;
-        } else {
-            return false
-        }
- /*       console.log('checking validation')
-        let validLoop = true
-        const invalidationId = checkValidation['Invalidation']['Id']
-        while (validLoop) {
-            const updateStatus = await cloudFrontMapper.checkInvalidation(id, invalidationId);
-
-            if (updateStatus['Invalidation'].Status === "Completed") {
-                validLoop = false
-            }
-            await this.sleep(5000);
-        } */
-
-        //return true;
+        return cdnService.invalidate("/event/month");
     }
 
 

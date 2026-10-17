@@ -91,20 +91,6 @@ describe("BaseMapper", () => {
         });
     });
 
-    describe("processImageArray", () => {
-        it("rewrites each key to a resized CloudFront URL", async () => {
-            const [row] = await mapper.processImageArray([{ key: "g1/a.png" }]);
-
-            expect(row.key).to.match(/^https:\/\/images\.kofc9544\.ca\/[A-Za-z0-9+/=]+$/);
-            const request = JSON.parse(Buffer.from(row.key.split("/").pop(), "base64").toString());
-            expect(request).to.deep.equal({ bucket: "images.kofc9544.ca", key: "g1/a.png", edits: { resize: { width: 400, height: 400, fit: "inside" } } });
-        });
-
-        it("returns an empty array for an empty list", async () => {
-            expect(await mapper.processImageArray([])).to.deep.equal([]);
-        });
-    });
-
     describe("getSQLData", () => {
         it("posts the SQL to the RDS proxy and returns the first result set", async () => {
             const post = track(stubMethod(axios, "post", async () => ({ data: { data: [[{ id: 1 }]] } })));
@@ -114,14 +100,6 @@ describe("BaseMapper", () => {
             expect(result).to.deep.equal([{ id: 1 }]);
             expect(post.calls[0][0]).to.equal(`${process.env.RDS_HOST}/${process.env.RDS_DB}`);
             expect(post.calls[0][1].sql).to.include("select 1");
-        });
-
-        it("runs image rows through processImageArray when asked", async () => {
-            track(stubMethod(axios, "post", async () => ({ data: { data: [[{ key: "a.png" }]] } })));
-
-            const [row] = await mapper.getSQLData({ sql: "select 1", params: [] }, true);
-
-            expect(row.key).to.match(/^https:\/\/images\.kofc9544\.ca\//);
         });
 
         it("resolves undefined when the request fails", async () => {

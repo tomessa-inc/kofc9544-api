@@ -1,10 +1,10 @@
 import { expect } from "chai";
-import { cloudFrontMapper, eventMapper, resourceGroupTaggingApiMapper } from "../../../mapper";
+import { eventMapper } from "../../../mapper";
+import { cdnService } from "../../../service/cdn.service";
 import { calendarMapper, nthWeekdayOfMonth } from "../../../mapper/calendar.mapper";
 import { Calendar2 } from "../../../models/Calendar2";
 import { stubMethod, stubSQL } from "../helpers/sql-stub";
 
-const distribution = { ResourceTagMappingList: [{ ResourceARN: "arn:aws:cloudfront::123:distribution/E123ABC" }] };
 
 describe("CalendarMapper / EventMapper", () => {
     const stubs: { restore: () => void }[] = [];
@@ -12,23 +12,20 @@ describe("CalendarMapper / EventMapper", () => {
 
     afterEach(() => stubs.splice(0).reverse().forEach((s) => s.restore()));
 
-    function stubPublish(status: string) {
-        const lookup = track(stubMethod(resourceGroupTaggingApiMapper, "getResourceByTag", async () => distribution));
-        const invalidate = track(stubMethod(cloudFrontMapper, "createInvalidation", async () => ({ Invalidation: { Status: status } })));
-        return { lookup, invalidate };
+    function stubPublish(started: boolean) {
+        return track(stubMethod(cdnService, "invalidate", async () => started));
     }
 
     describe("CalendarMapper.publishCalendars", () => {
-        it("invalidates the calendar path on the environment's distribution", async () => {
-            const { lookup, invalidate } = stubPublish("InProgress");
+        it("invalidates the calendar pages on the CDN", async () => {
+            const invalidate = stubPublish(true);
 
             expect(await calendarMapper.publishCalendars()).to.equal(true);
-            expect(lookup.calls[0][0]).to.deep.equal({ key: "Environment", value: process.env.NODE_ENV });
-            expect(invalidate.calls[0]).to.deep.equal(["/Calendar/month", "E123ABC"]);
+            expect(invalidate.calls[0]).to.deep.equal(["/Calendar/month"]);
         });
 
         it("returns false when the invalidation is not in progress", async () => {
-            stubPublish("Failed");
+            stubPublish(false);
 
             expect(await calendarMapper.publishCalendars()).to.equal(false);
         });
@@ -169,15 +166,15 @@ describe("CalendarMapper / EventMapper", () => {
     });
 
     describe("EventMapper.publishEvents", () => {
-        it("invalidates the event path on the environment's distribution", async () => {
-            const { invalidate } = stubPublish("InProgress");
+        it("invalidates the event pages on the CDN", async () => {
+            const invalidate = stubPublish(true);
 
             expect(await eventMapper.publishEvents()).to.equal(true);
-            expect(invalidate.calls[0]).to.deep.equal(["/event/month", "E123ABC"]);
+            expect(invalidate.calls[0]).to.deep.equal(["/event/month"]);
         });
 
         it("returns false when the invalidation is not in progress", async () => {
-            stubPublish("Completed");
+            stubPublish(false);
 
             expect(await eventMapper.publishEvents()).to.equal(false);
         });

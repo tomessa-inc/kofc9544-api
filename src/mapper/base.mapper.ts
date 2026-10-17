@@ -1,6 +1,5 @@
 import dotenv from "dotenv";
 import * as uuid from 'uuid';
-import { s3Mapper } from './s3.mapper';
 //import {SequelizeApi} from "../db/Sequelize";
 import process from "process";
 import {DrizzleAPI} from "../db/Drizzle";
@@ -134,32 +133,7 @@ export class BaseMapper {
         return [];
     }
 
-    public async processImageArray(listing) {
-        if (listing.length) {
-            const listArray = [];
-                
-            for (let item of listing) {
-                const key = s3Mapper.resizeWithInS3(item.key, {
-                    "resize": {
-                        "width": 400,
-                        "height": 400,
-                        "fit": "inside"
-                    }
-                });
-
-
-                item.key = `${this._PARAM_FRONTCLOUD}/${key}`;
-               
-                listArray.push(item);
-            }
-
-            return listArray;
-        }
-
-        return [];
-    }
-
-    public async getSQLData(preparedSQL, processKeyImage:boolean = false) {
+    public async getSQLData(preparedSQL) {
         const ff = JSON.stringify(preparedSQL)
         const sqlquery = ff.replace(/"/g, '\\\"').replace(/\\n/g, "")
 
@@ -176,10 +150,6 @@ export class BaseMapper {
             text,
         )
             .then( async (response) => {
-                if (processKeyImage) {
-
-                    return await this.processImageArray(response.data.data[0])
-                }
              //   console.log("no image")
 
                // console.log(response.data.data[0])

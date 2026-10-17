@@ -88,6 +88,11 @@ describe("foundation", () => {
             expect(res.data.total).to.equal(3);
         });
 
+        it("treats the order case-insensitively (the default is 'ASC')", () => {
+            const res = usePagedListResponse(rows(), { sort: "name", order: "ASC" }, "name");
+            expect(res.data.items.map((r) => r.name)).to.deep.equal(["alpha", "Bravo", "charlie"]);
+        });
+
         it("sorts descending", () => {
             const res = usePagedListResponse(rows(), { sort: "name", order: "desc" }, "name");
             expect(res.data.items.map((r) => r.name)).to.deep.equal(["charlie", "Bravo", "alpha"]);

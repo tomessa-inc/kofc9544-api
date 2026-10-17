@@ -83,7 +83,8 @@ export interface ListOptions {
  */
 export function usePagedListResponse<T extends Record<string, any>>(list: T[], options: ListOptions, defaultSort: string) {
   const sort = options.sort || defaultSort;
-  const order = options.order || 'asc';
+  // Case-insensitive: the default order is 'ASC', which a case-sensitive check treated as descending.
+  const order = String(options.order || 'asc').toLowerCase();
   const page = options.pageIndex || 1;
   const size = options.pageSize || 10;
   const items = Array.isArray(list) ? list : [];

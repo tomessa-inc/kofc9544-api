@@ -11,7 +11,6 @@ import {
 } from "../../../utils/response";
 import { clearRefreshTokenCookie, getRefreshTokenFromCookie, setRefreshTokenCookie } from "../../../utils/cookie-utils";
 import { getTimezone, setTimezone } from "../../../utils/timezone-utils";
-import { imageService } from "../../../service";
 
 function makeEvent(headers: Record<string, string> = {}) {
     const event = mockEvent("http://localhost/", { headers });
@@ -107,26 +106,5 @@ describe("utils", () => {
             setTimezone("America/Toronto");
             expect(getTimezone()).to.equal("America/Toronto");
         });
-    });
-
-    describe("ImageService", () => {
-        const decode = (url: string) => JSON.parse(Buffer.from(url.split("/").pop(), "base64").toString());
-
-        for (const [method, width, height] of [
-            ["loadImage600x300", 600, 300],
-            ["loadImage200x200", 200, 200],
-            ["loadImage100x100", 100, 100],
-        ] as const) {
-            it(`${method} returns a CloudFront URL for an email asset resized to ${width}x${height}`, () => {
-                const url = imageService[method]("logo.png");
-
-                expect(url).to.match(/^https:\/\/images\.kofc9544\.ca\//);
-                expect(decode(url)).to.deep.equal({
-                    bucket: "images.kofc9544.ca",
-                    key: "email/logo.png",
-                    edits: { resize: { width, height, fit: "cover" } },
-                });
-            });
-        }
     });
 });

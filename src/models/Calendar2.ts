@@ -1,6 +1,5 @@
 const {DataTypes, Model} = require("sequelize");
 //import {sequelize} from '../db/';
-import {S3Mapper} from "../mapper/s3.mapper";
 
 class Calendar2 extends Model {
 

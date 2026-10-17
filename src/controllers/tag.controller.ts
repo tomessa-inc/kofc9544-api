@@ -1,74 +1,26 @@
-import { defineHandler, readBody, getRouterParams } from "h3";
-import { paramsOptions, tagMapper } from "../mapper";
-import { useResponseError, useResponseSuccess } from "../utils/response";
+import { getRouterParams, readBody } from "h3";
+import { tagService } from "../service/tag.service";
+import { useResponseSuccess } from "../utils/response";
+import { parseListParams } from "../validators/list.validator";
+import { validateTag } from "../validators/media.validator";
+import { controller, pagedList } from "./controller";
 
-function parseParams(params: Record<string, string>, defaults: Record<string, any>) {
-    const options = { ...defaults };
-    Object.entries(params).forEach(([key, value]) => {
-        if (value !== "undefined") {
-            options[key] = isNaN(Number(value)) ? value : Number(value);
-        }
-    });
-    return options;
-}
+type Body = Record<string, unknown> | undefined;
 
+/** Gallery tag endpoints. */
 export class TagController {
-
-    public static apiCreateTag = defineHandler(async (event) => {
-        try {
-            const body = await readBody<Record<string, any>>(event);
-            const tag = await tagMapper.createTag(body);
-
-            if (typeof tag === "string") {
-                event.res.status = 500;
-                return useResponseError("InternalServerError", tag);
-            }
-
-            return useResponseSuccess(tag);
-        } catch (error) {
-            event.res.status = 500;
-            return useResponseError("InternalServerError", error.toString());
-        }
+    public static apiGetAllTags = controller(async (event) => {
+        const params = parseListParams(getRouterParams(event));
+        return pagedList(await tagService.list(params), params, "name");
     });
 
-    public static apiGetAllTagsAsLabelValues = defineHandler(async (event) => {
-        try {
-            const body = await readBody<Record<string, any>>(event);
-            const tags = await tagMapper.getAllTags(body);
-
-            if (typeof tags === "string") {
-                event.res.status = 500;
-                return useResponseError("InternalServerError", tags);
-            }
-
-            const tagList = tags.map((tag) => ({ label: tag.name, value: tag.id }));
-
-            return useResponseSuccess(tagList);
-        } catch (error) {
-            event.res.status = 500;
-            return useResponseError("InternalServerError", error.toString());
-        }
+    /** Every tag as select options. */
+    public static apiGetAllTagsAsLabelValues = controller(async () => {
+        return useResponseSuccess(await tagService.listAsOptions());
     });
 
-    public static apiGetAllTags = defineHandler(async (event) => {
-        try {
-            const params = getRouterParams(event);
-            const options: paramsOptions = parseParams(params, {
-                pageIndex: 1, pageSize: 10, filterQuery: "",
-                sort: tagMapper.DEFAULT_SORT, order: tagMapper.DEFAULT_ORDER,
-            });
-
-            const tags = await tagMapper.getAllTags(options);
-
-            if (typeof tags === "string") {
-                event.res.status = 500;
-                return useResponseError("InternalServerError", tags);
-            }
-
-            return tagMapper.prepareListResults(tags, options);
-        } catch (error) {
-            event.res.status = 500;
-            return useResponseError("InternalServerError", error.toString());
-        }
+    /** Create a tag; an existing tag with the same name is returned instead (`created: false`). */
+    public static apiCreateTag = controller(async (event) => {
+        return useResponseSuccess(await tagService.create(validateTag(await readBody<Body>(event))));
     });
 }

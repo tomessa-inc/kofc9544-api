@@ -1,114 +1,40 @@
-import { BaseMapper } from ".";
-import moment from "moment";
-import * as uuid from 'uuid';
-import {Tag2} from "../models/Tag2";
-import {GalleryTag2} from "../models/GalleryTag2";
-import {tag} from "../models/Tag";
+import { asc, eq, sql } from "drizzle-orm";
+import { QueryExecutor, sqlExecutor } from "../db/executor";
+import { db } from "../db/query-builder";
+import { tag } from "../models/Tag";
+import { driverValues, type Page, type WriteResult } from "./types";
 
-export class TagMapper extends BaseMapper {
-    private _PARAMS_NAME: string = 'name';
-    private _DEFAULT_SORT: string = 'name';
+export interface Tag {
+    id: string;
+    name: string;
+    description: string;
+}
 
+const tagColumns = { id: tag.id, name: tag.name, description: tag.description };
 
+/** Data access for gallery tags. */
+export class TagMapper {
+    constructor(private readonly executor: QueryExecutor = sqlExecutor) {}
 
-    constructor() {
-        super();
-        this.initializeDrizzle()
- //       this.initializeSequelize()
-   //     this.initializeTag();
+    /** One page of tags; every row carries the overall `total`. */
+    public findPage({ offset, limit }: Page) {
+        return this.executor.run<(Tag & { total: number })[]>(
+            db.select({ ...tagColumns, total: sql<number>`(SELECT count(*) FROM tag)`.as("total") })
+                .from(tag).offset(offset).limit(limit),
+        );
     }
 
-
-    private async initializeTag() {
-        Tag2.initialize(this.SEQUELIZE);
+    public findAll(): Promise<Tag[]> {
+        return this.executor.run(db.select(tagColumns).from(tag).orderBy(asc(tag.name)));
     }
 
-    public async createTag(params) { //: Promise<string[] | string> {
-
-        try {
-
-            const tag = {
-                id: params.id,
-                name: params.name,
-                description: params.description,
-                createdAt: moment().format('YYYY-MM-DD'),
-                updatedAt: moment().format('YYYY-MM-DD'),
-            };
-
-            return await Tag2.findOrCreate({ where: { name: params.name }, defaults: tag });
-        } catch (error) {
-            console.log(error);
-            return error.toString();
-        }
+    public findByName(name: string): Promise<Tag[]> {
+        return this.executor.run(db.select(tagColumns).from(tag).where(eq(tag.name, name)));
     }
 
-    /**
- * 
- * @param options 
- * @returns 
- */
-    public async getAllTagsForGallery(options) {
-        try {
-
-
-            const gallery = {
-                include: [{
-                    model: GalleryTag2,
-                    association: GalleryTag2.Tag,
-                    required: true
-                }],
-                where: {
-                    '$gallery_tag.gallery_id$': options.gallery_id
-                },
-                //  'gallery_tag.gallery': '975f63c6-8a0f-4536-a126-ffdde09c217c'
-                //  group: ['gallery_tag.tag_id']
-
-            }
-            //            console.log('the gallery');
-            //          console.log(gallery);
-
-            return await Tag2.findAll(gallery).then(data => {
-                return data[0];
-            }).catch(err => {
-                return err;
-            })
-        } catch (error) {
-            console.log(`Could not fetch gallery ${error}`)
-        }
+    public insert(values: Tag): Promise<WriteResult> {
+        return this.executor.run(db.insert(tag).values(driverValues({ ...values, createdAt: sql`NOW()`, updatedAt: sql`NOW()` })));
     }
-
-    public async getAllTags(params) { //: Promise<string[] | string> {
-        let offset;
-
-        try {
-
-            const offset = ((params.pageIndex - 1) * params.pageSize)
-            
-            const tagConfig = {
-                offset: offset,
-                limit: params.pageSize,
-
-            }
-
-            const tagSQL = this.DRIZZLE.select().from(tag).offset(offset).limit(params.pageSize)
-
-            return this.getSQLData(tagSQL.toSQL())
-
-
-        } catch (error) {
-            console.log(error);
-            return error.toString();
-        }
-    }
-
-    get DEFAULT_SORT(): string {
-        return this._DEFAULT_SORT;
-    }
-
-    get PARAMS_NAME(): string {
-        return this._PARAMS_NAME;
-    }
-
 }
 
 export const tagMapper = new TagMapper();
