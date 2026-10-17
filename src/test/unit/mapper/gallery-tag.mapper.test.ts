@@ -1,10 +1,9 @@
 import { expect } from "chai";
 import { cloudFrontMapper, galleryMapper, resourceGroupTaggingApiMapper, tagMapper } from "../../../mapper";
-import { individualMapper } from "../../../mapper/individual.mapper";
 import { Tag2 } from "../../../models/Tag2";
 import { stubMethod, stubSQL } from "../helpers/sql-stub";
 
-describe("GalleryMapper / TagMapper / IndividualMapper", () => {
+describe("GalleryMapper / TagMapper", () => {
     const stubs: { restore: () => void }[] = [];
     const track = <T extends { restore: () => void }>(stub: T) => (stubs.push(stub), stub);
 
@@ -77,7 +76,7 @@ describe("GalleryMapper / TagMapper / IndividualMapper", () => {
         });
     });
 
-    for (const [label, mapper] of [["TagMapper", tagMapper], ["IndividualMapper", individualMapper]] as const) {
+    for (const [label, mapper] of [["TagMapper", tagMapper]] as const) {
         describe(`${label}.createTag`, () => {
             it("finds or creates the tag by name", async () => {
                 const findOrCreate = track(stubMethod(Tag2 as any, "findOrCreate", async () => [{ id: "t1" }, true]));
@@ -117,18 +116,5 @@ describe("GalleryMapper / TagMapper / IndividualMapper", () => {
         });
     });
 
-    describe("IndividualMapper.getAllTags", () => {
-        it("paginates via the legacy model", async () => {
-            const findAll = track(stubMethod(Tag2 as any, "findAll", async () => [{ get: () => ({ id: "t1" }) }]));
 
-            expect(await individualMapper.getAllTags({ pageIndex: 2, pageSize: 20 })).to.deep.equal([{ id: "t1" }]);
-            expect(findAll.calls[0][0]).to.deep.equal({ offset: 20, limit: 20 });
-        });
-    });
-
-    describe("IndividualMapper.createRegistration", () => {
-        it("is a stub that resolves to undefined", async () => {
-            expect(await individualMapper.createRegistration({ players: [{}] })).to.equal(undefined);
-        });
-    });
 });

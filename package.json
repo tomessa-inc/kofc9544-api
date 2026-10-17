@@ -43,7 +43,7 @@
         "test:watch": "npm test -- -- -w",
         "test:unit": "cross-env TS_NODE_TRANSPILE_ONLY=true mocha",
         "test:unit:watch": "cross-env TS_NODE_TRANSPILE_ONLY=true mocha --watch --watch-files src",
-        "test:coverage": "cross-env TS_NODE_TRANSPILE_ONLY=true nyc --check-coverage=false --exclude=src/test/** --all --include=src/mapper/** --include=src/controllers/** --include=src/utils/** --include=src/service/** --reporter=text-summary --reporter=lcov mocha"
+        "test:coverage": "cross-env TS_NODE_TRANSPILE_ONLY=true nyc --check-coverage=false --exclude=src/test/** --all --include=src/** --exclude=src/models/** --exclude=src/app.local.ts --exclude=src/lambda.ts --reporter=text-summary --reporter=lcov mocha"
     },
     "license": "Apache-2.0",
     "dependencies": {
@@ -78,7 +78,6 @@
         "lodash-es": "^4.17.21",
         "mime": "^3.0.0",
         "moment": "^2.29.3",
-        "mongoose": "^7.6.3",
         "multer": "^1.4.5-lts.1",
         "mysql": "^2.18.1",
         "mysql2": "^3.9.7",

@@ -1,4 +1,5 @@
 import type { EventHandlerRequest, H3Event } from 'h3';
+import { AppError } from '../errors';
 
 export function useResponseSuccess<T = any>(data: T) {
   return {
@@ -65,4 +66,64 @@ export function pagination<T = any>(
   return offset + Number(pageSize) >= array.length
     ? array.slice(offset)
     : array.slice(offset, offset + Number(pageSize));
+}
+
+export interface ListOptions {
+  sort?: string;
+  order?: string;
+  pageIndex?: number;
+  pageSize?: number;
+  listLength?: number;
+}
+
+/**
+ * Paged list envelope used by every list endpoint. Rows arrive already paged by SQL and carry the
+ * overall count in a `total` column; this sorts them and adds the paging fields (stringly typed, as
+ * the API has always returned them).
+ */
+export function usePagedListResponse<T extends Record<string, any>>(list: T[], options: ListOptions, defaultSort: string) {
+  const sort = options.sort || defaultSort;
+  const order = options.order || 'asc';
+  const page = options.pageIndex || 1;
+  const size = options.pageSize || 10;
+  const items = Array.isArray(list) ? list : [];
+
+  if (options.sort) {
+    items.sort((a, b) => {
+      const fieldA = String(a[sort] ?? '').toUpperCase();
+      const fieldB = String(b[sort] ?? '').toUpperCase();
+      return order === 'asc' ? fieldA.localeCompare(fieldB) : fieldB.localeCompare(fieldA);
+    });
+  } else {
+    items.sort((a, b) => (order === 'asc' ? a[sort] - b[sort] : b[sort] - a[sort]));
+  }
+
+  const total = items.length === 0 ? 0 : items[0].total;
+  const lastPage = Math.max(Math.ceil(options.listLength / size), 1);
+
+  return JSON.parse(JSON.stringify({
+    code: 0,
+    error: null,
+    message: 'ok',
+    data: { items, total },
+    total: `${total}`,
+    pageSize: `${size}`,
+    pageIndex: `${page}`,
+    lastpage: `${lastPage}`,
+  }));
+}
+
+/**
+ * Single place errors become responses: domain errors keep their status and message; anything else is
+ * logged and reported as a generic 500 so internal details (SQL, stack text) never reach clients.
+ */
+export function handleError(event: H3Event<EventHandlerRequest>, error: unknown) {
+  if (error instanceof AppError) {
+    event.res.status = error.status;
+    return useResponseError(error.code, error.message);
+  }
+
+  console.error(error);
+  event.res.status = 500;
+  return useResponseError('InternalServerError', 'Internal server error');
 }

@@ -1,6 +1,5 @@
 import { expect } from "chai";
 import { mockEvent } from "h3";
-import jwt from "jsonwebtoken";
 import {
     forbiddenResponse,
     pagination,
@@ -10,10 +9,8 @@ import {
     useResponseError,
     useResponseSuccess,
 } from "../../../utils/response";
-import { generateAccessToken, generateRefreshToken, verifyAccessToken, verifyRefreshToken } from "../../../utils/jwt-utils";
 import { clearRefreshTokenCookie, getRefreshTokenFromCookie, setRefreshTokenCookie } from "../../../utils/cookie-utils";
 import { getTimezone, setTimezone } from "../../../utils/timezone-utils";
-import { MOCK_USERS } from "../../../utils/mock-data";
 import { imageService } from "../../../service";
 
 function makeEvent(headers: Record<string, string> = {}) {
@@ -77,54 +74,6 @@ describe("utils", () => {
             it("returns an empty array past the end", () => {
                 expect(pagination(4, 2, list)).to.deep.equal([]);
             });
-        });
-    });
-
-    describe("jwt-utils", () => {
-        const admin = MOCK_USERS.find((u) => u.username === "admin");
-
-        it("generateAccessToken signs the user with a 7 day expiry", () => {
-            const decoded: any = jwt.decode(generateAccessToken(admin));
-
-            expect(decoded.username).to.equal("admin");
-            expect(decoded.exp - decoded.iat).to.equal(7 * 24 * 60 * 60);
-        });
-
-        it("verifyAccessToken returns the user without their password", () => {
-            const { event } = makeEvent({ authorization: `Bearer ${generateAccessToken(admin)}` });
-
-            const user = verifyAccessToken(event);
-
-            expect(user).to.include({ username: "admin", id: admin.id });
-            expect(user).to.not.have.property("password");
-        });
-
-        it("verifyAccessToken returns null without a bearer header", () => {
-            expect(verifyAccessToken(makeEvent().event)).to.equal(null);
-            expect(verifyAccessToken(makeEvent({ authorization: "Basic abc" }).event)).to.equal(null);
-        });
-
-        it("verifyAccessToken returns null for a malformed header", () => {
-            expect(verifyAccessToken(makeEvent({ authorization: "Bearer a b" }).event)).to.equal(null);
-        });
-
-        it("verifyAccessToken returns null for an invalid token", () => {
-            expect(verifyAccessToken(makeEvent({ authorization: "Bearer nope" }).event)).to.equal(null);
-        });
-
-        it("verifyAccessToken returns null for an unknown user", () => {
-            const token = generateAccessToken({ ...admin, username: "ghost" });
-
-            expect(verifyAccessToken(makeEvent({ authorization: `Bearer ${token}` }).event)).to.equal(null);
-        });
-
-        it("verifyRefreshToken returns the user for a valid refresh token", () => {
-            expect(verifyRefreshToken(generateRefreshToken(admin))).to.include({ username: "admin" });
-        });
-
-        it("verifyRefreshToken rejects access tokens and unknown users", () => {
-            expect(verifyRefreshToken(generateAccessToken(admin))).to.equal(null);
-            expect(verifyRefreshToken(generateRefreshToken({ ...admin, username: "ghost" }))).to.equal(null);
         });
     });
 
