@@ -1,249 +1,139 @@
-"use strict";
-import {BaseMapper, paramsOptions} from "./base.mapper";
-import {user} from "../models/User"
-import dotenv from 'dotenv';
-import * as uuid from 'uuid';
-import moment from "moment";
-import { get } from "lodash";
-import {UserAccess2} from "../models/UserAccess2";
-import  crypto from "crypto";
-import {Access2} from "../models/Access2";
-import {User2} from "../models/User2";
-const algorithm = 'aes-256-cbc'; //Using AES encryption
-const key = crypto.randomBytes(32);
-const iv = crypto.randomBytes(16);
-import {sql, gt, lt, eq, SQL, like, and, or} from "drizzle-orm";
-import {access} from "../models/Access";
-import {userAuthentication} from "../models/UserAuthentication";
-import {userAccess} from "../models/UserAccess";
+import { and, eq, like, notLike, or, SQL, sql } from "drizzle-orm";
+import { QueryExecutor, sqlExecutor } from "../db/executor";
+import { db } from "../db/query-builder";
+import { user } from "../models/User";
+import type { Page, WriteResult } from "./types";
 
-export class UserMapper extends BaseMapper {
-    private _PARAMS_ID: string = 'id';
-    private _PARAMS_EMAIL: string = 'email';
-    private _PARAMS_PASSWORD: string = 'password';
-    private _PARAMS_USERNAME: string = 'userName';
-    private _PARAMS_USER: string = 'user';
-    private _LIST_NAME: string = 'users';
-    private _DEFAULT_SORT: string = 'firstName';
+/** A member as returned to clients: never includes the password or token columns. */
+export interface UserProfile {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    roles: string[] | null;
+}
 
+/** Optional user-list filters; each matches anywhere in its column. */
+export interface UserFilters {
+    /** first or last name */
+    name?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+}
 
+export interface NewUser {
+    id: string;
+    userName: string;
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+}
 
-    constructor() {
-        super();
-        this.initializeDrizzle();
-    }
+export interface UserChanges {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    password?: string;
+}
 
-    public async apiUpdateUser(params, body) {
-        try {
-            //const userUpdate = params['user'];
-            const id = params['id'];
+// Correlated subqueries name the outer `user` row literally (see TeamMapper for why).
+export const roleIds = sql<string[] | null>`(SELECT JSON_ARRAYAGG(access.id) FROM access INNER JOIN user_access ON access.id = user_access.AccessId WHERE user_access.UserId = user.id)`;
+const roleObjects = sql<{ id: string; name: string }[] | null>`(SELECT JSON_ARRAYAGG(JSON_OBJECT('id', access.id, 'name', access.name)) FROM access INNER JOIN user_access ON access.id = user_access.AccessId WHERE user_access.UserId = user.id)`;
 
-           // const teams = userUpdate['teams'];
-    
-            const userUpdateResult = await User2.update(body, {where: {id: id}}).then(data => {
-                return true;
-            }).catch(data => {
-                return false;
-            });
+/** Profile columns shared by the lookups below. */
+export const profileColumns = {
+    id: user.id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    roles: roleIds.as("roles"),
+};
 
-            return userUpdateResult;
-
-        } catch (error) {
-            console.log('catch');
-            console.log(error);
-            return error;
-        }
-    }
-
-    public async apiSignUp(params) {
-        try {
-            const userDefaults = {
-                id: uuid.v4(),
-                userName: params.userName,
-                email: params.email,
-                password: params.password,
-                createdAt: moment().format('YYYY-MM-DD'),
-                updatedAt: moment().format('YYYY-MM-DD')
-            }
-
-          //  console.log('the params');
-          //  console.log(params);
-            console.log(userDefaults);
-            return await User2.findOrCreate({ where: { userName: params.userName },  defaults: userDefaults })
-            //const result = await User.findOrCreate(user, defaults: userDefaults
-            .then(data => {
-
-                return data;
-
-            }).catch(data => {
-
-                return data;
-            });
-        } catch (error) {
-            return error.toString;
-        }
-    }
-
-
+/** Data access for the `user` table. */
+export class UserMapper {
+    constructor(private readonly executor: QueryExecutor = sqlExecutor) {}
 
     /**
-     *
-     * @param params
+     * Accounts whose email or id is `login`, with their stored password (hash, or legacy plain text) for
+     * AuthService to verify. The stored password must never be returned to clients.
      */
-    async getUserBasedOnPassword(params) {
-        try {
-            // get config vars
-            dotenv.config();
+    public findLoginCandidates(login: string): Promise<(UserProfile & { password: string })[]> {
+        return this.executor.run(
+            db.select({ ...profileColumns, password: user.password }).from(user)
+                .where(or(eq(user.email, login), eq(user.id, login)))
+                .limit(5),
+        );
+    }
 
-            const userSQL = this.DRIZZLE.select({
+    public setPassword(id: string, passwordHash: string): Promise<WriteResult> {
+        return this.executor.run(db.update(user).set({ password: passwordHash }).where(eq(user.id, id)));
+    }
+
+    /** Accounts whose password is still stored in plain text (not yet an scrypt hash). */
+    public findUnhashedPasswords(): Promise<{ id: string; password: string }[]> {
+        return this.executor.run(
+            db.select({ id: user.id, password: user.password }).from(user).where(notLike(user.password, "scrypt$%")),
+        );
+    }
+
+    public async findByEmail(email: string): Promise<UserProfile | undefined> {
+        const rows: UserProfile[] = await this.executor.run(db.select(profileColumns).from(user).where(eq(user.email, email)));
+        return rows[0];
+    }
+
+    /** A member with their access roles as {id, name} objects. */
+    public async findById(id: string) {
+        const rows = await this.executor.run(
+            db.select({
                 id: user.id,
                 firstName: user.firstName,
                 lastName: user.lastName,
                 email: user.email,
-                access: sql<string>`(SELECT JSON_ARRAYAGG(JSON_OBJECT('id', access.id,'name', access.name, 'name', access.name))
-                                     from ${access}
-                                    inner join user_access on access.id = user_access.AccessId
-                                    where user_access.UserId = user.id)`.as('access')
-            }).from(user)
-
-             userSQL.where(and(eq(user.password, params.password), or(eq(user.email, params.userName), eq(user.id, params.userName))));
-       //     console.log(userSQL.toSQL())
-            ///console.log(params.userName);
-        ///    userSQL.where(or(eq(user.userName, params.userName), eq(user.id, params.userName)));
-            console.log(userSQL.toSQL())
-
-          //  or(eq(user.userName, params.userName)), eq(user.id), params.userName)));
-
-            return this.getSQLData(userSQL.toSQL())
-        } catch (error) {
-           return error.toString();
-        }
+                access: roleObjects.as("access"),
+            }).from(user).where(eq(user.id, id)),
+        );
+        return rows[0];
     }
 
-    /**
-     *
-     * @param options
-     * @returns
-     */
-    public async getUserById(options: paramsOptions) {
-        try {
-            console.log('get user');
+    public findByUserNameOrEmail(userName: string, email: string) {
+        return this.executor.run<{ id: string }[]>(
+            db.select({ id: user.id }).from(user).where(or(eq(user.username, userName), eq(user.email, email))),
+        );
+    }
 
-            const userSQL = this.DRIZZLE.select({
+    /** One page of members matching the filters; every row carries the filtered `total`. */
+    public async findPage({ offset, limit }: Page, filters: UserFilters = {}) {
+        const conditions: (SQL | undefined)[] = [];
+        if (filters.name) conditions.push(or(like(user.firstName, `%${filters.name}%`), like(user.lastName, `%${filters.name}%`)));
+        if (filters.firstName) conditions.push(like(user.firstName, `%${filters.firstName}%`));
+        if (filters.lastName) conditions.push(like(user.lastName, `%${filters.lastName}%`));
+        if (filters.email) conditions.push(like(user.email, `%${filters.email}%`));
+        const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+        const [rows, counts] = await Promise.all([
+            this.executor.run<Omit<UserProfile, "roles">[]>(
+                db.select({
                     id: user.id,
                     firstName: user.firstName,
                     lastName: user.lastName,
                     email: user.email,
-                    access: sql<string>`(SELECT JSON_ARRAYAGG(JSON_OBJECT('id', access.id,'name', access.name, 'name', access.name))
-                                     from ${access}
-                                    inner join user_access on access.id = user_access.AccessId
-                                    where user_access.UserId = user.id)`.as('access')
-                }).from(user).where(eq(user.id, options.id))
-
-
-            return (await this.getSQLData(userSQL.toSQL()))[0]
-/*
-            const userParams = {
-                include: [
-                    {
-                        Model: Access2,
-                        association: User2.Access,
-                        required: false,
-                        as: 'access'
-                    },
-                ],
-                where: {id: options.id},
-                attributes: {exclude: ['ImageId', 'GalleryTagTagId']},
-            }
-
-            return await User2.findOrCreate(userParams).then(data => {
-              //  return this.processArray(data, User)
-                console.log('data')
-                console.log(data);
-                return data[0];
-            }).catch(err => {
-
-                return err;
-            }) */
-        } catch (error) {
-            return error.toString();
-        }
-    }
-    /**
-     *
-     * @param email
-     * @returns User2
-     */
-    public async getUserByEmail(email:string) {
-        try {
-
-            const userSQL = this.DRIZZLE.select(user).from(user).where(eq(user.email, email))
-
-            return (await this.getSQLData(userSQL.toSQL()))[0];
-        } catch (error) {
-            return error.toString();
-        }
+                }).from(user).where(where).offset(offset).limit(limit),
+            ),
+            this.executor.run<{ total: number }[]>(db.select({ total: sql<number>`count(*)` }).from(user).where(where)),
+        ]);
+        const total = Number(counts?.[0]?.total ?? 0);
+        return (rows ?? []).map((row) => ({ ...row, total }));
     }
 
-    public async getAllUsers(params:  paramsOptions) : Promise <string[] | string> {
-       const check = params;
-
-        try {
-            const offset = ((check.pageIndex - 1) * check.pageSize);
-            const userSQL = this.DRIZZLE.select(user).from(user)
-
-
-            if (check.filterQuery) {
-                userSQL.where(or(like(user.firstName, `%${check.filterQuery}%`)), like(user.lastName, `%${check.filterQuery}%`))
-            }
-            userSQL.offset(offset);
-            userSQL.limit(check.pageSize)
-
-            return this.getSQLData(userSQL.toSQL());
-        } catch (error) {
-            return error.toString() //["error" => error.toString()];
-        }
+    public insert(values: NewUser): Promise<WriteResult> {
+        const { userName, ...rest } = values;
+        return this.executor.run(db.insert(user).values({ ...rest, username: userName, token: "" }));
     }
 
-
-
-    //Encrypting text
-    encrypt(text) {
-        let cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(key), iv);
-        console.log("the cypher is ");
-        console.log(cipher);
-        let encrypted = cipher.update(text);
-        encrypted = Buffer.concat([encrypted, cipher.final()]);
-        console.log(encrypted.toString('hex'))
-        return encrypted.toString('hex')
-    }
-
-    get PARAMS_ID(): string {
-        return this._PARAMS_ID;
-    }
-
-    get PARAMS_EMAIL(): string {
-        return this._PARAMS_EMAIL;
-    }
-
-    get PARAMS_PASSWORD(): string {
-        return this._PARAMS_PASSWORD;
-    }
-
-    get PARAMS_USERNAME(): string {
-        return this._PARAMS_USERNAME;
-    }
-
-    get PARAMS_USER(): string {
-        return this._PARAMS_USER;
-    }
-
-    get LIST_NAME(): string {
-        return this._LIST_NAME;
-    }
-
-    get DEFAULT_SORT(): string {
-        return this._DEFAULT_SORT;
+    public update(id: string, changes: UserChanges): Promise<WriteResult> {
+        return this.executor.run(db.update(user).set(changes).where(eq(user.id, id)));
     }
 }
 

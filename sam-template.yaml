@@ -15,10 +15,6 @@ Parameters:
         Type: String
         Description: Certificate
         Default: $Certificate
-    BucketNameImages:
-        Type: String
-        Description: Bucket for Images
-        Default: $BucketNameImages
     Stage:
         Type: String
         Description: Bucket for Images
@@ -58,6 +54,10 @@ Parameters:
         Description: RDS Host URL
         Default: $RDSHost
 
+    RDSDBName:
+        Type: String
+        Description: RDS Database
+        Default: $DB_NAME
 
     DEBUG:
         Type: String
@@ -76,26 +76,19 @@ Conditions:
 
 Resources:
     ExpressApi:
-        Type: AWS::Serverless::Api
-        Properties:
-            StageName: !Ref Stage
-            BinaryMediaTypes:
-                - image/png
-                - image/jpg
-                - image/jpeg
-                - multipart/form-data
+        Type: AWS::Serverless::HttpApi
 
     ExpressLambdaFunction:
         Type: AWS::Serverless::Function
         Properties:
             CodeUri: ./dist
             PackageType: Zip
-            Runtime: nodejs20.x
+            Runtime: nodejs22.x
             Handler: lambda.handler
             Environment:
                 Variables:
                     DB_NAME: !Ref DbName
-                    STAGE: !Ref Stage   
+                    STAGE: !Ref Stage
                     DB_HOST: !Ref DbHost
                     DB_USERNAME: !Ref DbUserName
                     DB_PASSWORD: !Ref DbPassword
@@ -103,233 +96,27 @@ Resources:
                     TOKEN_SECRET: !Ref TokenSecret
                     DEBUG: !Ref DEBUG
                     RDS_HOST: !Ref RDSHost
+                    RDS_DB: !Ref RDSDBName
             MemorySize: 2048
             Timeout: 900
             Events:
-                GolfRegister:
-                    Type: Api
+                # h3 does the routing, so every path goes to the one function.
+                Proxy:
+                    Type: HttpApi
                     Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /golf/register
-                        Method: ANY
-
-                Mail:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /mail
-                        Method: ANY
-                Media:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /media
-                        Method: ANY
-                UserSignIn:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /user/sign-in
-                        Method: ANY
-                UserSignUp:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /user/sign-up
-                        Method: ANY
-                UserSignOut:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /user/sign-out
-                        Method: ANY
-                UserForgotPassword:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /user/forgot-password
-                        Method: ANY
-                UserForgotPasswordWithId:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /user/forgot-password/{id}
-                        Method: ANY
-
-                UserForgotPasswordToken:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /user/forgot-password-token/{token}
-                        Method: ANY
-                UserResetPassword:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /user/reset-password
-                        Method: ANY
-                UserResetPasswordToken:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /user/reset-password-token/{token}
-                        Method: ANY
-                UserList:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /user/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
-                        Method: ANY
-                UserListFilter:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /user/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}/{filterQuery}
-                        Method: ANY
-                UserId:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /user/id/{id}
-                        Method: ANY
-                AccessList:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /access/list/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
-                        Method: ANY
-                MediaId:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /media/id/{id}
-                        Method: ANY
-                MediaImagesByIdPagination:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /media/id/{id}/image/{pageIndex}/{pageSize}/{sort}/{order}
-                        Method: ANY
-                MediaImagesPrimary:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /media/primary/logged/{logged}
-                        Method: GET
-                MediaImagesPrimaryWithCode:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /media/primary/{code}
-                        Method: GET
-
-                MediaImagesAllGalleries:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /media/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
-                        Method: ANY
-
-                MediaAllImages:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /media/image/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{order}
-                        Method: ANY
-                MediaImagesById:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /media/image/id/{id}
-                        Method: ANY
-
-                MediaAllTags:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /media/tag/page-index/{pageIndex}/page-size/{pageSize}/{sort}/{query}
-                        Method: ANY
-
-                MediaTagByLabelValue:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /media/tag/list
-                        Method: ANY
-
-                MediaNewTag:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /media/tag/new
-                        Method: ANY
-                EventCreate:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /event
-                        Method: ANY
-
-                EventMonth:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /event/month/
-                        Method: ANY
-                EventMonthCache:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /event/month/{month}/year/{year}
-                        Method: ANY
-                EventMonthPublish:
-                    Type: Api
-                    Properties:
-                        RestApiId: !Ref ExpressApi
-                        Path: /event/publish
+                        ApiId: !Ref ExpressApi
+                        Path: /{proxy+}
                         Method: ANY
             Policies:
                 - SESBulkTemplatedCrudPolicy_v2:
                       IdentityName: kofc9544.ca
                       TemplateName: DefaultEmailTemplate
                 - SESEmailTemplateCrudPolicy: {}
-                - S3WritePolicy:
-                      BucketName: !Ref BucketNameImages
-                - Version: '2012-10-17'
-                  Statement:
-                      - Effect: Allow
-                        Action:
-                            - tag:GetResources
-                            - cloudfront:CreateInvalidation
-                        Resource: '*'
-
-
-    WarmupRule:
-        Type: AWS::Events::Rule
-        Properties:
-            ScheduleExpression: rate(2 minutes)
-            State: ENABLED
-            Description: Rule to ping Lambda function every 2 minutes to keep it warm
-            Targets:
-                - Id: TargetFunction
-                  Arn: !GetAtt ExpressLambdaFunction.Arn
-                  Input: '{"source": "warmup-ping"}'
-
-
-    # Permission for EventBridge to invoke Lambda
-    WarmupPermission:
-        Type: AWS::Lambda::Permission
-        Properties:
-            Action: lambda:InvokeFunction
-            FunctionName: !Ref ExpressLambdaFunction
-            Principal: events.amazonaws.com
-            SourceArn: !GetAtt WarmupRule.Arn
-
 
 
     MyApiRoute53RecordSetGroup:
         Type: AWS::Route53::RecordSetGroup
-   #     Condition: UseDomainName
+        #     Condition: UseDomainName
         Properties:
             HostedZoneName: !Sub ${ParentDomainName}.
             RecordSets:
@@ -351,21 +138,20 @@ Resources:
                 Enabled: "true"
                 Comment: !Ref AWS::StackName
                 Aliases:
-                     - !Ref DomainName
+                    - !Ref DomainName
                 CNAMEs:
-                     - !Ref DomainName
+                    - !Ref DomainName
                 ViewerCertificate:
-                         AcmCertificateArn: arn:aws:acm:us-east-1:767397839074:certificate/8ddd4c0d-1ef3-4f40-b226-6f96c67b4dfe
-                         SslSupportMethod: sni-only
+                    AcmCertificateArn: arn:aws:acm:us-east-1:767397839074:certificate/8ddd4c0d-1ef3-4f40-b226-6f96c67b4dfe
+                    SslSupportMethod: sni-only
                 HttpVersion: http2
                 Origins:
-                  - DomainName: !Sub "${ExpressApi}.execute-api.${AWS::Region}.amazonaws.com"
-                    OriginPath: !Sub "/${Stage}"
-                    Id: ApiOrigin
-                    CustomOriginConfig:
-                        HTTPPort: 80
-                        HTTPSPort: 443
-                        OriginProtocolPolicy: https-only
+                    - DomainName: !Sub "${ExpressApi}.execute-api.${AWS::Region}.amazonaws.com"
+                      Id: ApiOrigin
+                      CustomOriginConfig:
+                          HTTPPort: 80
+                          HTTPSPort: 443
+                          OriginProtocolPolicy: https-only
                 DefaultCacheBehavior:
                     Compress: "true"
                     AllowedMethods:
@@ -388,8 +174,8 @@ Outputs:
         Value: !Sub https://${AWS::Region}.console.aws.amazon.com/lambda/home?region=${AWS::Region}#/functions/${ExpressLambdaFunction}
 
     ApiGatewayApiConsoleUrl:
-        Description: Console URL for the API Gateway API's Stage.
-        Value: !Sub https://${AWS::Region}.console.aws.amazon.com/apigateway/home?region=${AWS::Region}#/apis/${ExpressApi}/stages/${Stage}
+        Description: Console URL for the HTTP API.
+        Value: !Sub https://${AWS::Region}.console.aws.amazon.com/apigateway/home?region=${AWS::Region}#/apis/${ExpressApi}
 
     ApiUrl:
         Description: Invoke URL for your API. Clicking this link will perform a GET request

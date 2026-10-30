@@ -1,5 +1,6 @@
 import "source-map-support/register";
-import serverlessExpress from "@vendia/serverless-express";
+import serverlessHttp from "serverless-http";
+import { toNodeHandler } from "h3";
 import { app } from "./app";
 
-export const handler = serverlessExpress({ app });
+export const handler = serverlessHttp(toNodeHandler(app));

@@ -1,385 +1,172 @@
-import {mailMapper, golfMapper, teamMapper} from "../mapper/";
-import {MailController} from "./mail.controller";
-import {inspect} from "util";
-import {EmailMessaging} from "../models/EmailMessaging";
-import moment from "moment/moment";
-//import {golfMapper} from "../mapper/golf.mapper";
-//import {teamMapper} from "../mapper/team.mapper";
+import { getRouterParams, readBody } from "h3";
+import { BadRequestError } from "../errors";
+import { holeService } from "../service/hole.service";
+import { playerImportService } from "../service/player-import.service";
+import { playerService } from "../service/player.service";
+import { playerYearService } from "../service/player-year.service";
+import { registrationService } from "../service/registration.service";
+import { teamService } from "../service/team.service";
+import { useResponseSuccess } from "../utils/response";
+import {
+    validateHole,
+    validateNewPlayer,
+    validateNewYear,
+    validatePlayerUpdate,
+    validateRegistration,
+    validateTeamUpdate,
+    validateYear,
+} from "../validators/golf.validator";
+import { validateNumericId, validateTextId } from "../validators/id.validator";
+import { parseListParams } from "../validators/list.validator";
+import { controller, pagedList, routeOrBodyId } from "./controller";
 
-const util = require('util');
+type Body = Record<string, unknown> | undefined;
 
-export interface OptionsPlayer {
-    team_name?: string,
-    players:
-        {
-            "player": string,
-            "email": string,
-            "phone": string,
-            allergies?: string,
-        }[],
-    body?: string,
-    teamId?: string,
-    individual?:boolean,
-    "email_type": string
-}
-
+/** Golf tournament endpoints: registration, players, player years, teams, holes, and the player import. */
 export class GolfController {
+    // Registration
 
-    static async apiRegisterTournament(req: any, res: any, next: any) {
-        let team;
-        const optionsPlayer: OptionsPlayer  = req.body
-        optionsPlayer.individual = true;
+    public static apiRegisterTournament = controller(async (event) => {
+        const registration = validateRegistration(await readBody<Body>(event));
+        const { emailSent } = await registrationService.register(registration);
+        return useResponseSuccess({ message: "Registration successful", emailSent });
+    });
 
-        if (optionsPlayer.players.length >= 2) {
-           team =  await teamMapper.createTeamRegistration(optionsPlayer);
+    // Players
 
-           console.log("first team")
-            console.log(team);
-           if (!team.success) {
-               return res.status(200).json({ success: team.success, msg: team.message })
-           }
+    public static apiGetAllPlayers = controller(async (event) => {
+        const params = parseListParams(getRouterParams(event));
+        return pagedList(await playerService.list(params), params, "name");
+    });
 
-           console.log("team results")
-            console.log(team);
-           if (team.data.affectedRows === 1) {
-                console.log("good")
-               optionsPlayer.teamId = team.data.id;
-               optionsPlayer.individual = false;
-           } else {
-               console.log("bad")
-               return res.status(500).json({ error_main:"Team name already exists" })
-           }
+    public static apiGetPlayersByTeamId = controller(async (event) => {
+        const params = parseListParams(getRouterParams(event));
+        const teamId = validateTextId(String(params.id ?? ""), "team id");
+        return pagedList(await playerService.listByTeam(teamId), params, "name");
+    });
+
+    /** Players without a team, as select options (a plain array, not the paged envelope). */
+    public static getAllPlayersNeedingTeamsLabelValue = controller(async () => {
+        return playerService.listWithoutTeamAsOptions();
+    });
+
+    public static getPlayerCSV = controller(async (event) => {
+        const params = parseListParams(getRouterParams(event));
+        return pagedList(await playerService.listForExport(params), params, "name");
+    });
+
+    public static apiCreatePlayer = controller(async (event) => {
+        const player = validateNewPlayer(await readBody<Body>(event));
+        return useResponseSuccess(await playerService.create(player));
+    });
+
+    public static apiUpdatePlayedById = controller(async (event) => {
+        const id = validateNumericId(getRouterParams(event).id, "player id");
+        const changes = validatePlayerUpdate(await readBody<Body>(event));
+        return useResponseSuccess(await playerService.update(id, changes));
+    });
+
+    public static apiDeletePlayer = controller(async (event) => {
+        const id = validateNumericId(getRouterParams(event).playerId, "player id");
+        return useResponseSuccess(await playerService.delete(id));
+    });
+
+    public static apiImportPlayers = controller(async (event) => {
+        const file = (await event.req.formData()).get("file");
+        if (!(file instanceof File)) {
+            throw new BadRequestError("No file provided");
         }
-        console.log("next")
-        await golfMapper.createPlayerRegistration(optionsPlayer);
-
-        await mailMapper.setupEmail({email_type:EmailMessaging.EMAIL_TYPE_REGISTER, data: req.body})
-        console.log("right before end")
-        console.log(moment().format('yyyy-mm-dd:hh:mm:ss'))
-        return res.status(200).json({ success: true, msg: "Registration successful" })
-    }
-
-    /**
-     * Calling all galleries
-     * @param req
-     * @param res
-     * @param next
-     *//*
-    public static async apiGetAllPlayersWithoutTeams(req: any, res: any, next: any) {
-        try {
-            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
-            //        return res.status(500).json({error: 'Not Authorized to access the API'})
-            //      }
-
-            const options = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: golfMapper.DEFAULT_SORT, order: golfMapper.DEFAULT_ORDER };
-
-            Object.entries(req.params).map(([key, value]) => {
-                if (value !== 'undefined') {
-                    if (isNaN(Number(value))) {
-                        options[key] = value;
-                    } else {
-                        options[key] = Number(value);
-                    }
-                }
-            })
-
-                 const galleries = await golfMapper.getAllPlayersWithoutTeams(options);
-
-            if (typeof galleries === 'string') {
-                return res.status(500).json({ errors_string: galleries })
-            }
-            const paginationResults = golfMapper.prepareListResults(galleries, options);
-
-            return res.status(200).json(paginationResults);
-
-        } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
-        }
-
-    } */
-
-
-    /**
-     * Calling all galleries
-     * @param req
-     * @param res
-     * @param next
-     */
-    public static async getAllTeamsNeedingPlayersLabelValue(req: any, res: any, next: any) {
-        try {
-            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
-            //        return res.status(500).json({error: 'Not Authorized to access the API'})
-            //      }
-
-            const options = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: golfMapper.LABEL_SORT, order: golfMapper.DEFAULT_ORDER };
-
-            Object.entries(req.params).map(([key, value]) => {
-                if (value !== 'undefined') {
-                    if (isNaN(Number(value))) {
-                        options[key] = value;
-                    } else {
-                        options[key] = Number(value);
-                    }
-                }
-            })
-            const teams = await teamMapper.getAllTeamsNeedingPlayersLabelValue(options);
-
-            console.log("gallkery")
-            console.log(teams)
-            console.log(options);
-            if (typeof teams === 'string') {
-                return res.status(500).json({ errors_string: teams })
-            }
-
-            return res.status(200).json(teams);
-
-        } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
-        }
-
-    }
-
-    /**
-     * Calling all galleries
-     * @param req
-     * @param res
-     * @param next
-     */
-    public static async getAllPlayersNeedingTeamsLabelValue(req: any, res: any, next: any) {
-        try {
-            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
-            //        return res.status(500).json({error: 'Not Authorized to access the API'})
-            //      }
-
-            const options = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: golfMapper.LABEL_SORT, order: golfMapper.DEFAULT_ORDER };
-
-            Object.entries(req.params).map(([key, value]) => {
-                if (value !== 'undefined') {
-                    if (isNaN(Number(value))) {
-                        options[key] = value;
-                    } else {
-                        options[key] = Number(value);
-                    }
-                }
-            })
-            const teams = await golfMapper.getAllPlayersNeedingTeamsLabelValue(options);
-
-            console.log("gallkery")
-            console.log(teams)
-            console.log(options);
-            if (typeof teams === 'string') {
-                return res.status(500).json({ errors_string: teams })
-            }
-
-            return res.status(200).json(teams);
-
-        } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
-        }
-
-    }
-
-
-
-    /**
-     * Calling all galleries
-     * @param req
-     * @param res
-     * @param next
-     */
-    public static async apiGetTeamsMissingPlayers(req: any, res: any, next: any) {
-        try {
-            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
-            //        return res.status(500).json({error: 'Not Authorized to access the API'})
-            //      }
-
-            const options = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: golfMapper.LABEL_SORT, order: golfMapper.DEFAULT_ORDER };
-
-            Object.entries(req.params).map(([key, value]) => {
-                if (value !== 'undefined') {
-                    if (isNaN(Number(value))) {
-                        options[key] = value;
-                    } else {
-                        options[key] = Number(value);
-                    }
-                }
-            })
-            const galleries = await teamMapper.getAllTeamsNeedingPlayers(options);
-
-            console.log("gallkery")
-            console.log(galleries)
-            console.log(options);
-            if (typeof galleries === 'string') {
-                return res.status(500).json({ errors_string: galleries })
-            }
-            const paginationResults = golfMapper.prepareListResults(galleries, options);
-            console.log("gogo")
-
-            return res.status(200).json(paginationResults);
-
-        } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
-        }
-
-    }
-
-
-
-
-    /**
-     * Calling all galleries
-     * @param req
-     * @param res
-     * @param next
-     */
-    public static async apiGetAllPlayers(req: any, res: any, next: any) {
-        try {
-            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
-            //        return res.status(500).json({error: 'Not Authorized to access the API'})
-            //      }
-
-            const options = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: golfMapper.DEFAULT_SORT, order: golfMapper.DEFAULT_ORDER };
-
-            Object.entries(req.params).map(([key, value]) => {
-                if (value !== 'undefined') {
-                    if (isNaN(Number(value))) {
-                        options[key] = value;
-                    } else {
-                        options[key] = Number(value);
-                    }
-                }
-            })
-
-            const galleries = await golfMapper.getAllPlayers(options);
-
-            if (typeof galleries === 'string') {
-                // return res.status(500).json({ errors_string: galleries })
-            }
-            const paginationResults = golfMapper.prepareListResults(galleries, options);
-
-            return res.status(200).json(paginationResults);
-
-        } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
-        }
-
-    }
-
-    /**
-     * Calling all galleries
-     * @param req
-     * @param res
-     * @param next
-     */
-    public static async apiGetAllTeams(req: any, res: any, next: any) {
-        try {
-            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
-            //        return res.status(500).json({error: 'Not Authorized to access the API'})
-            //      }
-
-            const options = { pageIndex: 1, pageSize: 10, filterQuery: "", sort: golfMapper.DEFAULT_SORT, order: golfMapper.DEFAULT_ORDER };
-
-            Object.entries(req.params).map(([key, value]) => {
-                if (value !== 'undefined') {
-                    if (isNaN(Number(value))) {
-                        options[key] = value;
-                    } else {
-                        options[key] = Number(value);
-                    }
-                }
-            })
-
-            const team = await teamMapper.getAllTeams(options);
-
-            if (typeof team === 'string') {
-                return res.status(500).json({ errors_string: team })
-            }
-
-            const paginationResults = teamMapper.prepareListResults(team, options);
-
-            console.log("page")
-            console.log(paginationResults)
-            return res.status(200).json(paginationResults);
-
-        } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
-        }
-
-    }
-
-
-    /**
-     * Calling all galleries
-     * @param req
-     * @param res
-     * @param next
-     */
-    public static async apiUpdatePlayedById(req: any, res: any, next: any) {
-        try {
-            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
-            //        return res.status(500).json({error: 'Not Authorized to access the API'})
-            //      }
-
-            console.log(req.body)
-            console.log(req.params.id)
-            const team = await golfMapper.updatePlayerById(req.body, req.params.id);
-        console.log("rep")
-            console.log(team);
-
-            if (typeof team === 'string') {
-                return res.status(500).json({ errors_string: team })
-            }
-
-            return res.status(200).json(team);
-
-        } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
-        }
-
-    }
-
-    /**
-     * Calling all galleries
-     * @param req
-     * @param res
-     * @param next
-     */
-    public static async apiGetPlayersByTeamId(req: any, res: any, next: any) {
-        try {
-            //        if (!galleryMapper.checkAuthenication(req.headers.authorization)) {
-            //        return res.status(500).json({error: 'Not Authorized to access the API'})
-            //      }
-
-            const options = { id: null, pageIndex: 1, pageSize: 10, filterQuery: "", sort: golfMapper.DEFAULT_SORT, order: golfMapper.DEFAULT_ORDER };
-
-            Object.entries(req.params).map(([key, value]) => {
-                if (value !== 'undefined') {
-                    if (isNaN(Number(value))) {
-                        options[key] = value;
-                    } else {
-                        options[key] = Number(value);
-                    }
-                }
-            })
-
-            console.log("options")
-            console.log(options);
-
-            const team = await golfMapper.getPlayersByTeamId(options);
-
-            if (typeof team === 'string') {
-                return res.status(500).json({ errors_string: team })
-            }
-
-            const paginationResults = teamMapper.prepareListResults(team, options);
-
-            return res.status(200).json(paginationResults);
-
-        } catch (error) {
-            res.status(500).json({ error_main: error.toString() })
-        }
-
-    }
-
-
+        return useResponseSuccess(await playerImportService.import(await file.text()));
+    });
+
+    // Player years
+
+    public static apiGetYears = controller(async (event) => {
+        const params = parseListParams(getRouterParams(event), { sort: "year" });
+        return pagedList(await playerYearService.listYears(params), params, "year");
+    });
+
+    public static apiCreateYear = controller(async (event) => {
+        const { year } = validateNewYear(await readBody<Body>(event));
+        return useResponseSuccess(await playerYearService.createYear(year));
+    });
+
+    public static apiGetPlayerYears = controller(async (event) => {
+        const id = validateNumericId(getRouterParams(event).id, "player id");
+        return useResponseSuccess(await playerYearService.listYearsForPlayer(id));
+    });
+
+    public static apiGetPlayersByYear = controller(async (event) => {
+        const params = parseListParams(getRouterParams(event));
+        const year = validateYear(String(params.year));
+        return pagedList(await playerYearService.listPlayers(year, params), params, "name");
+    });
+
+    public static apiAddPlayerYear = controller(async (event) => {
+        const params = getRouterParams(event);
+        const id = validateNumericId(params.id, "player id");
+        return useResponseSuccess(await playerYearService.markActive(id, validateYear(params.year)));
+    });
+
+    public static apiRemovePlayerYear = controller(async (event) => {
+        const params = getRouterParams(event);
+        const id = validateNumericId(params.id, "player id");
+        return useResponseSuccess(await playerYearService.markInactive(id, validateYear(params.year)));
+    });
+
+    // Teams
+
+    public static apiGetAllTeams = controller(async (event) => {
+        const params = parseListParams(getRouterParams(event));
+        return pagedList(await teamService.list(params), params, "name");
+    });
+
+    public static apiGetTeamsMissingPlayers = controller(async (event) => {
+        const params = parseListParams(getRouterParams(event));
+        return pagedList(await teamService.listNeedingPlayers(), params, "name");
+    });
+
+    public static getAllTeamsNeedingPlayersLabelValue = controller(async (event) => {
+        const params = parseListParams(getRouterParams(event), { sort: "label" });
+        return pagedList(await teamService.listNeedingPlayersAsOptions(), params, "label");
+    });
+
+    public static apiUpdateTeamById = controller(async (event) => {
+        const body = await readBody<Body>(event);
+        const id = validateTextId(routeOrBodyId(getRouterParams(event).id, body), "team id");
+        return useResponseSuccess(await teamService.update(id, validateTeamUpdate(body)));
+    });
+
+    public static apiDeleteTeam = controller(async (event) => {
+        const id = validateTextId(getRouterParams(event).teamId, "team id");
+        return useResponseSuccess(await teamService.delete(id));
+    });
+
+    /** Teams are created by registration and import; this route is reserved and does nothing. */
+    public static apiCreateTeam = controller(async () => {
+        return useResponseSuccess(null);
+    });
+
+    // Holes
+
+    public static apiGetAllHoles = controller(async (event) => {
+        const params = parseListParams(getRouterParams(event));
+        return pagedList(await holeService.list(params), params, "name");
+    });
+
+    public static getAllHolesNeedingTeamsLabelValue = controller(async (event) => {
+        const params = parseListParams(getRouterParams(event), { sort: "value" });
+        return pagedList(await holeService.listNeedingTeamsAsOptions(), params, "value");
+    });
+
+    public static apiCreateHole = controller(async (event) => {
+        const hole = validateHole(await readBody<Body>(event));
+        return useResponseSuccess(await holeService.create(hole));
+    });
+
+    public static apiUpdateHoleById = controller(async (event) => {
+        const body = await readBody<Body>(event);
+        const id = validateTextId(routeOrBodyId(getRouterParams(event).id, body), "hole id");
+        return useResponseSuccess(await holeService.update(id, validateHole(body)));
+    });
 }

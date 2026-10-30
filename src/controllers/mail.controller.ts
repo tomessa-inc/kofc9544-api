@@ -1,24 +1,14 @@
-import {mailMapper} from "../mapper/";
+import { readBody } from "h3";
+import { mailService } from "../service/mail.service";
+import { useResponseSuccess } from "../utils/response";
+import { validateFormSubmission } from "../validators/mail.validator";
+import { controller } from "./controller";
 
-import {inspect} from "util";
-
-const util = require('util');
-
+/** The site's contact, sponsor, volunteer and register forms. */
 export class MailController {
-    static async apiPostSendMail(req: any, res: any, next: any) {
-        try {
-
-            const retval = await mailMapper.setupEmail({email_type: req.body.email_type, data: req.body})
-
-            return res.status(200).json({success: true, msg: retval})
-        } catch (err) {
-            return res.status(500).json({success:false, message: `Registration not successful, ${err.toString()}`});
-        }
-                /*
-                    return res.status(200).json({
-                        success: true,
-                        message: `successfully got through with info ${inspect(retVal)}`
-                    });
-                } else { */
-    }
+    public static apiPostSendMail = controller(async (event) => {
+        const { type, fields } = validateFormSubmission(await readBody<Record<string, unknown>>(event));
+        await mailService.sendFormSubmission(type, fields);
+        return useResponseSuccess({ message: { success: true } });
+    });
 }

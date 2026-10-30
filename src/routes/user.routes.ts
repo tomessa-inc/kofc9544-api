@@ -1,36 +1,17 @@
-import expressRouter from 'express';
+import { H3 } from "h3";
+import { AuthController } from "../controllers/auth.controller";
+import { UserController } from "../controllers/user.controller";
 
-const userRouter = expressRouter.Router();
-import {UserController} from "../controllers/user.controller";
-import {ImageController} from "../controllers/image.controller";
-import {mediaRouter} from "./media.routes";
-import {GalleryController} from "../controllers/gallery.controller";
-import {UserAuthenticationController} from "../controllers/user.authentication.controller";
-//import {UserAvatarController} from "../controllers/user.avatar.controller";
-var bodyParser = require('body-parser')
-var jsonParser = bodyParser.json()
+const userRouter = new H3();
 
+// Session and password reset
+userRouter.post("/info", AuthController.apiUserInfo);
+userRouter.post("/forgot-password", AuthController.apiForgotPassword);
+userRouter.post("/reset-password", AuthController.apiResetPassword);
 
-userRouter.post("/sign-in", UserController.apiPostSignIn);
-userRouter.post("/forgot-password", UserAuthenticationController.apiForgotPasswordNoId);
-
-userRouter.post("/forgot-password/:id", UserAuthenticationController.apiForgotPassword);
-
-userRouter.post("/reset-password-token/:token", UserAuthenticationController.apiResetPasswordToken);
-
-userRouter.post("/sign-in", UserController.apiPostSignIn);
-userRouter.post("/sign-out", UserController.apiPostSignOut);
-userRouter.post("/sign-up", UserController.apiPostSignUp);
-
+// Members. Optional `:param?` segments need the h3 v2 router (rou3); one route covers every trailing-param form.
 userRouter.post("/page-index/:pageIndex/page-size/:pageSize?/:sort?/:order?/:filterQuery?", UserController.getAllUsers);
-
-//userRouter.post("/:pageIndex?/:pageSize?/:sort?/:order?",UserController.getAllUsers);
-
-//userRouter.post("/", UserController.getAllUsers);
 userRouter.patch("/", UserController.patchUpdateUser);
-//userRouter.post("/avatar", UserAvatarController.apiUploadAvatar);
-
 userRouter.post("/id/:id", UserController.getUserById);
-userRouter.put("/id/:id", UserController.apiUpdateUser);
 
-export {userRouter};
+export { userRouter };

@@ -1,14 +1,10 @@
-import expressRouter from 'express';
+import { H3 } from "h3";
+import { AuthController } from "../controllers/auth.controller";
 
-const userRouter = expressRouter.Router();
-import {UserController} from "../controllers/user.controller";
-//import {UserAvatarController} from "../controllers/user.avatar.controller";
+const authRouter = new H3();
 
-userRouter.post("/sign-in", UserController.apiPostSignIn);
-userRouter.post("/sign-in", UserController.apiPostSignIn);
-userRouter.post("/sign-up", UserController.apiPostSignUp);
-userRouter.get("/", UserController.getAllUsers);
-userRouter.post("/", UserController.patchUpdateUser);
-//userRouter.post("/avatar", UserAvatarController.apiUploadAvatar);
+authRouter.get("/codes", AuthController.apiGetCodes);
+authRouter.post("/login", AuthController.apiPostSignIn);
+authRouter.post("/logout", AuthController.apiPostSignOut);
 
-export {userRouter};
+export { authRouter };

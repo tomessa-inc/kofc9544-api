@@ -1,15 +1,10 @@
-import { drizzle } from 'drizzle-orm/mysql2';
-import { mysqlTable, serial, varchar, int, boolean, DatetimeFsp, MySqlTimestamp, timestamp } from 'drizzle-orm/mysql-core';
-import mysql from 'mysql2/promise';
-import {DataTypes} from "../db";
+import { datetime, mysqlTable, varchar } from "drizzle-orm/mysql-core";
 
-
-// Define your schema
-export const team = mysqlTable('team', {
-    id: varchar('id', {length: 25}).primaryKey(),
-    name: varchar('name', {length: 255}).notNull(),
-    captain: varchar('captain', {length: 255}).notNull(),
-
-//    createdAt:timestamp().defaultNow(),
-    //  updatedAt: timestamp().defaultNow(),
-})
+export const team = mysqlTable("team", {
+    id: varchar("id", { length: 25 }).primaryKey(),
+    name: varchar("name", { length: 45 }),
+    captain: varchar("captain", { length: 45 }),
+    hole: varchar("hole", { length: 45 }),
+    createdAt: datetime("createdAt"),
+    updatedAt: datetime("updatedAt"),
+});

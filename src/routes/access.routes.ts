@@ -1,13 +1,12 @@
-import expressRouter from 'express';
+import { H3 } from "h3";
+import { AccessController } from "../controllers/access.controller";
 
-const accessRouter = expressRouter.Router();
-import {AccessController} from "../controllers/access.controlller";
-//import {UserAvatarController} from "../controllers/user.avatar.controller";
-var bodyParser = require('body-parser')
-var jsonParser = bodyParser.json()
+const accessRouter = new H3();
 
-accessRouter.post("/", AccessController.getAllAccess);
-accessRouter.post("/new", AccessController.apiCreateAccess);
-accessRouter.post("/list/page-index/:pageIndex/page-size/:pageSize?/:sort?/:order?", AccessController.apiGetAllAccessAsLabelValues);
+// Roles. Create, update and delete need a member with a role-manager role (see AccessService).
+accessRouter.post("/list", AccessController.apiListAccess);
+accessRouter.post("/", AccessController.apiCreateAccess);
+accessRouter.put("/id/:id", AccessController.apiUpdateAccess);
+accessRouter.delete("/id/:id", AccessController.apiDeleteAccess);
 
-export {accessRouter};
+export { accessRouter };

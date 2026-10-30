@@ -1,19 +1,17 @@
-import { drizzle } from 'drizzle-orm/mysql2';
-import { mysqlTable, serial, varchar, int, boolean, DatetimeFsp, MySqlTimestamp, timestamp } from 'drizzle-orm/mysql-core';
-import mysql from 'mysql2/promise';
-import {DataTypes} from "../db";
+import { boolean, datetime, int, mysqlTable, varchar } from "drizzle-orm/mysql-core";
 
-
-// Define your schema
-export const player = mysqlTable('player', {
-    id: serial('id').primaryKey(),
-    name: varchar('name', {length: 255}).notNull(),
-    email: varchar('email', {length: 255}).notNull(),
-    phone: varchar('phone', {length: 255}).notNull(),
-    individual: varchar('individual', {length: 255}),
-    TeamId: varchar('TeamId', {length: 255}),
-    allergies: varchar('allergies', {length: 255}),
-    payment: boolean('payment')
-//    createdAt:timestamp().defaultNow(),
-  //  updatedAt: timestamp().defaultNow(),
-})
+export const player = mysqlTable("player", {
+    id: int("id").autoincrement().primaryKey(),
+    name: varchar("name", { length: 45 }),
+    firstName: varchar("firstName", { length: 255 }),
+    lastName: varchar("lastName", { length: 255 }),
+    email: varchar("email", { length: 45 }),
+    phone: varchar("phone", { length: 45 }),
+    TeamId: varchar("TeamId", { length: 45 }),
+    individual: boolean("individual"),
+    allergies: varchar("allergies", { length: 45 }),
+    payment: varchar("payment", { length: 45 }),
+    member: varchar("member", { length: 45 }),
+    createdAt: datetime("createdAt"),
+    updatedAt: datetime("updatedAt"),
+});
