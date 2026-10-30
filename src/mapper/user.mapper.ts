@@ -1,4 +1,4 @@
-import { eq, like, notLike, or, sql } from "drizzle-orm";
+import { and, eq, like, notLike, or, SQL, sql } from "drizzle-orm";
 import { QueryExecutor, sqlExecutor } from "../db/executor";
 import { db } from "../db/query-builder";
 import { user } from "../models/User";
@@ -11,6 +11,15 @@ export interface UserProfile {
     lastName: string;
     email: string;
     roles: string[] | null;
+}
+
+/** Optional user-list filters; each matches anywhere in its column. */
+export interface UserFilters {
+    /** first or last name */
+    name?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
 }
 
 export interface NewUser {
@@ -94,20 +103,28 @@ export class UserMapper {
         );
     }
 
-    /** One page of members, optionally filtered by first or last name; every row carries the overall `total`. */
-    public findPage({ offset, limit }: Page, nameFilter?: string) {
-        const query = db.select({
-            id: user.id,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
-            total: sql<number>`(SELECT count(*) FROM user)`.as("total"),
-        }).from(user);
+    /** One page of members matching the filters; every row carries the filtered `total`. */
+    public async findPage({ offset, limit }: Page, filters: UserFilters = {}) {
+        const conditions: (SQL | undefined)[] = [];
+        if (filters.name) conditions.push(or(like(user.firstName, `%${filters.name}%`), like(user.lastName, `%${filters.name}%`)));
+        if (filters.firstName) conditions.push(like(user.firstName, `%${filters.firstName}%`));
+        if (filters.lastName) conditions.push(like(user.lastName, `%${filters.lastName}%`));
+        if (filters.email) conditions.push(like(user.email, `%${filters.email}%`));
+        const where = conditions.length > 0 ? and(...conditions) : undefined;
 
-        if (nameFilter) {
-            query.where(or(like(user.firstName, `%${nameFilter}%`), like(user.lastName, `%${nameFilter}%`)));
-        }
-        return this.executor.run(query.offset(offset).limit(limit));
+        const [rows, counts] = await Promise.all([
+            this.executor.run<Omit<UserProfile, "roles">[]>(
+                db.select({
+                    id: user.id,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    email: user.email,
+                }).from(user).where(where).offset(offset).limit(limit),
+            ),
+            this.executor.run<{ total: number }[]>(db.select({ total: sql<number>`count(*)` }).from(user).where(where)),
+        ]);
+        const total = Number(counts?.[0]?.total ?? 0);
+        return (rows ?? []).map((row) => ({ ...row, total }));
     }
 
     public insert(values: NewUser): Promise<WriteResult> {

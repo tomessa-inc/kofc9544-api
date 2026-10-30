@@ -7,6 +7,7 @@ import { AppError, BadRequestError, ConflictError, ForbiddenError, NotFoundError
 import { team } from "../../../models/Team";
 import { handleError, usePagedListResponse } from "../../../utils/response";
 import { eq, sql } from "drizzle-orm";
+import { api } from "../helpers/http";
 
 describe("foundation", () => {
     describe("config", () => {
@@ -154,6 +155,19 @@ describe("foundation", () => {
                 caught = error as Error;
             }
             expect(caught?.message).to.equal("ECONNREFUSED");
+        });
+    });
+
+    describe("CORS", () => {
+        it("answers an allowed origin's preflight and lets the browser cache it for a day", async () => {
+            const res = await api()
+                .options("/golf/year-new")
+                .set("Origin", "https://golf.kofc9544.ca")
+                .set("Access-Control-Request-Method", "POST");
+
+            expect(res.status).to.equal(204);
+            expect(res.headers["access-control-allow-origin"]).to.equal("https://golf.kofc9544.ca");
+            expect(res.headers["access-control-max-age"]).to.equal("86400");
         });
     });
 });

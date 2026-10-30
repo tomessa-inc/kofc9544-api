@@ -37,7 +37,7 @@ Follow the `mvc-solid` skill (`.claude/skills/mvc-solid/SKILL.md`) for all new o
 - **Routes** (`src/routes/`): one `new H3()` sub-app per file binding paths to controller methods; `src/app.ts` adds CORS and `mount()`s them.
 - **Controllers** (`src/controllers/`): handlers wrapped in `controller()` (`controllers/controller.ts`), which turns thrown errors into responses via `handleError`. Each validates input, calls one service method, and returns a view.
 - **Services** (`src/service/`): business logic and workflows. Dependencies are narrow `Pick<Mapper, ...>` slices received through the constructor; each module exports a default singleton.
-- **Mappers** (`src/mapper/`): data access only, one per table (or AWS service: `cdn.mapper`, `mail.mapper`). Build queries with the Drizzle builder in `db/query-builder.ts` and run them through an injected `QueryExecutor` (`db/executor.ts`).
+- **Mappers** (`src/mapper/`): data access only, one per table (or AWS service: `mail.mapper`). Build queries with the Drizzle builder in `db/query-builder.ts` and run them through an injected `QueryExecutor` (`db/executor.ts`).
 - **Models** (`src/models/`): Drizzle `mysqlTable` schemas only. Drizzle is the only ORM.
 - **Views** (`src/views/`, `src/utils/response.ts`): the response envelope (`useResponseSuccess`, `usePagedListResponse`), CDN image URLs, and composed emails (`views/email/compose.ts`).
 - **DTOs / validators / errors**: `src/dto/`, `src/validators/`, `src/errors/`. Services throw `AppError` subclasses; unexpected errors become a generic 500 so internals never reach clients.
@@ -45,7 +45,7 @@ Follow the `mvc-solid` skill (`.claude/skills/mvc-solid/SKILL.md`) for all new o
 
 **Database access**: queries are not sent over a MySQL connection. `RdsProxyExecutor` posts the prepared statement (`{ sql, params }`) to the RDS SQL proxy at `RDS_HOST/RDS_DB`; failures throw.
 
-**h3 v2** (ESM-only, loaded from this CommonJS build via Node's `require(esm)`, so Node >= 22 locally and the `nodejs22.x` Lambda runtime; tsconfig uses `module: nodenext`). Use the v2 APIs: `defineHandler`, `event.res.status`, `event.req.headers.get()`, `event.req.formData()`, `readBody<T>(event)` (undefined for GET/empty bodies), `toNodeHandler`, `mockEvent` in tests. Routes sharing a path must use the same param name (see `src/routes/media.routes.ts`).
+**h3 v2** (ESM-only, loaded from this CommonJS build via Node's `require(esm)`, so Node >= 22 locally and the `nodejs22.x` Lambda runtime; tsconfig uses `module: nodenext`). Use the v2 APIs: `defineHandler`, `event.res.status`, `event.req.headers.get()`, `event.req.formData()`, `readBody<T>(event)` (undefined for GET/empty bodies), `toNodeHandler`, `mockEvent` in tests. Routes sharing a path must use the same param name.
 
 **Drizzle tips**: `strictNullChecks` must stay on (Drizzle's insert/update types depend on it). Inside correlated `sql` subqueries, name outer columns literally (`team.id`, not `${team.id}`): Drizzle renders `${team.id}` unqualified in single-table selects, which binds to the subquery's table.
 

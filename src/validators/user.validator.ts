@@ -1,3 +1,4 @@
+import type { UserFilters } from "../mapper/user.mapper";
 import type { AccessDto, LoginDto, SignUpDto, UserUpdateDto } from "../dto/user.dto";
 import { BadRequestError } from "../errors";
 import { MissingCredentialsError } from "../errors/auth.errors";
@@ -61,9 +62,32 @@ export function validateSignUp(body: Body): SignUpDto {
     return { username, email, password: newPassword(body.password), firstName: text(body?.firstName), lastName: text(body?.lastName) };
 }
 
+/** Longest role name and description the `access` table holds. */
+export const MAX_ACCESS_NAME = 45;
+export const MAX_ACCESS_DESCRIPTION = 100;
+
+/** A role's name (required) and description (optional, "" when absent), for both create and update. */
 export function validateAccess(body: Body): AccessDto {
     const name = text(body?.name);
-    const description = text(body?.description);
-    if (!name || !description) throw new BadRequestError("Missing required fields");
-    return { name, description, id: text(body?.id) };
+    const description = text(body?.description) ?? "";
+    if (!name) throw new BadRequestError("Missing required fields");
+    if (name.length > MAX_ACCESS_NAME) throw new BadRequestError(`Role name must be ${MAX_ACCESS_NAME} characters or fewer`);
+    if (description.length > MAX_ACCESS_DESCRIPTION) {
+        throw new BadRequestError(`Description must be ${MAX_ACCESS_DESCRIPTION} characters or fewer`);
+    }
+    return { name, description };
+}
+
+/**
+ * User-list filters from a list request body. The admin sends its search form as
+ * `{ params: { firstName, lastName, email, ... } }`; blank and non-text values are ignored.
+ */
+export function userListFilters(body: Record<string, unknown> | undefined): UserFilters {
+    const source = (body?.params ?? body ?? {}) as Record<string, unknown>;
+    const text = (value: unknown) => (typeof value === "string" && value.trim() ? value.trim() : undefined);
+    return {
+        firstName: text(source.firstName),
+        lastName: text(source.lastName),
+        email: text(source.email),
+    };
 }

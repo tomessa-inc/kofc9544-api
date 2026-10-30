@@ -3,7 +3,7 @@ import { userService } from "../service/user.service";
 import { useResponseSuccess } from "../utils/response";
 import { parseListParams } from "../validators/list.validator";
 import { validateTextId } from "../validators/id.validator";
-import { validateSignUp, validateUserPatch, validateUserUpdate } from "../validators/user.validator";
+import { userListFilters, validateSignUp, validateUserPatch, validateUserUpdate } from "../validators/user.validator";
 import { controller, pagedList } from "./controller";
 
 type Body = Record<string, unknown> | undefined;
@@ -12,7 +12,8 @@ type Body = Record<string, unknown> | undefined;
 export class UserController {
     public static getAllUsers = controller(async (event) => {
         const params = parseListParams(getRouterParams(event), { sort: "firstName" });
-        return pagedList(await userService.list(params), params, "firstName");
+        const filters = userListFilters(await readBody<Body>(event));
+        return pagedList(await userService.list(params, filters), params, "firstName");
     });
 
     /** The member with their access roles (a plain object, not the envelope). */

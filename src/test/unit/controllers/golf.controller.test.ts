@@ -1,10 +1,11 @@
 import { expect } from "chai";
 import { sqlExecutor } from "../../../db/executor";
-import { ConflictError } from "../../../errors";
+import { ConflictError, NotFoundError } from "../../../errors";
 import { mailMapper } from "../../../mapper/mail.mapper";
 import { holeService } from "../../../service/hole.service";
 import { playerImportService } from "../../../service/player-import.service";
 import { playerService } from "../../../service/player.service";
+import { playerYearService } from "../../../service/player-year.service";
 import { registrationService } from "../../../service/registration.service";
 import { teamService } from "../../../service/team.service";
 import { api } from "../helpers/http";
@@ -304,6 +305,119 @@ describe("GolfController (HTTP contract)", () => {
             expect(res.status).to.equal(400);
             expect(res.body.error).to.equal('Unknown hole(s), nothing was imported: "Hole 99" (John Smith)');
             expect(queries.every((q) => q.startsWith("select"))).to.equal(true);
+        });
+    });
+
+    describe("player years", () => {
+        it("POST /golf/year/page-index/... returns the paged years, newest first", async () => {
+            const list = stub(playerYearService, "listYears", async () => [
+                { id: 1, year: 2025, players: 40, total: 2 },
+                { id: 2, year: 2026, players: 12, total: 2 },
+            ]);
+
+            const res = await api().post("/golf/year/page-index/1/page-size/10/year/desc");
+
+            expect(res.status).to.equal(200);
+            expect(res.body.data.items.map((r) => r.year)).to.deep.equal([2026, 2025]);
+            expect(res.body.data.total).to.equal(2);
+            expect(list.calls[0][0]).to.include({ pageIndex: 1, pageSize: 10, sort: "year", order: "desc" });
+        });
+
+        it("POST /golf/year-new validates and creates the year", async () => {
+            const create = stub(playerYearService, "createYear", async () => ({ id: 4 }));
+
+            const res = await api().post("/golf/year-new").send({ year: 2027 });
+
+            expect(res.status).to.equal(200);
+            expect(res.body.data).to.deep.equal({ id: 4 });
+            expect(create.calls[0]).to.deep.equal([2027]);
+        });
+
+        it("POST /golf/year-new returns 400 for an invalid year without calling the service", async () => {
+            const create = stub(playerYearService, "createYear");
+
+            const res = await api().post("/golf/year-new").send({ year: "next" });
+
+            expect(res.status).to.equal(400);
+            expect(res.body.error).to.equal("Invalid year");
+            expect(create.calls).to.have.length(0);
+        });
+
+        it("POST /golf/year-new returns 409 for an existing year", async () => {
+            stub(playerYearService, "createYear", async () => {
+                throw new ConflictError("Year 2026 already exists");
+            });
+
+            const res = await api().post("/golf/year-new").send({ year: 2026 });
+
+            expect(res.status).to.equal(409);
+            expect(res.body.error).to.equal("Year 2026 already exists");
+        });
+
+        it("GET /golf/player/:id/years returns the player's years", async () => {
+            const list = stub(playerYearService, "listYearsForPlayer", async () => [{ id: 3, year: 2026 }]);
+
+            const res = await api().get("/golf/player/7/years");
+
+            expect(res.body.data).to.deep.equal([{ id: 3, year: 2026 }]);
+            expect(list.calls[0]).to.deep.equal([7]);
+        });
+
+        it("GET /golf/player/:id/years returns 400 for a bad player id", async () => {
+            const list = stub(playerYearService, "listYearsForPlayer");
+
+            expect((await api().get("/golf/player/abc/years")).status).to.equal(400);
+            expect(list.calls).to.have.length(0);
+        });
+
+        it("POST /golf/year/:year/... returns the paged players for the year", async () => {
+            const list = stub(playerYearService, "listPlayers", async () => [{ name: "b", total: 2 }, { name: "a", total: 2 }]);
+
+            const res = await api().post("/golf/year/2026/page-index/1/page-size/10/name/asc");
+
+            expect(res.status).to.equal(200);
+            expect(res.body.data.items.map((r) => r.name)).to.deep.equal(["a", "b"]);
+            expect(list.calls[0][0]).to.equal(2026);
+            expect(list.calls[0][1]).to.include({ pageIndex: 1, pageSize: 10 });
+        });
+
+        it("POST /golf/year/:year/... returns 400 for a bad year", async () => {
+            const list = stub(playerYearService, "listPlayers");
+
+            const res = await api().post("/golf/year/abc/page-index/1/page-size/10/name/asc");
+
+            expect(res.status).to.equal(400);
+            expect(res.body.error).to.equal("Invalid year");
+            expect(list.calls).to.have.length(0);
+        });
+
+        it("PUT /golf/player/:id/year/:year marks the player active", async () => {
+            const mark = stub(playerYearService, "markActive", async () => ({ affectedRows: 1 }));
+
+            const res = await api().put("/golf/player/7/year/2026");
+
+            expect(res.body.data).to.deep.equal({ affectedRows: 1 });
+            expect(mark.calls[0]).to.deep.equal([7, 2026]);
+        });
+
+        it("PUT /golf/player/:id/year/:year returns 404 for an unknown player", async () => {
+            stub(playerYearService, "markActive", async () => {
+                throw new NotFoundError("Player 99 not found");
+            });
+
+            const res = await api().put("/golf/player/99/year/2026");
+
+            expect(res.status).to.equal(404);
+            expect(res.body.error).to.equal("Player 99 not found");
+        });
+
+        it("DELETE /golf/player/:id/year/:year marks the player inactive", async () => {
+            const mark = stub(playerYearService, "markInactive", async () => ({ affectedRows: 1 }));
+
+            const res = await api().delete("/golf/player/7/year/2026");
+
+            expect(res.status).to.equal(200);
+            expect(mark.calls[0]).to.deep.equal([7, 2026]);
         });
     });
 });

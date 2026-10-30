@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { BadRequestError } from "../../../errors";
 import { MissingCredentialsError } from "../../../errors/auth.errors";
-import { validateAccess, validateEmail, validateLogin, validateSignUp, validateUserPatch, validateUserUpdate } from "../../../validators/user.validator";
+import { MAX_ACCESS_DESCRIPTION, MAX_ACCESS_NAME, validateAccess, validateEmail, validateLogin, validateSignUp, validateUserPatch, validateUserUpdate } from "../../../validators/user.validator";
 
 describe("user validators", () => {
     it("validateLogin trims the username but not the password", () => {
@@ -38,7 +38,13 @@ describe("user validators", () => {
     it("validateSignUp and validateAccess require their fields", () => {
         expect(validateSignUp({ username: "tom", email: "e", password: "long enough" })).to.include({ username: "tom", email: "e", password: "long enough" });
         expect(() => validateSignUp({ username: "tom" })).to.throw(BadRequestError, "Missing required fields");
-        expect(validateAccess({ name: "Admin", description: "d" })).to.include({ name: "Admin", description: "d" });
-        expect(() => validateAccess({ name: "Admin" })).to.throw(BadRequestError);
+    });
+
+    it("validateAccess requires a name, defaults the description to \"\" and enforces the column lengths", () => {
+        expect(validateAccess({ name: " Admin ", description: " d " })).to.deep.equal({ name: "Admin", description: "d" });
+        expect(validateAccess({ name: "Admin" })).to.deep.equal({ name: "Admin", description: "" });
+        expect(() => validateAccess({ description: "d" })).to.throw(BadRequestError, "Missing required fields");
+        expect(() => validateAccess({ name: "x".repeat(MAX_ACCESS_NAME + 1) })).to.throw(BadRequestError, "Role name");
+        expect(() => validateAccess({ name: "Admin", description: "x".repeat(MAX_ACCESS_DESCRIPTION + 1) })).to.throw(BadRequestError, "Description");
     });
 });

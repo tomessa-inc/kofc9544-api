@@ -13,3 +13,4 @@ cdk
 # test coverage output
 build
 .nyc_output
+*.sql

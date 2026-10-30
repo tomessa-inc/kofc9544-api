@@ -24,4 +24,11 @@ golfRouter.post("/team/page-index/:pageIndex/page-size/:pageSize/:sort/:order", 
 golfRouter.post("/team/id/:id/page-index/:pageIndex/page-size/:pageSize/:sort/:order",                       GolfController.apiGetPlayersByTeamId);
 golfRouter.post("/player-csv/:sort/:order",        GolfController.getPlayerCSV);
 
+golfRouter.post("/year-new",                                                                                   GolfController.apiCreateYear);
+golfRouter.post("/year/page-index/:pageIndex/page-size/:pageSize/:sort/:order",                              GolfController.apiGetYears);
+golfRouter.get("/player/:id/years",                                                                            GolfController.apiGetPlayerYears);
+golfRouter.put("/player/:id/year/:year",                                                                       GolfController.apiAddPlayerYear);
+golfRouter.delete("/player/:id/year/:year",                                                                    GolfController.apiRemovePlayerYear);
+golfRouter.post("/year/:year/page-index/:pageIndex/page-size/:pageSize/:sort/:order",                         GolfController.apiGetPlayersByYear);
+
 export { golfRouter };

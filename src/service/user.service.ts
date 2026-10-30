@@ -1,7 +1,7 @@
 import * as uuid from "uuid";
 import type { SignUpDto, UserUpdateDto } from "../dto/user.dto";
 import { ConflictError, NotFoundError } from "../errors";
-import { UserMapper, userMapper } from "../mapper/user.mapper";
+import { UserFilters, UserMapper, userMapper } from "../mapper/user.mapper";
 import type { WriteResult } from "../mapper/types";
 import { ListParams, toPage } from "../validators/list.validator";
 import { PasswordService, passwordService } from "./password.service";
@@ -16,8 +16,8 @@ export class UserService {
         private readonly passwords: Passwords,
     ) {}
 
-    public list(params: ListParams) {
-        return this.users.findPage(toPage(params), params.filterQuery || undefined);
+    public list(params: ListParams, filters: UserFilters = {}) {
+        return this.users.findPage(toPage(params), { name: params.filterQuery ? String(params.filterQuery) : undefined, ...filters });
     }
 
     public async get(id: string) {

@@ -45,6 +45,11 @@ export interface HoleDto {
     par?: string;
 }
 
+/** POST /golf/year-new body. */
+export interface NewYearDto {
+    year: number;
+}
+
 /** One row of the player-import CSV, keyed by its header. */
 export interface ImportRow {
     PAR?: string;

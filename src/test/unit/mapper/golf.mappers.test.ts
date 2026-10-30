@@ -1,7 +1,9 @@
 import { expect } from "chai";
 import { HoleMapper } from "../../../mapper/hole.mapper";
 import { PlayerMapper } from "../../../mapper/player.mapper";
+import { PlayerYearMapper } from "../../../mapper/player-year.mapper";
 import { TeamMapper } from "../../../mapper/team.mapper";
+import { YearMapper } from "../../../mapper/year.mapper";
 import { fakeExecutor } from "../helpers/fake-executor";
 
 describe("golf mappers", () => {
@@ -175,6 +177,92 @@ describe("golf mappers", () => {
             expect(db.last.sql).to.include("from `hole` left join `team`");
             expect(db.last.sql).to.include("having count(`team`.`id`) < ?");
             expect(db.last.params.at(-1)).to.equal(2);
+        });
+    });
+
+    describe("player years", () => {
+        it("PlayerMapper.findById selects the player by id", async () => {
+            const db = fakeExecutor([{ id: 7 }]);
+
+            expect(await new PlayerMapper(db).findById(7)).to.deep.equal([{ id: 7 }]);
+            expect(db.last.sql).to.match(/from `player` where `player`.`id` = \?$/);
+            expect(db.last.params).to.deep.equal([7]);
+        });
+
+        it("PlayerMapper.findPageByYear pages the year's players with that year's total", async () => {
+            const db = fakeExecutor([]);
+
+            await new PlayerMapper(db).findPageByYear(3, { offset: 10, limit: 10 });
+
+            expect(db.last.sql).to.include("(SELECT count(*) FROM player_year WHERE player_year.YearId = ?) as `total`");
+            expect(db.last.sql).to.include("where `player`.`id` in (select `PlayerId` from `player_year` where `player_year`.`YearId` = ?) limit ? offset ?");
+            expect(db.last.params).to.deep.equal([3, 3, 10, 10]);
+        });
+
+        it("YearMapper.findPage pages years newest first with each year's player count and the overall total", async () => {
+            const db = fakeExecutor([]);
+
+            await new YearMapper(db).findPage({ offset: 10, limit: 10 });
+
+            expect(db.last.sql).to.include("(SELECT count(*) FROM player_year WHERE player_year.YearId = year.id) as `players`");
+            expect(db.last.sql).to.include("(SELECT count(*) FROM year) as `total`");
+            expect(db.last.sql).to.match(/from `year` order by `year`.`year` desc limit \? offset \?$/);
+            expect(db.last.params).to.deep.equal([10, 10]);
+        });
+
+        it("YearMapper.findByYear matches the year value", async () => {
+            const db = fakeExecutor([]);
+
+            await new YearMapper(db).findByYear(2026);
+
+            expect(db.last.sql).to.equal("select `id`, `year` from `year` where `year`.`year` = ?");
+            expect(db.last.params).to.deep.equal([2026]);
+        });
+
+        it("YearMapper.findByPlayer selects the player's years newest first", async () => {
+            const db = fakeExecutor([]);
+
+            await new YearMapper(db).findByPlayer(7);
+
+            expect(db.last.sql).to.equal(
+                "select `id`, `year` from `year` where `year`.`id` in (select `YearId` from `player_year` where `player_year`.`PlayerId` = ?) order by `year`.`year` desc",
+            );
+            expect(db.last.params).to.deep.equal([7]);
+        });
+
+        it("YearMapper.insert adds the year", async () => {
+            const db = fakeExecutor({ insertId: 4, affectedRows: 1 });
+
+            expect(await new YearMapper(db).insert(2027)).to.deep.equal({ insertId: 4, affectedRows: 1 });
+            expect(db.last.sql).to.equal("insert into `year` (`id`, `year`) values (default, ?)");
+            expect(db.last.params).to.deep.equal([2027]);
+        });
+
+        it("YearMapper.insertIgnore adds the year unless it exists", async () => {
+            const db = fakeExecutor({ affectedRows: 1 });
+
+            await new YearMapper(db).insertIgnore(2026);
+
+            expect(db.last.sql).to.equal("insert ignore into `year` (`id`, `year`) values (default, ?)");
+            expect(db.last.params).to.deep.equal([2026]);
+        });
+
+        it("PlayerYearMapper.insertIgnore links the player and year unless already linked", async () => {
+            const db = fakeExecutor({ affectedRows: 1 });
+
+            await new PlayerYearMapper(db).insertIgnore(7, 3);
+
+            expect(db.last.sql).to.equal("insert ignore into `player_year` (`PlayerId`, `YearId`) values (?, ?)");
+            expect(db.last.params).to.deep.equal([7, 3]);
+        });
+
+        it("PlayerYearMapper.delete removes the player's link to the year", async () => {
+            const db = fakeExecutor({ affectedRows: 1 });
+
+            await new PlayerYearMapper(db).delete(7, 3);
+
+            expect(db.last.sql).to.equal("delete from `player_year` where (`player_year`.`PlayerId` = ? and `player_year`.`YearId` = ?)");
+            expect(db.last.params).to.deep.equal([7, 3]);
         });
     });
 });

@@ -3,15 +3,18 @@ import { BadRequestError } from "../errors";
 import { holeService } from "../service/hole.service";
 import { playerImportService } from "../service/player-import.service";
 import { playerService } from "../service/player.service";
+import { playerYearService } from "../service/player-year.service";
 import { registrationService } from "../service/registration.service";
 import { teamService } from "../service/team.service";
 import { useResponseSuccess } from "../utils/response";
 import {
     validateHole,
     validateNewPlayer,
+    validateNewYear,
     validatePlayerUpdate,
     validateRegistration,
     validateTeamUpdate,
+    validateYear,
 } from "../validators/golf.validator";
 import { validateNumericId, validateTextId } from "../validators/id.validator";
 import { parseListParams } from "../validators/list.validator";
@@ -19,7 +22,7 @@ import { controller, pagedList, routeOrBodyId } from "./controller";
 
 type Body = Record<string, unknown> | undefined;
 
-/** Golf tournament endpoints: registration, players, teams, holes, and the player import. */
+/** Golf tournament endpoints: registration, players, player years, teams, holes, and the player import. */
 export class GolfController {
     // Registration
 
@@ -74,6 +77,41 @@ export class GolfController {
             throw new BadRequestError("No file provided");
         }
         return useResponseSuccess(await playerImportService.import(await file.text()));
+    });
+
+    // Player years
+
+    public static apiGetYears = controller(async (event) => {
+        const params = parseListParams(getRouterParams(event), { sort: "year" });
+        return pagedList(await playerYearService.listYears(params), params, "year");
+    });
+
+    public static apiCreateYear = controller(async (event) => {
+        const { year } = validateNewYear(await readBody<Body>(event));
+        return useResponseSuccess(await playerYearService.createYear(year));
+    });
+
+    public static apiGetPlayerYears = controller(async (event) => {
+        const id = validateNumericId(getRouterParams(event).id, "player id");
+        return useResponseSuccess(await playerYearService.listYearsForPlayer(id));
+    });
+
+    public static apiGetPlayersByYear = controller(async (event) => {
+        const params = parseListParams(getRouterParams(event));
+        const year = validateYear(String(params.year));
+        return pagedList(await playerYearService.listPlayers(year, params), params, "name");
+    });
+
+    public static apiAddPlayerYear = controller(async (event) => {
+        const params = getRouterParams(event);
+        const id = validateNumericId(params.id, "player id");
+        return useResponseSuccess(await playerYearService.markActive(id, validateYear(params.year)));
+    });
+
+    public static apiRemovePlayerYear = controller(async (event) => {
+        const params = getRouterParams(event);
+        const id = validateNumericId(params.id, "player id");
+        return useResponseSuccess(await playerYearService.markInactive(id, validateYear(params.year)));
     });
 
     // Teams

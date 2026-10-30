@@ -1,7 +1,8 @@
-import { and, asc, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { QueryExecutor, sqlExecutor } from "../db/executor";
 import { db } from "../db/query-builder";
 import { player } from "../models/Player";
+import { playerYear } from "../models/PlayerYear";
 import type { InsertResult, LabelValue, Page, WriteResult } from "./types";
 
 export type Player = typeof player.$inferSelect;
@@ -25,6 +26,10 @@ export class PlayerMapper {
 
     public findByNameAndEmail(name: string, email: string): Promise<Player[]> {
         return this.executor.run(db.select().from(player).where(and(eq(player.name, name), eq(player.email, email))));
+    }
+
+    public findById(id: number): Promise<Player[]> {
+        return this.executor.run(db.select().from(player).where(eq(player.id, id)));
     }
 
     public insert(values: NewPlayer): Promise<InsertResult> {
@@ -68,6 +73,21 @@ export class PlayerMapper {
                 TeamId: player.TeamId,
                 total: sql<number>`(SELECT count(*) FROM player AS p WHERE p.TeamId = ${teamId})`.as("total"),
             }).from(player).where(eq(player.TeamId, teamId)),
+        );
+    }
+
+    /** One page of the players active in a year; every row carries that year's player `total`. */
+    public findPageByYear(yearId: number, { offset, limit }: Page) {
+        const active = db.select({ playerId: playerYear.playerId }).from(playerYear).where(eq(playerYear.yearId, yearId));
+        return this.executor.run(
+            db.select({
+                id: player.id,
+                name: player.name,
+                email: player.email,
+                phone: player.phone,
+                TeamId: player.TeamId,
+                total: sql<number>`(SELECT count(*) FROM player_year WHERE player_year.YearId = ${yearId})`.as("total"),
+            }).from(player).where(inArray(player.id, active)).offset(offset).limit(limit),
         );
     }
 

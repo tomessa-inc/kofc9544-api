@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { calendarEventEmail, formSubmissionEmail, passwordResetEmail, playerConfirmationEmail, renderFields } from "../../../views/email/compose";
+import { formSubmissionEmail, passwordResetEmail, playerConfirmationEmail, renderFields } from "../../../views/email/compose";
 
 const data = (email: { TemplateData: string }) => JSON.parse(email.TemplateData);
 
@@ -31,14 +31,6 @@ describe("email views", () => {
         expect(email.Destination.ToAddresses).to.deep.equal(["tom@x.ca"]);
         expect(data(email).HTML_CONTENT).to.include('<a href="https://member-stage.kofc9544.ca/#/auth/reset/abc.def">');
         expect(data(email).TEXT_CONTENT).to.equal("You are receiving this email in order to reset your password:\n");
-    });
-
-    it("calendarEventEmail lists the event details to its creator", () => {
-        const email = calendarEventEmail({ email: "tom@x.ca", firstName: "Tom" }, { event: "Golf night", start: "2026-06-15T18:30:00" });
-
-        expect(email.Destination.ToAddresses).to.deep.equal(["tom@x.ca"]);
-        expect(data(email).HTML_CONTENT).to.equal("<p>event: Golf night</p><p>start: 2026-06-15T18:30:00</p>");
-        expect(data(email).PARAMS_CONTENT).to.equal(data(email).HTML_CONTENT);
     });
 
     for (const [type, to, name] of [

@@ -44,5 +44,4 @@ export const config = {
     awsRegion: "us-east-1",
     imageCdnUrl: "https://images.kofc9544.ca",
     imageBucket: "images.kofc9544.ca",
-    uploadBucket: "images-kofc-golf",
 } as const;

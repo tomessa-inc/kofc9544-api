@@ -95,21 +95,6 @@ export function passwordResetEmail(recipient: { email: string; firstName: string
     });
 }
 
-/** Tell the member who posted an event that it is on the calendar; `fields` lists its details. */
-export function calendarEventEmail(recipient: { email: string; firstName: string }, fields: Record<string, unknown>): TemplatedEmail {
-    const listed = renderFields(fields);
-    return render({
-        to: [recipient.email],
-        name: recipient.firstName,
-        logo: SMALL_LOGO(),
-        banner: PARISH_BANNER(),
-        subject: messages.calendarEvent.subject,
-        html: listed,
-        fields: listed,
-        text: messages.calendarEvent.text,
-    });
-}
-
 /** Forms whose submissions are emailed to a committee inbox. */
 export type FormEmailType = typeof EmailType.ContactUs | typeof EmailType.Register | typeof EmailType.Volunteer | typeof EmailType.Sponsor;
 

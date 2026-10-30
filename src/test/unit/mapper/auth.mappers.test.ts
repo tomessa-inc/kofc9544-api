@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import { AccessMapper } from "../../../mapper/access.mapper";
 import { SessionTokenMapper, TokenType } from "../../../mapper/session-token.mapper";
+import { UserAccessMapper } from "../../../mapper/user-access.mapper";
 import { UserMapper } from "../../../mapper/user.mapper";
 import { fakeExecutor } from "../helpers/fake-executor";
 
@@ -44,10 +45,29 @@ describe("auth mappers", () => {
         it("findPage filters on first OR last name", async () => {
             const db = fakeExecutor([]);
 
-            await new UserMapper(db).findPage({ offset: 10, limit: 10 }, "tom");
+            await new UserMapper(db).findPage({ offset: 10, limit: 10 }, { name: "tom" });
 
-            expect(db.last.sql).to.include("where (`user`.`firstName` like ? or `user`.`lastName` like ?)");
-            expect(db.last.params).to.deep.equal(["%tom%", "%tom%", 10, 10]);
+            expect(db.calls[0].sql).to.include("where (`user`.`firstName` like ? or `user`.`lastName` like ?)");
+            expect(db.calls[0].params).to.deep.equal(["%tom%", "%tom%", 10, 10]);
+        });
+
+        it("findPage combines the first name, last name and email filters", async () => {
+            const db = fakeExecutor([]);
+
+            await new UserMapper(db).findPage({ offset: 0, limit: 10 }, { firstName: "to", lastName: "cr", email: "@kofc" });
+
+            expect(db.calls[0].sql).to.include("where (`user`.`firstName` like ? and `user`.`lastName` like ? and `user`.`email` like ?)");
+            expect(db.calls[0].params).to.deep.equal(["%to%", "%cr%", "%@kofc%", 10]);
+        });
+
+        it("findPage counts the total with the same filters", async () => {
+            const db = fakeExecutor([{ id: "u1", firstName: "Tom", lastName: "C", email: "t@x.ca", total: 7 }]);
+
+            const rows = await new UserMapper(db).findPage({ offset: 0, limit: 10 }, { email: "@x.ca" });
+
+            expect(db.calls[1].sql).to.equal("select count(*) from `user` where `user`.`email` like ?");
+            expect(db.calls[1].params).to.deep.equal(["%@x.ca%"]);
+            expect(rows[0].total).to.equal(7);
         });
 
         it("findPage without a filter has no where clause", async () => {
@@ -55,7 +75,9 @@ describe("auth mappers", () => {
 
             await new UserMapper(db).findPage({ offset: 0, limit: 10 });
 
-            expect(db.last.sql).to.not.include("where");
+            for (const { sql } of db.calls) {
+                expect(sql).to.not.include("where");
+            }
         });
 
         it("findById returns the member with role objects", async () => {
@@ -131,17 +153,44 @@ describe("auth mappers", () => {
     });
 
     describe("AccessMapper", () => {
-        it("findPage, findByName and insert", async () => {
+        it("findAll, findPage, findByIdOrName and insert", async () => {
             const db = fakeExecutor([]);
             const roles = new AccessMapper(db);
 
+            await roles.findAll();
             await roles.findPage({ offset: 5, limit: 5 });
-            await roles.findByName("admin");
+            await roles.findByIdOrName("admin", "Admin");
             await roles.insert({ id: "admin", name: "Admin", description: "Admins" });
 
-            expect(db.calls[0].params).to.deep.equal([5, 5]);
-            expect(db.calls[1].sql).to.include("where `access`.`name` = ?");
-            expect(db.calls[2].params).to.deep.equal(["admin", "Admin", "Admins"]);
+            expect(db.calls[0].sql).to.equal("select `id`, `name`, `description` from `access` order by `access`.`name` asc");
+            expect(db.calls[1].params).to.deep.equal([5, 5]);
+            expect(db.calls[2].sql).to.include("where (`access`.`id` = ? or `access`.`name` = ?)");
+            expect(db.calls[2].params).to.deep.equal(["admin", "Admin"]);
+            expect(db.calls[3].params).to.deep.equal(["admin", "Admin", "Admins"]);
+        });
+
+        it("update and delete target one role by id", async () => {
+            const db = fakeExecutor({ affectedRows: 1 });
+            const roles = new AccessMapper(db);
+
+            await roles.update("admin", { name: "Admins", description: "d" });
+            await roles.delete("admin");
+
+            expect(db.calls.map((c) => c.sql)).to.deep.equal([
+                "update `access` set `name` = ?, `description` = ? where `access`.`id` = ?",
+                "delete from `access` where `access`.`id` = ?",
+            ]);
+            expect(db.calls[0].params).to.deep.equal(["Admins", "d", "admin"]);
+        });
+    });
+
+    describe("UserAccessMapper", () => {
+        it("deleteByAccess removes the role from every member", async () => {
+            const db = fakeExecutor({ affectedRows: 2 });
+
+            expect(await new UserAccessMapper(db).deleteByAccess("admin")).to.deep.equal({ affectedRows: 2 });
+            expect(db.last.sql).to.equal("delete from `user_access` where `user_access`.`AccessId` = ?");
+            expect(db.last.params).to.deep.equal(["admin"]);
         });
     });
 });

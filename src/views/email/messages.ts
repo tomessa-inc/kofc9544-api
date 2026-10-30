@@ -1,6 +1,5 @@
 /** Email types, as sent in `email_type` by the site's forms and used internally. */
 export const EmailType = {
-    CalendarEvent: "calender",
     ForgotPassword: "forgot",
     ContactUs: "contact_us",
     Register: "register",
@@ -12,10 +11,6 @@ export type EmailType = (typeof EmailType)[keyof typeof EmailType];
 
 /** Subject, plain-text intro and HTML intro of each email. `%s` is filled in where noted. */
 export const messages = {
-    calendarEvent: {
-        subject: "New Calender Event has just been posted",
-        text: "A new event has been posted on the KOFC Calender:\n",
-    },
     forgotPassword: {
         subject: "Forgot Password",
         text: "You are receiving this email in order to reset your password:\n",

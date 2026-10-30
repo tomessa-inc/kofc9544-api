@@ -3,7 +3,7 @@ import { AccessController } from "../../../controllers/access.controller";
 import { AuthController } from "../../../controllers/auth.controller";
 import { UserController } from "../../../controllers/user.controller";
 import { sqlExecutor } from "../../../db/executor";
-import { ConflictError, NotFoundError, UnauthorizedError } from "../../../errors";
+import { ConflictError, ForbiddenError, NotFoundError, UnauthorizedError } from "../../../errors";
 import { InvalidCredentialsError } from "../../../errors/auth.errors";
 import { accessService } from "../../../service/access.service";
 import { authService } from "../../../service/auth.service";
@@ -203,15 +203,52 @@ describe("Auth / User / Access controllers (HTTP contract)", () => {
         });
     });
 
-    describe("AccessController (not routed)", () => {
-        it("apiCreateAccess validates and creates", async () => {
-            const create = stub(accessService, "create", async () => undefined);
+    describe("/access (roles)", () => {
+        const role = { id: "admin", name: "Admin", description: "Admins" };
 
-            const res = await mount(AccessController.apiCreateAccess).post("/").send({ name: "Admin", description: "Admins" });
+        it("POST /access/list returns every role as { items }", async () => {
+            stub(accessService, "listAll", async () => [role]);
 
-            expect(res.body.data).to.deep.equal({ message: "Access has been created" });
-            expect(create.calls[0][0]).to.deep.include({ name: "Admin", description: "Admins" });
-            expect((await mount(AccessController.apiCreateAccess).post("/").send({ name: "Admin" })).status).to.equal(400);
+            const res = await api().post("/access/list");
+
+            expect(res.status).to.equal(200);
+            expect(res.body.data).to.deep.equal({ items: [role] });
+        });
+
+        it("POST /access validates, passes the bearer token and returns the new role", async () => {
+            const create = stub(accessService, "create", async () => role);
+
+            const res = await api().post("/access").set("Authorization", "Bearer tok").send({ name: "Admin", description: "Admins" });
+
+            expect(res.body.data).to.deep.equal(role);
+            expect(create.calls[0]).to.deep.equal([{ name: "Admin", description: "Admins" }, "tok"]);
+            expect((await api().post("/access").send({ description: "no name" })).status).to.equal(400);
+            expect(create.calls).to.have.length(1);
+        });
+
+        it("PUT /access/id/:id updates by the URL's id", async () => {
+            const update = stub(accessService, "update", async () => role);
+
+            const res = await api().put("/access/id/admin").set("Authorization", "Bearer tok").send({ name: "Admin", description: "Admins" });
+
+            expect(res.body.data).to.deep.equal(role);
+            expect(update.calls[0]).to.deep.equal(["admin", { name: "Admin", description: "Admins" }, "tok"]);
+        });
+
+        it("DELETE /access/id/:id deletes, and reports the service's auth and not-found errors", async () => {
+            const del = stub(accessService, "delete", async () => undefined);
+
+            const res = await api().delete("/access/id/admin").set("Authorization", "Bearer tok");
+
+            expect(res.body).to.deep.include({ code: 0, data: "" });
+            expect(del.calls[0]).to.deep.equal(["admin", "tok"]);
+
+            del.restore();
+            for (const [error, status] of [[new UnauthorizedError("x"), 401], [new ForbiddenError("x"), 403], [new NotFoundError("x"), 404]] as const) {
+                const failing = stub(accessService, "delete", async () => { throw error; });
+                expect((await api().delete("/access/id/admin")).status).to.equal(status);
+                failing.restore();
+            }
         });
 
         it("getAllAccess pages and apiGetAllAccessAsLabelValues maps options", async () => {

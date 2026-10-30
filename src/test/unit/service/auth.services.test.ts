@@ -1,9 +1,9 @@
 import { expect } from "chai";
 import jwt from "jsonwebtoken";
-import { ConflictError, NotFoundError, UnauthorizedError } from "../../../errors";
+import { BadRequestError, ConflictError, ForbiddenError, NotFoundError, UnauthorizedError } from "../../../errors";
 import { InvalidCredentialsError } from "../../../errors/auth.errors";
 import { TokenType } from "../../../mapper/session-token.mapper";
-import { AccessService } from "../../../service/access.service";
+import { AccessService, MAX_ACCESS_ID, ROLE_MANAGERS, roleIdsOf } from "../../../service/access.service";
 import { AuthService } from "../../../service/auth.service";
 import { PasswordService } from "../../../service/password.service";
 import { TokenService } from "../../../service/token.service";
@@ -246,7 +246,15 @@ describe("auth services", () => {
 
             await service.list(parseListParams({ pageIndex: "2", pageSize: "10", filterQuery: "tom" }));
 
-            expect(store.calls.findPage[0]).to.deep.equal([{ offset: 10, limit: 10 }, "tom"]);
+            expect(store.calls.findPage[0]).to.deep.equal([{ offset: 10, limit: 10 }, { name: "tom" }]);
+        });
+
+        it("list passes the first name, last name and email filters", async () => {
+            const { service, store } = setup();
+
+            await service.list(parseListParams({ pageIndex: "1", pageSize: "10" }), { email: "@kofc" });
+
+            expect(store.calls.findPage[0]).to.deep.equal([{ offset: 0, limit: 10 }, { name: undefined, email: "@kofc" }]);
         });
 
         it("get throws NotFoundError for an unknown member", async () => {
@@ -277,26 +285,84 @@ describe("auth services", () => {
     });
 
     describe("AccessService", () => {
-        function setup(existing: any[] = []) {
+        const admin = { roles: ["admin"] };
+
+        function setup({ existing = [] as any[], member = admin as { roles: any } | null, deleted = 1 } = {}) {
             const store = fake({
+                findAll: async () => [{ id: "admin", name: "Admin", description: "" }],
                 findPage: async () => [{ id: "admin", name: "Admin", description: "", total: 1 }],
-                findByName: async () => existing,
+                findByIdOrName: async () => existing,
                 insert: async () => ({ affectedRows: 1 }),
+                update: async () => ({ affectedRows: 1 }),
+                delete: async () => ({ affectedRows: deleted }),
             });
-            return { service: new AccessService(store.proxy), store };
+            const assignments = fake({ deleteByAccess: async () => ({ affectedRows: 3 }) });
+            const members = fake({ currentUser: async () => member });
+            return { service: new AccessService(store.proxy, assignments.proxy, members.proxy), store, assignments, members };
         }
 
-        it("listAsOptions maps roles to label/value", async () => {
+        it("listAll returns every role; listAsOptions maps roles to label/value", async () => {
+            expect(await setup().service.listAll()).to.deep.equal([{ id: "admin", name: "Admin", description: "" }]);
             expect(await setup().service.listAsOptions(parseListParams({}))).to.deep.equal([{ label: "Admin", value: "admin" }]);
         });
 
-        it("create inserts a new role, or conflicts", async () => {
+        it("create slugs the name into the id, checks id and name, inserts and returns the role", async () => {
+            const { service, store, members } = setup();
+
+            expect(await service.create({ name: "Golf Admin", description: "Runs golf" }, "tok")).to.deep.equal({
+                id: "golf-admin", name: "Golf Admin", description: "Runs golf",
+            });
+            expect(members.calls.currentUser[0]).to.deep.equal(["tok"]);
+            expect(store.calls.findByIdOrName[0]).to.deep.equal(["golf-admin", "Golf Admin"]);
+            expect(store.calls.insert[0][0]).to.deep.equal({ id: "golf-admin", name: "Golf Admin", description: "Runs golf" });
+        });
+
+        it("create conflicts on an existing role and rejects names too long for the id column", async () => {
+            expect(await rejects(setup({ existing: [{ id: "x" }] }).service.create({ name: "Editor", description: "" }, "tok"))).to.be.instanceOf(ConflictError);
+
+            const { service, store } = setup();
+            expect(await rejects(service.create({ name: "x".repeat(MAX_ACCESS_ID + 1), description: "" }, "tok"))).to.be.instanceOf(BadRequestError);
+            expect(store.calls.insert).to.have.length(0);
+        });
+
+        it("update changes the name and description, keeping the id", async () => {
             const { service, store } = setup();
 
-            await service.create({ name: "Editor", description: "Edits" });
+            expect(await service.update("admin", { name: "Admins", description: "d" }, "tok")).to.deep.equal({ id: "admin", name: "Admins", description: "d" });
+            expect(store.calls.update[0]).to.deep.equal(["admin", { name: "Admins", description: "d" }]);
+        });
 
-            expect(store.calls.insert[0][0]).to.deep.equal({ id: "editor", name: "Editor", description: "Edits" });
-            expect(await rejects(setup([{ id: "x" }]).service.create({ name: "Editor", description: "Edits" }))).to.be.instanceOf(ConflictError);
+        it("delete removes the role then its assignments, or is NotFound without touching assignments", async () => {
+            const { service, store, assignments } = setup();
+            await service.delete("admin", "tok");
+            expect(store.calls.delete[0]).to.deep.equal(["admin"]);
+            expect(assignments.calls.deleteByAccess[0]).to.deep.equal(["admin"]);
+
+            const missing = setup({ deleted: 0 });
+            expect(await rejects(missing.service.delete("nope", "tok"))).to.be.instanceOf(NotFoundError);
+            expect(missing.assignments.calls.deleteByAccess).to.have.length(0);
+        });
+
+        it("only signed-in role managers may create, update or delete", async () => {
+            for (const [member, error] of [[null, UnauthorizedError], [{ roles: ["calendar"] }, ForbiddenError], [{ roles: null }, ForbiddenError]] as const) {
+                const { service, store } = setup({ member });
+                expect(await rejects(service.create({ name: "Editor", description: "" }, "tok"))).to.be.instanceOf(error);
+                expect(await rejects(service.update("admin", { name: "A", description: "" }, "tok"))).to.be.instanceOf(error);
+                expect(await rejects(service.delete("admin", "tok"))).to.be.instanceOf(error);
+                expect(store.calls.insert.length + store.calls.update.length + store.calls.delete.length).to.equal(0);
+            }
+            for (const roles of [["access"], '["calendar","admin"]']) {
+                await setup({ member: { roles } }).service.delete("admin", "tok");
+            }
+        });
+
+        it("roleIdsOf accepts an array or JSON text and ignores anything else", () => {
+            expect(roleIdsOf(["admin"])).to.deep.equal(["admin"]);
+            expect(roleIdsOf('["admin",1]')).to.deep.equal(["admin"]);
+            expect(roleIdsOf("not json")).to.deep.equal([]);
+            expect(roleIdsOf('{"a":1}')).to.deep.equal([]);
+            expect(roleIdsOf(null)).to.deep.equal([]);
+            expect(ROLE_MANAGERS).to.deep.equal(["access", "admin"]);
         });
     });
 });

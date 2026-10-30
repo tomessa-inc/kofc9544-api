@@ -1,8 +1,9 @@
 import { expect } from "chai";
-import { ConflictError, BadRequestError } from "../../../errors";
+import { ConflictError, BadRequestError, NotFoundError } from "../../../errors";
 import { HoleService } from "../../../service/hole.service";
 import { PlayerImportService, parseImportCsv } from "../../../service/player-import.service";
 import { PlayerService } from "../../../service/player.service";
+import { PlayerYearService } from "../../../service/player-year.service";
 import { RegistrationService } from "../../../service/registration.service";
 import { TeamService } from "../../../service/team.service";
 import { parseListParams } from "../../../validators/list.validator";
@@ -293,6 +294,99 @@ describe("golf services", () => {
             };
 
             expect((await rejects(service.import(csv("4,Eagles,Hole 1,Smith,John,j@x.ca,,,,")))).message).to.equal("Duplicate entry");
+        });
+    });
+
+    describe("PlayerYearService", () => {
+        function setup({ player = [{ id: 7 }] as any[], year = [{ id: 3, year: 2026 }] as any[] } = {}) {
+            const years = fake({
+                findPage: async () => [{ id: 3, year: 2026 }],
+                findByYear: async () => year,
+                findByPlayer: async () => [{ id: 3, year: 2026 }],
+                insert: async () => ({ insertId: 4, affectedRows: 1 }),
+                insertIgnore: async () => ({ affectedRows: 1 }),
+            });
+            const links = fake({ insertIgnore: async () => ({ affectedRows: 1 }), delete: async () => ({ affectedRows: 1 }) });
+            const players = fake({ findById: async () => player, findPageByYear: async () => [{ id: 7, total: 1 }] });
+            return { service: new PlayerYearService(years.proxy, links.proxy, players.proxy), years, links, players };
+        }
+
+        it("listYears pages and listYearsForPlayer delegate to the year store", async () => {
+            const { service, years } = setup();
+
+            expect(await service.listYears(parseListParams({ pageIndex: "2", pageSize: "10" }))).to.deep.equal([{ id: 3, year: 2026 }]);
+            await service.listYearsForPlayer(7);
+
+            expect(years.calls.findPage[0]).to.deep.equal([{ offset: 10, limit: 10 }]);
+            expect(years.calls.findByPlayer[0]).to.deep.equal([7]);
+        });
+
+        it("createYear adds a new year and returns its id", async () => {
+            const { service, years } = setup({ year: [] });
+
+            expect(await service.createYear(2027)).to.deep.equal({ id: 4 });
+            expect(years.calls.insert[0]).to.deep.equal([2027]);
+        });
+
+        it("createYear throws Conflict for an existing year without inserting", async () => {
+            const { service, years } = setup();
+
+            const error = await rejects(service.createYear(2026));
+
+            expect(error).to.be.instanceOf(ConflictError);
+            expect(error.message).to.equal("Year 2026 already exists");
+            expect(years.calls.insert).to.have.length(0);
+        });
+
+        it("listPlayers pages the players of the year's id", async () => {
+            const { service, years, players } = setup();
+
+            expect(await service.listPlayers(2026, parseListParams({ pageIndex: "2", pageSize: "10" }))).to.deep.equal([{ id: 7, total: 1 }]);
+
+            expect(years.calls.findByYear[0]).to.deep.equal([2026]);
+            expect(players.calls.findPageByYear[0]).to.deep.equal([3, { offset: 10, limit: 10 }]);
+        });
+
+        it("listPlayers is empty for an unknown year", async () => {
+            const { service, players } = setup({ year: [] });
+
+            expect(await service.listPlayers(1999, parseListParams({}))).to.deep.equal([]);
+            expect(players.calls.findPageByYear).to.have.length(0);
+        });
+
+        it("markActive adds the year if new, then links the player to it", async () => {
+            const { service, years, links } = setup();
+
+            expect(await service.markActive(7, 2026)).to.deep.equal({ affectedRows: 1 });
+
+            expect(years.calls.insertIgnore[0]).to.deep.equal([2026]);
+            expect(links.calls.insertIgnore[0]).to.deep.equal([7, 3]);
+        });
+
+        it("markActive throws NotFound for an unknown player without writing", async () => {
+            const { service, years, links } = setup({ player: [] });
+
+            const error = await rejects(service.markActive(99, 2026));
+
+            expect(error).to.be.instanceOf(NotFoundError);
+            expect(error.message).to.equal("Player 99 not found");
+            expect(years.calls.insertIgnore).to.have.length(0);
+            expect(links.calls.insertIgnore).to.have.length(0);
+        });
+
+        it("markInactive unlinks the player from the year", async () => {
+            const { service, links } = setup();
+
+            await service.markInactive(7, 2026);
+
+            expect(links.calls.delete[0]).to.deep.equal([7, 3]);
+        });
+
+        it("markInactive does nothing for an unknown year", async () => {
+            const { service, links } = setup({ year: [] });
+
+            expect(await service.markInactive(7, 1999)).to.deep.equal({ affectedRows: 0 });
+            expect(links.calls.delete).to.have.length(0);
         });
     });
 });

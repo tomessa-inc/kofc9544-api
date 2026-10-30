@@ -21,9 +21,8 @@ export interface UserUpdateDto {
     password?: string;
 }
 
-/** New access role (not routed yet). */
+/** An access role's editable fields; the id is derived from the name on create. */
 export interface AccessDto {
-    id?: string;
     name: string;
     description: string;
 }

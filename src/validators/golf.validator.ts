@@ -1,4 +1,4 @@
-import type { HoleDto, NewPlayerDto, PlayerUpdateDto, RegistrationDto, TeamUpdateDto } from "../dto/golf.dto";
+import type { HoleDto, NewPlayerDto, NewYearDto, PlayerUpdateDto, RegistrationDto, TeamUpdateDto } from "../dto/golf.dto";
 import { BadRequestError } from "../errors";
 
 type Body = Record<string, unknown> | undefined;
@@ -73,4 +73,15 @@ export function validateTeamUpdate(input: Body): TeamUpdateDto {
 export function validateHole(input: Body): HoleDto {
     const body = requireBody(input);
     return { name: requireText(body, "name"), ...pickText(body, ["par"] as const) };
+}
+
+/** A tournament year from the route, e.g. "2026". */
+export function validateYear(value: string | undefined): number {
+    const year = Number(value);
+    if (!Number.isInteger(year) || year < 1900 || year > 2100) throw new BadRequestError("Invalid year");
+    return year;
+}
+
+export function validateNewYear(input: Body): NewYearDto {
+    return { year: validateYear(text(requireBody(input).year)) };
 }

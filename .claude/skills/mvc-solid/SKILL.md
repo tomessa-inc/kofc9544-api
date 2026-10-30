@@ -24,7 +24,7 @@ Route ──▶ Controller ──▶ Service ──▶ Mapper ──▶ QueryExe
 | **Route** | `src/routes/<domain>.routes.ts` | `new H3()`; path + verb → controller method | Contain logic |
 | **Controller** (C) | `src/controllers/<domain>.controller.ts` | Read params/body, validate, call **one** service method, return a view | Run queries, import models or `drizzle-orm`, hold business rules, catch errors itself |
 | **Service** | `src/service/<domain>.service.ts` | Business rules and workflows across mappers (register team → players → email) | Import `h3`, set status codes, build SQL |
-| **Mapper** | `src/mapper/<entity>.mapper.ts` | Drizzle queries for **one** table, run through the injected executor; AWS adapters (`cdn`, `mail`) | Hold business rules, call other mappers, know about HTTP |
+| **Mapper** | `src/mapper/<entity>.mapper.ts` | Drizzle queries for **one** table, run through the injected executor; AWS adapters (`mail`) | Hold business rules, call other mappers, know about HTTP |
 | **Model** (M) | `src/models/<Entity>.ts` | Drizzle `mysqlTable` schema matching the real table | Hold behaviour |
 | **View** (V) | `src/utils/response.ts`, `src/views/` | Response envelope, paged lists, CDN URLs, composed emails | Hold logic beyond formatting |
 | **DTO / validator** | `src/dto/`, `src/validators/` | Request types; turning untrusted input into a DTO or a `BadRequestError` | Touch the database |

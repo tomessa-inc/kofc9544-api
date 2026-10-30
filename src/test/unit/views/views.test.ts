@@ -1,12 +1,12 @@
 import { expect } from "chai";
 import { emailImages } from "../../../views/email-images";
-import { imageUrl, THUMBNAIL } from "../../../views/image-url";
+import { imageUrl } from "../../../views/image-url";
 
 const decode = (url: string) => JSON.parse(Buffer.from(url.split("/").pop()!, "base64").toString());
 
 describe("views", () => {
     it("imageUrl encodes bucket, key and edits into a CDN path", () => {
-        const url = imageUrl("g1/a.png", THUMBNAIL);
+        const url = imageUrl("g1/a.png", { resize: { width: 400, height: 400, fit: "inside" } });
 
         expect(url).to.match(/^https:\/\/images\.kofc9544\.ca\/[A-Za-z0-9+/=]+$/);
         expect(decode(url)).to.deep.equal({ bucket: "images.kofc9544.ca", key: "g1/a.png", edits: { resize: { width: 400, height: 400, fit: "inside" } } });

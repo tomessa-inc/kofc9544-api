@@ -3,9 +3,11 @@ import { BadRequestError } from "../../../errors";
 import {
     validateHole,
     validateNewPlayer,
+    validateNewYear,
     validatePlayerUpdate,
     validateRegistration,
     validateTeamUpdate,
+    validateYear,
 } from "../../../validators/golf.validator";
 import { validateNumericId, validateTextId } from "../../../validators/id.validator";
 import { parseListParams, sortDirection, toPage } from "../../../validators/list.validator";
@@ -92,6 +94,28 @@ describe("validators", () => {
             expect(sortDirection("ASC")).to.equal("asc");
             expect(sortDirection("desc")).to.equal("desc");
             expect(sortDirection(undefined)).to.equal("desc");
+        });
+    });
+
+    describe("validateNewYear", () => {
+        it("reads the year from the body, as a number or string", () => {
+            expect(validateNewYear({ year: 2027 })).to.deep.equal({ year: 2027 });
+            expect(validateNewYear({ year: " 2027 " })).to.deep.equal({ year: 2027 });
+        });
+
+        it("rejects a missing body or year", () => {
+            badRequest(() => validateNewYear(undefined), "Missing request body");
+            badRequest(() => validateNewYear({}), "Invalid year");
+        });
+    });
+
+    describe("validateYear", () => {
+        it("accepts a four-digit year in range", () => {
+            expect(validateYear("2026")).to.equal(2026);
+        });
+
+        it("rejects anything else", () => {
+            for (const bad of ["1899", "2101", "20.5", "abc", "undefined", undefined]) badRequest(() => validateYear(bad), "Invalid year");
         });
     });
 });

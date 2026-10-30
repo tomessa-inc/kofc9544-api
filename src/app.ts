@@ -1,9 +1,7 @@
 import { H3, handleCors } from "h3";
 import {
   mailRouter,
-  mediaRouter,
   userRouter,
-  eventRouter,
   accessRouter,
   golfRouter,
   authRouter
@@ -30,6 +28,8 @@ app.use((event) => {
     methods: "*",
     allowHeaders: "*",
     credentials: true,
+    // Browsers cache the preflight for a day instead of sending a billed OPTIONS before every call.
+    maxAge: "86400",
   });
 
   if (preflight !== false) return preflight;
@@ -41,9 +41,7 @@ app.use((event) => {
 // Mount sub-apps
 app.mount("/mail", mailRouter);
 app.mount("/user", userRouter);
-app.mount("/media", mediaRouter);
 app.mount("/auth", authRouter);
-app.mount("/event", eventRouter);
 app.mount("/access", accessRouter);
 app.mount("/golf", golfRouter);
 

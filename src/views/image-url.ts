@@ -4,8 +4,6 @@ export interface ImageEdits {
     resize: { width?: number; height?: number; fit?: string };
 }
 
-/** Square thumbnail used for gallery and primary images. */
-export const THUMBNAIL: ImageEdits = { resize: { width: 400, height: 400, fit: "inside" } };
 
 /**
  * CDN URL for an S3 image resized on the fly: the serverless image handler behind the CDN decodes the

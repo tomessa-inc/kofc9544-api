@@ -1,7 +1,6 @@
 import type { RegistrationDto } from "../dto/golf.dto";
 import { MailMapper, mailMapper } from "../mapper/mail.mapper";
 import {
-    calendarEventEmail,
     formSubmissionEmail,
     passwordResetEmail,
     playerConfirmationEmail,
@@ -18,11 +17,6 @@ export interface GolfMailer {
 /** What authentication needs from email. */
 export interface PasswordResetMailer {
     sendPasswordReset(recipient: Recipient, resetToken: string): Promise<void>;
-}
-
-/** What the calendar needs from email. */
-export interface EventMailer {
-    sendCalendarEvent(recipient: Recipient, details: Record<string, unknown>): Promise<void>;
 }
 
 export interface Recipient {
@@ -44,7 +38,7 @@ export interface PlayerConfirmation {
 }
 
 /** Decides which email goes to whom; composing is in views/email, delivery in MailMapper. */
-export class MailService implements GolfMailer, PasswordResetMailer, EventMailer {
+export class MailService implements GolfMailer, PasswordResetMailer {
     constructor(private readonly mailer: Pick<MailMapper, "send"> = mailMapper) {}
 
     public async sendPlayerConfirmation(player: PlayerConfirmation): Promise<void> {
@@ -58,15 +52,6 @@ export class MailService implements GolfMailer, PasswordResetMailer, EventMailer
 
     public async sendPasswordReset(recipient: Recipient, resetToken: string): Promise<void> {
         await this.mailer.send(passwordResetEmail(recipient, resetToken));
-    }
-
-    public async sendCalendarEvent(recipient: Recipient, details: Record<string, unknown>): Promise<void> {
-        await this.mailer.send(calendarEventEmail(recipient, {
-            email_type: EmailType.CalendarEvent,
-            email: recipient.email,
-            firstName: recipient.firstName,
-            ...details,
-        }));
     }
 
     /** A public site form (contact us, sponsor, volunteer, register) for the committee inbox. */
